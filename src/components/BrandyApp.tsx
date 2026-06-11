@@ -23,6 +23,7 @@ interface EditPopoverProps {
 function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopoverProps) {
   const [name, setName] = useState(brand.name);
   const [color, setColor] = useState(brand.color);
+  const [hexInput, setHexInput] = useState(brand.color.replace('#', ''));
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,7 +65,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
             key={c}
             className={`w-6 h-6 rounded-full transition-transform ${color === c ? 'scale-110 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-110'}`}
             style={{ background: c }}
-            onClick={() => setColor(c)}
+            onClick={() => { setColor(c); setHexInput(c.replace('#', '')); }}
           />
         ))}
       </div>
@@ -73,7 +74,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
         <input
           type="color"
           value={color}
-          onChange={e => setColor(e.target.value)}
+          onChange={e => { setColor(e.target.value); setHexInput(e.target.value.replace('#', '')); }}
           className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 flex-shrink-0"
           title="Couleur personnalisée"
         />
@@ -81,16 +82,12 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
           <span className="px-2 text-xs text-gray-400 font-mono select-none">#</span>
           <input
             className="flex-1 py-1.5 pr-2 text-xs font-mono outline-none bg-transparent"
-            value={color.replace('#', '')}
+            value={hexInput}
             maxLength={6}
             placeholder="6366f1"
             onChange={e => {
               const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
-              if (val.length === 6) setColor('#' + val);
-              else if (val.length < 6) e.target.value = val; // allow partial typing
-            }}
-            onBlur={e => {
-              const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+              setHexInput(val);
               if (val.length === 6) setColor('#' + val);
             }}
           />
