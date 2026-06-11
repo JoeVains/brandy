@@ -1,0 +1,198 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Brand, Section, Asset } from '@/types';
+import Sidebar from './Sidebar';
+import AssetGrid from './AssetGrid';
+import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+
+const BRAND_COLORS = [
+  '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
+  '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#06b6d4',
+];
+
+export default function BrandyApp() {
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [showNewBrand, setShowNewBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+  const [newBrandColor, setNewBrandColor] = useState(BRAND_COLORS[0]);
+  const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
+  const [editingBrandName, setEditingBrandName] = useState('');
+
+  const fetchAll = useCallback(async () => {
+    const [b, s, a] = await Promise.all([
+      fetch('/api/brands').then(r => r.json()),
+      fetch('/api/sections').then(r => r.json()),
+      fetch('/api/assets').then(r => r.json()),
+    ]);
+    setBrands(b);
+    setSections(s);
+    setAssets(a);
+    if (!activeBrandId && b.length > 0) setActiveBrandId(b[0].id);
+  }, [activeBrandId]);
+
+  useEffect(() => { fetchAll(); }, []);
+
+  // reset section when brand changes
+  useEffect(() => { setActiveSectionId(null); }, [activeBrandId]);
+
+  async function createBrand() {
+    if (!newBrandName.trim()) return;
+    const res = await fetch('/api/brands', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: newBrandName.trim(), color: newBrandColor }),
+    });
+    const brand = await res.json();
+    setBrands(prev => [...prev, brand]);
+    setActiveBrandId(brand.id);
+    setNewBrandName('');
+    setShowNewBrand(false);
+  }
+
+  async function deleteBrand(id: string) {
+    if (!confirm('Supprimer cette marque et tous ses assets ?')) return;
+    await fetch(`/api/brands/${id}`, { method: 'DELETE' });
+    setBrands(prev => prev.filter(b => b.id !== id));
+    setSections(prev => prev.filter(s => s.brandId !== id));
+    setAssets(prev => prev.filter(a => a.brandId !== id));
+    if (activeBrandId === id) setActiveBrandId(brands.find(b => b.id !== id)?.id ?? null);
+  }
+
+  async function renameBrand(id: string, name: string) {
+    await fetch(`/api/brands/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    setBrands(prev => prev.map(b => b.id === id ? { ...b, name } : b));
+    setEditingBrandId(null);
+  }
+
+  const activeBrand = brands.find(b => b.id === activeBrandId) ?? null;
+  const brandSections = sections.filter(s => s.brandId === activeBrandId);
+  const displayedAssets = activeSectionId
+    ? assets.filter(a => a.sectionId === activeSectionId)
+    : assets.filter(a => a.brandId === activeBrandId);
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
+      {/* Header */}
+      <header className="flex items-center gap-4 px-6 py-3 bg-white border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center gap-2 mr-4">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>B</div>
+          <span className="font-semibold text-lg tracking-tight">Brandy</span>
+        </div>
+
+        {/* Brand tabs */}
+        <div className="flex items-center gap-1 flex-1 overflow-x-auto">
+          {brands.map(brand => (
+            <div
+              key={brand.id}
+              className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium transition-all select-none ${activeBrandId === brand.id ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+              style={activeBrandId === brand.id ? { background: brand.color } : {}}
+              onClick={() => setActiveBrandId(brand.id)}
+            >
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: activeBrandId === brand.id ? 'rgba(255,255,255,0.5)' : brand.color }} />
+              {editingBrandId === brand.id ? (
+                <input
+                  autoFocus
+                  className="bg-transparent outline-none w-24 text-sm"
+                  value={editingBrandName}
+                  onChange={e => setEditingBrandName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') renameBrand(brand.id, editingBrandName);
+                    if (e.key === 'Escape') setEditingBrandId(null);
+                  }}
+                  onClick={e => e.stopPropagation()}
+                />
+              ) : (
+                <span onDoubleClick={(e) => { e.stopPropagation(); setEditingBrandId(brand.id); setEditingBrandName(brand.name); }}>
+                  {brand.name}
+                </span>
+              )}
+              {editingBrandId === brand.id ? (
+                <>
+                  <button onClick={e => { e.stopPropagation(); renameBrand(brand.id, editingBrandName); }} className="opacity-70 hover:opacity-100"><Check size={12} /></button>
+                  <button onClick={e => { e.stopPropagation(); setEditingBrandId(null); }} className="opacity-70 hover:opacity-100"><X size={12} /></button>
+                </>
+              ) : (
+                <button
+                  className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity ml-0.5"
+                  onClick={e => { e.stopPropagation(); deleteBrand(brand.id); }}
+                >
+                  <Trash2 size={11} />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {showNewBrand ? (
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-100">
+              <div className="flex gap-1">
+                {BRAND_COLORS.map(c => (
+                  <button key={c} className={`w-3.5 h-3.5 rounded-full transition-transform ${newBrandColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : ''}`} style={{ background: c }} onClick={() => setNewBrandColor(c)} />
+                ))}
+              </div>
+              <input
+                autoFocus
+                placeholder="Nom de la marque"
+                className="bg-transparent outline-none text-sm w-32"
+                value={newBrandName}
+                onChange={e => setNewBrandName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') createBrand(); if (e.key === 'Escape') setShowNewBrand(false); }}
+              />
+              <button onClick={createBrand} className="text-indigo-600 hover:text-indigo-800"><Check size={14} /></button>
+              <button onClick={() => setShowNewBrand(false)} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewBrand(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Plus size={14} /> Marque
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        {activeBrand ? (
+          <>
+            <Sidebar
+              brand={activeBrand}
+              sections={brandSections}
+              activeSectionId={activeSectionId}
+              onSelectSection={setActiveSectionId}
+              onSectionsChange={updated => setSections(prev => [...prev.filter(s => s.brandId !== activeBrand.id), ...updated])}
+            />
+            <AssetGrid
+              brand={activeBrand}
+              sectionId={activeSectionId}
+              assets={displayedAssets}
+              sections={brandSections}
+              onAssetsChange={updated => setAssets(prev => [...prev.filter(a => a.brandId !== activeBrand.id), ...updated])}
+            />
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--border)' }}>B</div>
+            <p className="text-sm">Créez votre première marque pour commencer</p>
+            <button
+              onClick={() => setShowNewBrand(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-medium"
+              style={{ background: 'var(--accent)' }}
+            >
+              <Plus size={16} /> Nouvelle marque
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
