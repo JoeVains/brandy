@@ -70,7 +70,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
     setEditName(asset.name);
     setEditColor(asset.colorValue ?? '#000000');
     setEditHex((asset.colorValue ?? '#000000').replace('#', ''));
-    setNameTouched(true); // name already exists — don't override on color change
+    setNameTouched(false);
     setEditing(true);
   }
 
