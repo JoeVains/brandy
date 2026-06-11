@@ -28,19 +28,66 @@ function AssetIcon({ type }: { type: Asset['type'] }) {
   return <File className={cls} />;
 }
 
-function ColorSwatch({ asset }: { asset: Asset }) {
-  const [copied, setCopied] = useState(false);
-  function copy() {
-    navigator.clipboard.writeText(asset.colorValue!);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+function hexToRgb(hex: string) {
+  const v = hex.replace('#', '');
+  const n = parseInt(v, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgbToHsl(r: number, g: number, b: number) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
   }
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function ColorSwatch({ asset }: { asset: Asset }) {
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function copy(text: string, label: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  const hex = asset.colorValue ?? '#000000';
+  const { r, g, b } = hexToRgb(hex);
+  const { h, s, l } = rgbToHsl(r, g, b);
+  const rgbStr = `rgb(${r}, ${g}, ${b})`;
+  const hslStr = `hsl(${h}, ${s}%, ${l}%)`;
+
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden border bg-white cursor-pointer group" style={{ borderColor: 'var(--border)' }} onClick={copy}>
-      <div className="h-24" style={{ background: asset.colorValue }} />
-      <div className="p-3">
+    <div className="flex flex-col rounded-xl overflow-hidden border bg-white" style={{ borderColor: 'var(--border)' }}>
+      <div className="h-20" style={{ background: hex }} />
+      <div className="p-3 space-y-1.5">
         <p className="text-sm font-medium text-gray-800 truncate">{asset.name}</p>
-        <p className="text-xs text-gray-400 font-mono mt-0.5">{copied ? 'Copié !' : asset.colorValue}</p>
+        {([
+          { label: 'HEX', value: hex.toUpperCase() },
+          { label: 'RVB', value: rgbStr },
+          { label: 'TSL', value: hslStr },
+        ] as { label: string; value: string }[]).map(({ label, value }) => (
+          <button
+            key={label}
+            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors text-left group/row"
+            onClick={() => copy(value, label)}
+            title={`Copier ${label}`}
+          >
+            <span className="text-[10px] font-semibold text-gray-400 w-7 flex-shrink-0">{label}</span>
+            <span className="text-xs font-mono text-gray-600 truncate flex-1">
+              {copied === label ? '✓ Copié' : value}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
