@@ -68,17 +68,34 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
           />
         ))}
       </div>
-      {/* Custom color picker */}
+      {/* Custom color picker + hex input */}
       <div className="flex items-center gap-2 mb-3">
         <input
           type="color"
           value={color}
           onChange={e => setColor(e.target.value)}
-          className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0"
+          className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 flex-shrink-0"
           title="Couleur personnalisée"
         />
-        <span className="text-xs font-mono text-gray-500">{color}</span>
-        <div className="flex-1 h-5 rounded" style={{ background: color }} />
+        <div className="flex items-center flex-1 rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+          <span className="px-2 text-xs text-gray-400 font-mono select-none">#</span>
+          <input
+            className="flex-1 py-1.5 pr-2 text-xs font-mono outline-none bg-transparent"
+            value={color.replace('#', '')}
+            maxLength={6}
+            placeholder="6366f1"
+            onChange={e => {
+              const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+              if (val.length === 6) setColor('#' + val);
+              else if (val.length < 6) e.target.value = val; // allow partial typing
+            }}
+            onBlur={e => {
+              const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+              if (val.length === 6) setColor('#' + val);
+            }}
+          />
+          <div className="w-6 h-6 mr-1.5 rounded flex-shrink-0" style={{ background: color }} />
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <button
