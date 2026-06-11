@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Brand, Section, Asset } from '@/types';
 import { Upload, Plus, Download, Trash2, FileText, Image, Palette, Type, File } from 'lucide-react';
+import { suggestColorName } from '@/lib/colorNames';
 
 interface Props {
   brand: Brand;
@@ -152,8 +153,15 @@ function AssetCard({ asset, onDelete }: { asset: Asset; onDelete: () => void }) 
 export default function AssetGrid({ brand, sectionId, assets, sections, onAssetsChange }: Props) {
   const [showColorForm, setShowColorForm] = useState(false);
   const [colorName, setColorName] = useState('');
+  const [colorNameTouched, setColorNameTouched] = useState(false);
   const [colorValue, setColorValue] = useState('#000000');
   const [colorHexInput, setColorHexInput] = useState('000000');
+
+  function applyColor(hex: string) {
+    setColorValue(hex);
+    setColorHexInput(hex.replace('#', ''));
+    if (!colorNameTouched) setColorName(suggestColorName(hex));
+  }
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -189,6 +197,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
     onAssetsChange([...assets, asset]);
     setShowColorForm(false);
     setColorName('');
+    setColorNameTouched(false);
     setColorValue('#000000');
     setColorHexInput('000000');
   }
@@ -220,7 +229,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
         {sectionId && (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowColorForm(!showColorForm)}
+              onClick={() => { setShowColorForm(!showColorForm); if (!showColorForm) { setColorName(suggestColorName('#000000')); setColorNameTouched(false); } }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border text-gray-600 hover:bg-gray-50 transition-colors"
               style={{ borderColor: 'var(--border)' }}
             >
@@ -244,7 +253,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
           <input
             type="color"
             value={colorValue}
-            onChange={e => { setColorValue(e.target.value); setColorHexInput(e.target.value.replace('#', '')); }}
+            onChange={e => applyColor(e.target.value)}
             className="w-10 h-10 rounded-lg cursor-pointer border-0 flex-shrink-0"
           />
           <div className="flex items-center rounded-lg border overflow-hidden flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
@@ -257,18 +266,18 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
               onChange={e => {
                 const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
                 setColorHexInput(val);
-                if (val.length === 6) setColorValue('#' + val);
+                if (val.length === 6) applyColor('#' + val);
               }}
             />
             <div className="w-6 h-6 mr-1.5 rounded flex-shrink-0" style={{ background: colorValue }} />
           </div>
           <input
             autoFocus
-            placeholder="Nom de la couleur (ex: Indigo principal)"
+            placeholder="Nom de la couleur"
             className="flex-1 px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-indigo-300"
             style={{ borderColor: 'var(--border)' }}
             value={colorName}
-            onChange={e => setColorName(e.target.value)}
+            onChange={e => { setColorName(e.target.value); setColorNameTouched(true); }}
             onKeyDown={e => { if (e.key === 'Enter') addColor(); if (e.key === 'Escape') setShowColorForm(false); }}
           />
           <button onClick={addColor} className="px-4 py-2 rounded-lg text-white text-sm font-medium flex-shrink-0" style={{ background: brand.color }}>Ajouter</button>
