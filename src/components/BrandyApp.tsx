@@ -126,6 +126,8 @@ export default function BrandyApp() {
   const [newBrandColor, setNewBrandColor] = useState(BRAND_COLORS[0]);
   const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
   const [editingAnchorRect, setEditingAnchorRect] = useState<DOMRect | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     const [b, s, a] = await Promise.all([
@@ -167,6 +169,20 @@ export default function BrandyApp() {
     if (activeBrandId === id) setActiveBrandId(brands.find(b => b.id !== id)?.id ?? null);
   }
 
+  async function reorderBrands(draggedId: string, targetId: string) {
+    if (draggedId === targetId) return;
+    const next = [...brands];
+    const from = next.findIndex(b => b.id === draggedId);
+    const to = next.findIndex(b => b.id === targetId);
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    setBrands(next);
+    fetch('/api/brands/reorder', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ids: next.map(b => b.id) }),
+    });
+  }
+
   async function updateBrand(id: string, name: string, color: string) {
     await fetch(`/api/brands/${id}`, {
       method: 'PATCH',
@@ -198,10 +214,25 @@ export default function BrandyApp() {
           {brands.map(brand => {
             const isActive = activeBrandId === brand.id;
             const isEditing = editingBrandId === brand.id;
+            const isDragging = dragId === brand.id;
+            const isOver = dragOverId === brand.id;
             return (
-              <div key={brand.id} className="relative">
+              <div
+                key={brand.id}
+                className="relative flex-shrink-0"
+                draggable
+                onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
+                onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverId(brand.id); }}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={e => { e.preventDefault(); if (dragId) reorderBrands(dragId, brand.id); setDragId(null); setDragOverId(null); }}
+                onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+                style={{ opacity: isDragging ? 0.4 : 1, transition: 'opacity 0.15s' }}
+              >
+                {isOver && !isDragging && (
+                  <div className="absolute left-0 top-1 bottom-1 w-0.5 -translate-x-1 rounded-full" style={{ background: 'var(--accent)' }} />
+                )}
                 <div
-                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer text-sm font-medium transition-all select-none ${isActive ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-grab active:cursor-grabbing text-sm font-medium transition-all select-none ${isActive ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                   style={isActive ? { background: brand.color } : {}}
                   onClick={() => { setActiveBrandId(brand.id); setEditingBrandId(null); }}
                 >
