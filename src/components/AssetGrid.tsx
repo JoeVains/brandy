@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Brand, Section, Asset } from '@/types';
-import { Upload, Plus, Download, Trash2, FileText, Image, Palette, Type, File } from 'lucide-react';
+import { Upload, Plus, Download, Trash2, FileText, Image, Palette, Type, File, Pencil } from 'lucide-react';
 import { suggestColorName } from '@/lib/colorNames';
 
 interface Props {
@@ -52,8 +52,32 @@ function rgbToHsl(r: number, g: number, b: number) {
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
-function ColorSwatch({ asset }: { asset: Asset }) {
+function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (name: string, colorValue: string) => void; onDelete: () => void }) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(asset.name);
+  const [editColor, setEditColor] = useState(asset.colorValue ?? '#000000');
+  const [editHex, setEditHex] = useState((asset.colorValue ?? '#000000').replace('#', ''));
+  const [nameTouched, setNameTouched] = useState(false);
+
+  function applyEditColor(hex: string) {
+    setEditColor(hex);
+    setEditHex(hex.replace('#', ''));
+    if (!nameTouched) setEditName(suggestColorName(hex));
+  }
+
+  function openEdit() {
+    setEditName(asset.name);
+    setEditColor(asset.colorValue ?? '#000000');
+    setEditHex((asset.colorValue ?? '#000000').replace('#', ''));
+    setNameTouched(true); // name already exists — don't override on color change
+    setEditing(true);
+  }
+
+  function save() {
+    onUpdate(editName || suggestColorName(editColor), editColor);
+    setEditing(false);
+  }
 
   function copy(text: string, label: string) {
     navigator.clipboard.writeText(text);
@@ -67,9 +91,73 @@ function ColorSwatch({ asset }: { asset: Asset }) {
   const rgbStr = `rgb(${r}, ${g}, ${b})`;
   const hslStr = `hsl(${h}, ${s}%, ${l}%)`;
 
+  if (editing) {
+    return (
+      <div className="flex flex-col rounded-xl overflow-hidden border bg-white" style={{ borderColor: 'var(--border)' }}>
+        <div className="h-20 relative" style={{ background: editColor }}>
+          <input
+            type="color"
+            value={editColor}
+            onChange={e => applyEditColor(e.target.value)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            title="Changer la couleur"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-white/70 text-xs bg-black/20 px-2 py-0.5 rounded-full">Cliquer pour changer</span>
+          </div>
+        </div>
+        <div className="p-3 space-y-2">
+          <div className="flex items-center gap-1.5 rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+            <span className="pl-2 text-xs text-gray-400 font-mono">#</span>
+            <input
+              className="flex-1 py-1 text-xs font-mono outline-none bg-transparent"
+              value={editHex}
+              maxLength={6}
+              onChange={e => {
+                const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+                setEditHex(val);
+                if (val.length === 6) applyEditColor('#' + val);
+              }}
+            />
+            <div className="w-5 h-5 mr-1.5 rounded flex-shrink-0" style={{ background: editColor }} />
+          </div>
+          <input
+            autoFocus
+            className="w-full px-2 py-1 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-300"
+            style={{ borderColor: 'var(--border)' }}
+            value={editName}
+            onChange={e => { setEditName(e.target.value); setNameTouched(true); }}
+            onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+            placeholder="Nom de la couleur"
+          />
+          <div className="flex gap-1.5">
+            <button onClick={save} className="flex-1 py-1 rounded-lg text-white text-xs font-medium" style={{ background: editColor }}>
+              Enregistrer
+            </button>
+            <button onClick={() => setEditing(false)} className="px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-100 text-xs">
+              Annuler
+            </button>
+            <button onClick={onDelete} className="p-1 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 text-xs">
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden border bg-white" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-20" style={{ background: hex }} />
+    <div className="flex flex-col rounded-xl overflow-hidden border bg-white group/swatch" style={{ borderColor: 'var(--border)' }}>
+      <div className="h-20 relative" style={{ background: hex }}>
+        <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/swatch:opacity-100 transition-opacity">
+          <button onClick={openEdit} className="p-1 rounded-lg bg-white/80 text-gray-600 hover:text-gray-900 shadow-sm" title="Modifier">
+            <Pencil size={11} />
+          </button>
+          <button onClick={onDelete} className="p-1 rounded-lg bg-white/80 text-red-400 hover:text-red-600 shadow-sm" title="Supprimer">
+            <Trash2 size={11} />
+          </button>
+        </div>
+      </div>
       <div className="p-3 space-y-1.5">
         <p className="text-sm font-medium text-gray-800 truncate">{asset.name}</p>
         {([
@@ -79,13 +167,13 @@ function ColorSwatch({ asset }: { asset: Asset }) {
         ] as { label: string; value: string }[]).map(({ label, value }) => (
           <button
             key={label}
-            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors text-left group/row"
+            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors text-left"
             onClick={() => copy(value, label)}
             title={`Copier ${label}`}
           >
             <span className="text-[10px] font-semibold text-gray-400 w-7 flex-shrink-0">{label}</span>
             <span className="text-xs font-mono text-gray-600 truncate flex-1">
-              {copied === label ? '✓ Copié' : value}
+              {copied === label ? '✓ Copied' : value}
             </span>
           </button>
         ))}
@@ -94,22 +182,12 @@ function ColorSwatch({ asset }: { asset: Asset }) {
   );
 }
 
-function AssetCard({ asset, onDelete }: { asset: Asset; onDelete: () => void }) {
+function AssetCard({ asset, onDelete, onUpdate }: { asset: Asset; onDelete: () => void; onUpdate: (name: string, colorValue: string) => void  }) {
   const isImage = asset.type === 'image';
   const isColor = asset.type === 'color';
 
   if (isColor) {
-    return (
-      <div className="relative group">
-        <ColorSwatch asset={asset} />
-        <button
-          onClick={onDelete}
-          className="absolute top-2 right-2 p-1 rounded-lg bg-white/80 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-        >
-          <Trash2 size={13} />
-        </button>
-      </div>
-    );
+    return <ColorSwatch asset={asset} onUpdate={onUpdate} onDelete={onDelete} />;
   }
 
   return (
@@ -205,6 +283,16 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
   async function deleteAsset(id: string) {
     await fetch(`/api/assets/${id}`, { method: 'DELETE' });
     onAssetsChange(assets.filter(a => a.id !== id));
+  }
+
+  async function updateAsset(id: string, name: string, colorValue: string) {
+    const res = await fetch(`/api/assets/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, colorValue }),
+    });
+    const updated = await res.json();
+    onAssetsChange(assets.map(a => a.id === id ? updated : a));
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -309,7 +397,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}
         >
           {assets.map(asset => (
-            <AssetCard key={asset.id} asset={asset} onDelete={() => deleteAsset(asset.id)} />
+            <AssetCard key={asset.id} asset={asset} onDelete={() => deleteAsset(asset.id)} onUpdate={(name, colorValue) => updateAsset(asset.id, name, colorValue)} />
           ))}
           {sectionId && (
             <div
