@@ -153,6 +153,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
   const [showColorForm, setShowColorForm] = useState(false);
   const [colorName, setColorName] = useState('');
   const [colorValue, setColorValue] = useState('#000000');
+  const [colorHexInput, setColorHexInput] = useState('000000');
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -189,6 +190,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
     setShowColorForm(false);
     setColorName('');
     setColorValue('#000000');
+    setColorHexInput('000000');
   }
 
   async function deleteAsset(id: string) {
@@ -239,8 +241,29 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
       {/* Color form */}
       {showColorForm && (
         <div className="mb-4 p-4 rounded-xl border bg-white flex items-center gap-3" style={{ borderColor: 'var(--border)' }}>
-          <input type="color" value={colorValue} onChange={e => setColorValue(e.target.value)} className="w-10 h-10 rounded-lg cursor-pointer border-0" />
           <input
+            type="color"
+            value={colorValue}
+            onChange={e => { setColorValue(e.target.value); setColorHexInput(e.target.value.replace('#', '')); }}
+            className="w-10 h-10 rounded-lg cursor-pointer border-0 flex-shrink-0"
+          />
+          <div className="flex items-center rounded-lg border overflow-hidden flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+            <span className="px-2 text-xs text-gray-400 font-mono select-none">#</span>
+            <input
+              className="w-20 py-2 pr-2 text-sm font-mono outline-none bg-transparent"
+              value={colorHexInput}
+              maxLength={6}
+              placeholder="000000"
+              onChange={e => {
+                const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+                setColorHexInput(val);
+                if (val.length === 6) setColorValue('#' + val);
+              }}
+            />
+            <div className="w-6 h-6 mr-1.5 rounded flex-shrink-0" style={{ background: colorValue }} />
+          </div>
+          <input
+            autoFocus
             placeholder="Nom de la couleur (ex: Indigo principal)"
             className="flex-1 px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-indigo-300"
             style={{ borderColor: 'var(--border)' }}
@@ -248,9 +271,8 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
             onChange={e => setColorName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addColor(); if (e.key === 'Escape') setShowColorForm(false); }}
           />
-          <span className="text-sm font-mono text-gray-500">{colorValue}</span>
-          <button onClick={addColor} className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ background: brand.color }}>Ajouter</button>
-          <button onClick={() => setShowColorForm(false)} className="text-gray-400 hover:text-gray-600 text-sm">Annuler</button>
+          <button onClick={addColor} className="px-4 py-2 rounded-lg text-white text-sm font-medium flex-shrink-0" style={{ background: brand.color }}>Ajouter</button>
+          <button onClick={() => setShowColorForm(false)} className="text-gray-400 hover:text-gray-600 text-sm flex-shrink-0">Annuler</button>
         </div>
       )}
 
