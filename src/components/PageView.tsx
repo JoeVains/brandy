@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Module, ModuleType, Section, Brand } from '@/types';
-import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight } from 'lucide-react';
 import ColorsModule from './modules/ColorsModule';
 import TypographyModule from './modules/TypographyModule';
 import TextModule from './modules/TextModule';
@@ -13,6 +13,7 @@ import DividerModule from './modules/DividerModule';
 interface Props {
   brand: Brand;
   section: Section;
+  sections: Section[];
   onModuleDragStart?: (module: Module) => void;
   onModuleDragEnd?: () => void;
 }
@@ -26,18 +27,38 @@ const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; de
   { type: 'divider', label: 'Séparateur', icon: <Minus size={18} />, description: 'Ligne de séparation horizontale' },
 ];
 
-function ModuleCard({ module, brandColor, onUpdate, onDelete, dragHandleProps, isDragging }: {
+function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, onDelete, onDuplicate, onMoveTo, onCopyTo, dragHandleProps, isDragging }: {
   module: Module;
   brandColor: string;
+  sections: Section[];
+  currentSectionId: string;
   onUpdate: (m: Module) => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onMoveTo: (targetSectionId: string) => void;
+  onCopyTo: (targetSectionId: string) => void;
   dragHandleProps: React.HTMLAttributes<HTMLDivElement>;
   isDragging: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(module.title);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [subMenu, setSubMenu] = useState<'move' | 'copy' | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const meta = MODULE_TYPES.find(t => t.type === module.type)!;
+  const otherSections = sections.filter(s => s.id !== currentSectionId);
+
+  useEffect(() => {
+    if (!menuOpen) { setSubMenu(null); return; }
+    function handler(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   async function saveTitle() {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -49,9 +70,14 @@ function ModuleCard({ module, brandColor, onUpdate, onDelete, dragHandleProps, i
     setEditingTitle(false);
   }
 
+  function sectionLabel(id: string) {
+    const s = sections.find(x => x.id === id);
+    return s?.name ?? id;
+  }
+
   return (
-    <div className={`border rounded-2xl bg-white transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'} ${isEditing ? 'ring-2' : ''}`}
-      style={{ borderColor: 'var(--border)', ...(isEditing ? { ringColor: brandColor, outline: `2px solid ${brandColor}` } : {}) }}>
+    <div className={`border rounded-2xl bg-white transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
+      style={{ borderColor: 'var(--border)', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
       {/* Module header */}
       {module.type !== 'divider' && (
         <div className="flex items-center gap-3 px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -74,7 +100,7 @@ function ModuleCard({ module, brandColor, onUpdate, onDelete, dragHandleProps, i
                 <button onClick={() => { setEditingTitle(false); setTitleDraft(module.title); }} className="text-gray-400"><X size={13} /></button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 group/title">
+              <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-800">{module.title || meta.label}</span>
                 {isEditing && (
                   <button onClick={() => setEditingTitle(true)} className="text-gray-400 hover:text-gray-700">
@@ -84,21 +110,86 @@ function ModuleCard({ module, brandColor, onUpdate, onDelete, dragHandleProps, i
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {isEditing && (
-              <button onClick={onDelete} className="text-gray-400 hover:text-red-500 transition-colors">
+              <button onClick={onDelete} className="text-gray-400 hover:text-red-500 transition-colors p-1">
                 <Trash2 size={14} />
               </button>
             )}
             <button
               onClick={() => setIsEditing(e => !e)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
-              style={isEditing
-                ? { background: brandColor, color: 'white' }
-                : { background: 'var(--border)', color: '#6b7280' }}
+              style={isEditing ? { background: brandColor, color: 'white' } : { background: 'var(--border)', color: '#6b7280' }}
             >
               {isEditing ? <><Check size={11} /> Terminé</> : <><PenLine size={11} /> Éditer</>}
             </button>
+
+            {/* Context menu */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 py-1 min-w-[200px]" style={{ borderColor: 'var(--border)' }}>
+                  {/* Duplicate */}
+                  <button
+                    onClick={() => { onDuplicate(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Copy size={14} className="text-gray-400" /> Dupliquer le module
+                  </button>
+
+                  <div className="h-px mx-3 my-1" style={{ background: 'var(--border)' }} />
+
+                  {/* Move to */}
+                  <button
+                    onClick={() => setSubMenu(subMenu === 'move' ? null : 'move')}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <FolderSymlink size={14} className="text-gray-400" />
+                    <span className="flex-1 text-left">Déplacer vers…</span>
+                    <ArrowRight size={12} className="text-gray-400" />
+                  </button>
+                  {subMenu === 'move' && (
+                    <div className="mx-2 mb-1 bg-gray-50 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+                      {otherSections.length === 0 ? (
+                        <p className="px-3 py-2 text-xs text-gray-400 italic">Aucune autre rubrique</p>
+                      ) : otherSections.map(s => (
+                        <button key={s.id} onClick={() => { onMoveTo(s.id); setMenuOpen(false); }}
+                          className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-white transition-colors truncate">
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Copy to */}
+                  <button
+                    onClick={() => setSubMenu(subMenu === 'copy' ? null : 'copy')}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Copy size={14} className="text-gray-400" />
+                    <span className="flex-1 text-left">Copier vers…</span>
+                    <ArrowRight size={12} className="text-gray-400" />
+                  </button>
+                  {subMenu === 'copy' && (
+                    <div className="mx-2 mb-1 bg-gray-50 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+                      {otherSections.length === 0 ? (
+                        <p className="px-3 py-2 text-xs text-gray-400 italic">Aucune autre rubrique</p>
+                      ) : otherSections.map(s => (
+                        <button key={s.id} onClick={() => { onCopyTo(s.id); setMenuOpen(false); }}
+                          className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-white transition-colors truncate">
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -150,7 +241,7 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
   );
 }
 
-export default function PageView({ brand, section, onModuleDragStart, onModuleDragEnd }: Props) {
+export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
@@ -182,6 +273,58 @@ export default function PageView({ brand, section, onModuleDragStart, onModuleDr
     if (!confirm('Supprimer ce module ?')) return;
     await fetch(`/api/modules/${id}`, { method: 'DELETE' });
     setModules(prev => prev.filter(m => m.id !== id));
+  }
+
+  async function duplicateModule(module: Module) {
+    const { id, createdAt, order, ...rest } = module;
+    const res = await fetch('/api/modules', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...rest, title: rest.title ? `${rest.title} (copie)` : '' }),
+    });
+    const created = await res.json();
+    // Patch the full content fields that POST doesn't set
+    const patch = await fetch(`/api/modules/${created.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        colorItems: rest.colorItems,
+        fontItems: rest.fontItems,
+        content: rest.content,
+        attachmentItems: rest.attachmentItems,
+      }),
+    });
+    const full = await patch.json();
+    setModules(prev => [...prev, full]);
+  }
+
+  async function moveModuleTo(module: Module, targetSectionId: string) {
+    await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sectionId: targetSectionId }),
+    });
+    setModules(prev => prev.filter(m => m.id !== module.id));
+  }
+
+  async function copyModuleTo(module: Module, targetSectionId: string) {
+    const { id, createdAt, order, sectionId, ...rest } = module;
+    const res = await fetch('/api/modules', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...rest, sectionId: targetSectionId }),
+    });
+    const created = await res.json();
+    await fetch(`/api/modules/${created.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        colorItems: rest.colorItems,
+        fontItems: rest.fontItems,
+        content: rest.content,
+        attachmentItems: rest.attachmentItems,
+      }),
+    });
   }
 
   // Drag-and-drop reordering + cross-section move
@@ -251,8 +394,13 @@ export default function PageView({ brand, section, onModuleDragStart, onModuleDr
             <ModuleCard
               module={module}
               brandColor={brand.color}
+              sections={sections}
+              currentSectionId={section.id}
               onUpdate={updateModule}
               onDelete={() => deleteModule(module.id)}
+              onDuplicate={() => duplicateModule(module)}
+              onMoveTo={targetId => moveModuleTo(module, targetId)}
+              onCopyTo={targetId => copyModuleTo(module, targetId)}
               isDragging={dragId === module.id}
               dragHandleProps={{
                 onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),

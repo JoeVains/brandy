@@ -313,6 +313,7 @@ export default function BrandyApp() {
                 key={pageViewKey}
                 brand={activeBrand}
                 section={activeSection}
+                sections={brandSections}
                 onModuleDragStart={setDraggingModule}
                 onModuleDragEnd={() => setDraggingModule(null)}
               />
