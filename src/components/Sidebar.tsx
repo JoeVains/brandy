@@ -19,10 +19,11 @@ interface SectionNodeProps {
   onSelect: (id: string | null) => void;
   onSectionsChange: (sections: Section[]) => void;
   brandId: string;
+  brandColor: string;
   depth: number;
 }
 
-function SectionNode({ section, allSections, activeSectionId, onSelect, onSectionsChange, brandId, depth }: SectionNodeProps) {
+function SectionNode({ section, allSections, activeSectionId, onSelect, onSectionsChange, brandId, brandColor, depth }: SectionNodeProps) {
   const children = allSections.filter(s => s.parentId === section.id).sort((a, b) => a.order - b.order);
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -75,7 +76,7 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
         className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
         style={{
           paddingLeft: `${8 + depth * 14}px`,
-          ...(isActive ? { background: brand_color_placeholder } : {}),
+          ...(isActive ? { background: brandColor } : {}),
         }}
         onClick={() => onSelect(section.id)}
       >
@@ -138,6 +139,7 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
           onSelect={onSelect}
           onSectionsChange={onSectionsChange}
           brandId={brandId}
+          brandColor={brandColor}
           depth={depth + 1}
         />
       ))}
@@ -145,8 +147,6 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
   );
 }
 
-// hack to pass brand color into node — replaced dynamically
-const brand_color_placeholder = 'var(--accent)';
 
 export default function Sidebar({ brand, sections, activeSectionId, onSelectSection, onSectionsChange }: Props) {
   const [showAdd, setShowAdd] = useState(false);
@@ -192,6 +192,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
               onSelect={onSelectSection}
               onSectionsChange={onSectionsChange}
               brandId={brand.id}
+              brandColor={brand.color}
               depth={0}
             />
           ))}
