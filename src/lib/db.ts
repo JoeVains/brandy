@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Brand, Section, Asset } from '@/types';
+import { Brand, Section, Asset, Module } from '@/types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
@@ -34,5 +34,9 @@ export const db = {
   assets: {
     all: () => readJson<Asset[]>('assets.json', []),
     save: (assets: Asset[]) => writeJson('assets.json', assets),
+  },
+  modules: {
+    all: () => readJson<Module[]>('modules.json', []),
+    save: (modules: Module[]) => writeJson('modules.json', modules),
   },
 };

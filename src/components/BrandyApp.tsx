@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Brand, Section, Asset } from '@/types';
+import { Brand, Section } from '@/types';
 import Sidebar from './Sidebar';
-import AssetGrid from './AssetGrid';
+import PageView from './PageView';
 import { Plus, Trash2, Check, X, Pencil } from 'lucide-react';
 
 const BRAND_COLORS = [
@@ -120,7 +120,6 @@ export default function BrandyApp() {
   const [sections, setSections] = useState<Section[]>([]);
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [assets, setAssets] = useState<Asset[]>([]);
   const [showNewBrand, setShowNewBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState('');
   const [newBrandColor, setNewBrandColor] = useState(BRAND_COLORS[0]);
@@ -130,14 +129,12 @@ export default function BrandyApp() {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
-    const [b, s, a] = await Promise.all([
+    const [b, s] = await Promise.all([
       fetch('/api/brands').then(r => r.json()),
       fetch('/api/sections').then(r => r.json()),
-      fetch('/api/assets').then(r => r.json()),
     ]);
     setBrands(b);
     setSections(s);
-    setAssets(a);
     if (!activeBrandId && b.length > 0) setActiveBrandId(b[0].id);
   }, [activeBrandId]);
 
@@ -159,11 +156,10 @@ export default function BrandyApp() {
   }
 
   async function deleteBrand(id: string) {
-    if (!confirm('Supprimer cette marque et tous ses assets ?')) return;
+    if (!confirm('Supprimer cette marque et tout son contenu ?')) return;
     await fetch(`/api/brands/${id}`, { method: 'DELETE' });
     setBrands(prev => prev.filter(b => b.id !== id));
     setSections(prev => prev.filter(s => s.brandId !== id));
-    setAssets(prev => prev.filter(a => a.brandId !== id));
     setEditingBrandId(null);
     setEditingAnchorRect(null);
     if (activeBrandId === id) setActiveBrandId(brands.find(b => b.id !== id)?.id ?? null);
@@ -196,9 +192,7 @@ export default function BrandyApp() {
 
   const activeBrand = brands.find(b => b.id === activeBrandId) ?? null;
   const brandSections = sections.filter(s => s.brandId === activeBrandId);
-  const displayedAssets = activeSectionId
-    ? assets.filter(a => a.sectionId === activeSectionId)
-    : assets.filter(a => a.brandId === activeBrandId);
+  const activeSection = brandSections.find(s => s.id === activeSectionId) ?? null;
 
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
@@ -299,13 +293,17 @@ export default function BrandyApp() {
               onSelectSection={setActiveSectionId}
               onSectionsChange={updated => setSections(prev => [...prev.filter(s => s.brandId !== activeBrand.id), ...updated])}
             />
-            <AssetGrid
-              brand={activeBrand}
-              sectionId={activeSectionId}
-              assets={displayedAssets}
-              sections={brandSections}
-              onAssetsChange={updated => setAssets(prev => [...prev.filter(a => a.brandId !== activeBrand.id), ...updated])}
-            />
+            {activeSection ? (
+              <PageView brand={activeBrand} section={activeSection} />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-400">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-bold text-white" style={{ background: activeBrand.color }}>
+                  {activeBrand.name.charAt(0).toUpperCase()}
+                </div>
+                <p className="text-sm font-medium text-gray-600">{activeBrand.name}</p>
+                <p className="text-xs text-gray-400">Sélectionnez une rubrique dans la sidebar</p>
+              </div>
+            )}
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">

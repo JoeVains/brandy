@@ -13,6 +13,57 @@ export interface Section {
   order: number;
 }
 
+// Module item sub-types
+export interface ColorItem {
+  id: string;
+  name: string;
+  value: string;
+}
+
+export interface FontItem {
+  id: string;
+  name: string;
+  source: 'google' | 'upload';
+  family?: string;
+  weights?: number[];
+  filename?: string;
+  mimeType?: string;
+  size?: number;
+}
+
+export interface AttachmentItem {
+  id: string;
+  name: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
+export type ModuleType = 'colors' | 'typography' | 'text' | 'image' | 'attachments' | 'divider';
+
+export interface Module {
+  id: string;
+  sectionId: string;
+  brandId: string;
+  type: ModuleType;
+  title: string;
+  order: number;
+  // colors
+  colorItems?: ColorItem[];
+  // typography
+  fontItems?: FontItem[];
+  // text
+  content?: string;
+  // image
+  imageFilename?: string;
+  imageMimeType?: string;
+  imageSize?: number;
+  // attachments
+  attachmentItems?: AttachmentItem[];
+  createdAt: string;
+}
+
+// Legacy — kept for DB compat
 export interface Asset {
   id: string;
   brandId: string;
