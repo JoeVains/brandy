@@ -20,12 +20,17 @@ export interface ColorItem {
   value: string;
 }
 
+export interface FontVariant {
+  weight: number;
+  style: 'normal' | 'italic';
+}
+
 export interface FontItem {
   id: string;
   name: string;
   source: 'google' | 'upload';
   family?: string;
-  weights?: number[];
+  variants?: FontVariant[];
   filename?: string;
   mimeType?: string;
   size?: number;

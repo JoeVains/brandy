@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Module, FontItem } from '@/types';
-import { Plus, Trash2, Upload, Type } from 'lucide-react';
+import { Module, FontItem, FontVariant } from '@/types';
+import { Plus, Trash2, Upload, Type, ChevronDown } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -12,36 +12,102 @@ interface Props {
   isEditing?: boolean;
 }
 
-const SAMPLE_TEXT = 'The quick brown fox jumps over the lazy dog';
-const GOOGLE_FONT_SIZES = [12, 16, 24, 36, 48];
+const SAMPLE_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const SAMPLE_LOWER = 'abcdefghijklmnopqrstuvwxyz';
+const SAMPLE_NUMS  = '1234567890(..::?!$&*)';
 
-function GoogleFontPreview({ family }: { family: string }) {
+const WEIGHT_NAMES: Record<number, string> = {
+  100: 'Thin', 200: 'ExtraLight', 300: 'Light', 400: 'Regular',
+  500: 'Medium', 600: 'SemiBold', 700: 'Bold', 800: 'ExtraBold', 900: 'Black',
+};
+
+const ALL_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+
+function buildGoogleUrl(family: string, variants: FontVariant[]) {
+  if (!variants.length) return null;
+  const normals = variants.filter(v => v.style === 'normal').map(v => v.weight).sort((a, b) => a - b);
+  const italics = variants.filter(v => v.style === 'italic').map(v => v.weight).sort((a, b) => a - b);
+  const parts: string[] = [];
+  normals.forEach(w => parts.push(`0,${w}`));
+  italics.forEach(w => parts.push(`1,${w}`));
+  return `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:ital,wght@${parts.join(';')}&display=swap`;
+}
+
+function FontVariantRow({ family, variant, fontFace, onDelete, isEditing }: {
+  family: string;
+  variant: FontVariant;
+  fontFace?: string;
+  onDelete: () => void;
+  isEditing?: boolean;
+}) {
+  const style: React.CSSProperties = {
+    fontFamily: `'${family}', sans-serif`,
+    fontWeight: variant.weight,
+    fontStyle: variant.style,
+  };
+  const weightLabel = WEIGHT_NAMES[variant.weight] ?? String(variant.weight);
+  const styleLabel = variant.style === 'italic' ? 'Italic' : '';
+  const label = [weightLabel, styleLabel].filter(Boolean).join(' ');
+
   return (
-    <div>
-      <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400;700&display=swap`} />
-      <div style={{ fontFamily: `'${family}', sans-serif` }} className="space-y-1">
-        {GOOGLE_FONT_SIZES.map(size => (
-          <p key={size} style={{ fontSize: size }} className="text-gray-800 leading-tight truncate">
-            {SAMPLE_TEXT}
-          </p>
-        ))}
+    <div className="flex items-start gap-6 py-5 border-b last:border-b-0" style={{ borderColor: 'var(--border)' }}>
+      {/* Big Aa */}
+      <div className="flex-shrink-0 w-20 text-5xl leading-none text-gray-900" style={style}>Aa</div>
+
+      {/* Alphabet preview */}
+      <div className="flex-1 min-w-0 space-y-0.5 border-l pl-6" style={{ borderColor: 'var(--border)' }}>
+        {fontFace && <style>{fontFace}</style>}
+        <p className="text-sm text-gray-700 truncate" style={style}>{SAMPLE_UPPER}</p>
+        <p className="text-sm text-gray-700 truncate" style={style}>{SAMPLE_LOWER}</p>
+        <p className="text-sm text-gray-700 truncate" style={style}>{SAMPLE_NUMS}</p>
+      </div>
+
+      {/* Info + delete */}
+      <div className="flex-shrink-0 w-32 text-right">
+        <p className="text-sm font-medium text-gray-800">{family}</p>
+        <p className="text-xs text-gray-400 mt-0.5">Weight: {variant.weight}</p>
+        <p className="text-xs text-gray-400">Style: {variant.style}</p>
+        {isEditing && (
+          <button onClick={onDelete} className="text-xs text-red-500 hover:text-red-700 mt-1 transition-colors">
+            Supprimer
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function UploadFontPreview({ filename, name }: { filename: string; name: string }) {
-  const fontFace = `@font-face { font-family: '${name}'; src: url('/uploads/${filename}'); }`;
+function AddVariantPicker({ existing, onAdd, onClose }: {
+  existing: FontVariant[];
+  onAdd: (v: FontVariant) => void;
+  onClose: () => void;
+}) {
+  const [weight, setWeight] = useState(400);
+  const [style, setStyle] = useState<'normal' | 'italic'>('normal');
+
+  const alreadyExists = existing.some(v => v.weight === weight && v.style === style);
+
   return (
-    <div>
-      <style>{fontFace}</style>
-      <div style={{ fontFamily: `'${name}', sans-serif` }} className="space-y-1">
-        {GOOGLE_FONT_SIZES.map(size => (
-          <p key={size} style={{ fontSize: size }} className="text-gray-800 leading-tight truncate">
-            {SAMPLE_TEXT}
-          </p>
-        ))}
-      </div>
+    <div className="flex items-center gap-2 mt-3 p-3 border rounded-xl bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+      <select value={weight} onChange={e => setWeight(Number(e.target.value))}
+        className="text-sm border rounded-lg px-2 py-1.5 bg-white outline-none" style={{ borderColor: 'var(--border)' }}>
+        {ALL_WEIGHTS.map(w => <option key={w} value={w}>{w} – {WEIGHT_NAMES[w]}</option>)}
+      </select>
+      <select value={style} onChange={e => setStyle(e.target.value as 'normal' | 'italic')}
+        className="text-sm border rounded-lg px-2 py-1.5 bg-white outline-none" style={{ borderColor: 'var(--border)' }}>
+        <option value="normal">Normal</option>
+        <option value="italic">Italic</option>
+      </select>
+      <button
+        disabled={alreadyExists}
+        onClick={() => { onAdd({ weight, style }); onClose(); }}
+        className="text-xs px-3 py-1.5 rounded-lg text-white disabled:opacity-40 transition-opacity"
+        style={{ background: alreadyExists ? '#9ca3af' : '#111' }}>
+        Ajouter
+      </button>
+      <button onClick={onClose} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
+        Annuler
+      </button>
     </div>
   );
 }
@@ -49,8 +115,18 @@ function UploadFontPreview({ filename, name }: { filename: string; name: string 
 export default function TypographyModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const [showAddGoogle, setShowAddGoogle] = useState(false);
   const [googleFamily, setGoogleFamily] = useState('');
+  const [addingVariantFor, setAddingVariantFor] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const items = module.fontItems ?? [];
+
+  async function patch(fontItems: FontItem[]) {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fontItems }),
+    });
+    onUpdate(await res.json());
+  }
 
   async function addGoogleFont() {
     if (!googleFamily.trim()) return;
@@ -59,14 +135,9 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
       name: googleFamily.trim(),
       source: 'google',
       family: googleFamily.trim(),
+      variants: [{ weight: 400, style: 'normal' }],
     };
-    const newItems = [...items, item];
-    const res = await fetch(`/api/modules/${module.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ fontItems: newItems }),
-    });
-    onUpdate(await res.json());
+    await patch([...items, item]);
     setGoogleFamily('');
     setShowAddGoogle(false);
   }
@@ -80,14 +151,24 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
     onUpdate(await res.json());
   }
 
-  async function deleteItem(id: string) {
-    const newItems = items.filter(i => i.id !== id);
-    const res = await fetch(`/api/modules/${module.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ fontItems: newItems }),
+  async function deleteFontItem(id: string) {
+    await patch(items.filter(i => i.id !== id));
+  }
+
+  async function addVariant(itemId: string, variant: FontVariant) {
+    const newItems = items.map(i => i.id !== itemId ? i : {
+      ...i, variants: [...(i.variants ?? []), variant],
     });
-    onUpdate(await res.json());
+    await patch(newItems);
+  }
+
+  async function deleteVariant(itemId: string, variant: FontVariant) {
+    const newItems = items.map(i => {
+      if (i.id !== itemId) return i;
+      const remaining = (i.variants ?? []).filter(v => !(v.weight === variant.weight && v.style === variant.style));
+      return { ...i, variants: remaining };
+    });
+    await patch(newItems);
   }
 
   return (
@@ -98,69 +179,123 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
         isEditing={isEditing}
         onUpdate={desc => onUpdate({ ...module, description: desc })}
       />
-    <div className="space-y-6">
-      {items.map(item => (
-        <div key={item.id} className="border rounded-xl p-5 group relative" style={{ borderColor: 'var(--border)' }}>
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="font-semibold text-gray-800">{item.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{item.source === 'google' ? 'Google Fonts' : 'Police uploadée'}</p>
+      <div className="space-y-8">
+        {items.map(item => {
+          const variants = item.variants ?? (item.source === 'google' ? [{ weight: 400, style: 'normal' as const }] : []);
+          const googleUrl = item.source === 'google' && item.family ? buildGoogleUrl(item.family, variants) : null;
+          const fontFaceUpload = item.source === 'upload' && item.filename
+            ? `@font-face { font-family: '${item.name}'; src: url('/uploads/${item.filename}'); }`
+            : undefined;
+
+          return (
+            <div key={item.id} className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+              {/* Font header */}
+              <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b" style={{ borderColor: 'var(--border)' }}>
+                <div>
+                  <p className="font-semibold text-gray-800">{item.name}</p>
+                  <p className="text-xs text-gray-400">{item.source === 'google' ? 'Google Fonts' : 'Police uploadée'}</p>
+                </div>
+                {isEditing && (
+                  <button onClick={() => deleteFontItem(item.id)}
+                    className="p-1.5 rounded-lg border hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Load Google font for all variants */}
+              {googleUrl && <link rel="stylesheet" href={googleUrl} />}
+              {fontFaceUpload && <style>{fontFaceUpload}</style>}
+
+              {/* Size preview */}
+              <div className="px-5 py-4 border-b space-y-1" style={{ borderColor: 'var(--border)', fontFamily: `'${item.family ?? item.name}', sans-serif` }}>
+                {[12, 16, 24, 36, 48].map(size => (
+                  <p key={size} style={{ fontSize: size }} className="text-gray-800 leading-tight truncate">
+                    The quick brown fox jumps over the lazy dog
+                  </p>
+                ))}
+              </div>
+
+              {/* Variant rows */}
+              <div className="px-5">
+                {variants
+                  .slice()
+                  .sort((a, b) => a.weight - b.weight || (a.style === 'italic' ? 1 : -1))
+                  .map(v => (
+                    <FontVariantRow
+                      key={`${v.weight}-${v.style}`}
+                      family={item.family ?? item.name}
+                      variant={v}
+                      fontFace={fontFaceUpload}
+                      isEditing={isEditing}
+                      onDelete={() => deleteVariant(item.id, v)}
+                    />
+                  ))}
+              </div>
+
+              {/* Add variant */}
+              {isEditing && item.source === 'google' && (
+                <div className="px-5 pb-4">
+                  {addingVariantFor === item.id ? (
+                    <AddVariantPicker
+                      existing={variants}
+                      onAdd={v => addVariant(item.id, v)}
+                      onClose={() => setAddingVariantFor(null)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setAddingVariantFor(item.id)}
+                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors mt-2">
+                      <Plus size={12} /> Ajouter une variante
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            {isEditing && (
-              <button onClick={() => deleteItem(item.id)}
-                className="p-1.5 rounded-lg border opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500 text-gray-400" style={{ borderColor: 'var(--border)' }}>
-                <Trash2 size={13} />
-              </button>
+          );
+        })}
+
+        {/* Add font buttons */}
+        {isEditing && (
+          <div className="flex gap-3">
+            {showAddGoogle ? (
+              <div className="flex-1 flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
+                <Type size={16} className="text-gray-400 flex-shrink-0" />
+                <input
+                  autoFocus
+                  className="flex-1 outline-none text-sm"
+                  placeholder="Nom de la police (ex: Rubik, Playfair Display)"
+                  value={googleFamily}
+                  onChange={e => setGoogleFamily(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addGoogleFont(); if (e.key === 'Escape') setShowAddGoogle(false); }}
+                />
+                <button onClick={addGoogleFont} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: brandColor }}>
+                  Ajouter
+                </button>
+                <button onClick={() => setShowAddGoogle(false)} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <>
+                <button onClick={() => setShowAddGoogle(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                  style={{ borderColor: 'var(--border)' }}>
+                  <Plus size={14} /> Google Fonts
+                </button>
+                <button onClick={() => inputRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                  style={{ borderColor: 'var(--border)' }}>
+                  <Upload size={14} /> Uploader une police
+                </button>
+              </>
             )}
           </div>
-          {item.source === 'google' && item.family ? (
-            <GoogleFontPreview family={item.family} />
-          ) : item.filename ? (
-            <UploadFontPreview filename={item.filename} name={item.name} />
-          ) : null}
-        </div>
-      ))}
-
-      {isEditing && (
-        <div className="flex gap-3">
-          {showAddGoogle ? (
-            <div className="flex-1 flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
-              <Type size={16} className="text-gray-400 flex-shrink-0" />
-              <input
-                autoFocus
-                className="flex-1 outline-none text-sm"
-                placeholder="Nom de la police (ex: Roboto, Playfair Display)"
-                value={googleFamily}
-                onChange={e => setGoogleFamily(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addGoogleFont(); if (e.key === 'Escape') setShowAddGoogle(false); }}
-              />
-              <button onClick={addGoogleFont} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: brandColor }}>
-                Ajouter
-              </button>
-              <button onClick={() => setShowAddGoogle(false)} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
-                Annuler
-              </button>
-            </div>
-          ) : (
-            <>
-              <button onClick={() => setShowAddGoogle(true)}
-                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-                style={{ borderColor: 'var(--border)' }}>
-                <Plus size={14} /> Google Fonts
-              </button>
-              <button onClick={() => inputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-                style={{ borderColor: 'var(--border)' }}>
-                <Upload size={14} /> Uploader une police
-              </button>
-            </>
-          )}
-        </div>
-      )}
-      {isEditing && (
-        <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />
-      )}
-    </div>
+        )}
+        {isEditing && (
+          <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />
+        )}
+      </div>
     </div>
   );
 }
