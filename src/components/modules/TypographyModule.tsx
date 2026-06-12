@@ -113,41 +113,45 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
         </div>
       ))}
 
-      {isEditing && <div className="flex gap-3">
-        {showAddGoogle ? (
-          <div className="flex-1 flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
-            <Type size={16} className="text-gray-400 flex-shrink-0" />
-            <input
-              autoFocus
-              className="flex-1 outline-none text-sm"
-              placeholder="Nom de la police (ex: Roboto, Playfair Display)"
-              value={googleFamily}
-              onChange={e => setGoogleFamily(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') addGoogleFont(); if (e.key === 'Escape') setShowAddGoogle(false); }}
-            />
-            <button onClick={addGoogleFont} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: brandColor }}>
-              Ajouter
-            </button>
-            <button onClick={() => setShowAddGoogle(false)} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
-              Annuler
-            </button>
-          </div>
-        ) : (
-          <>
-            <button onClick={() => setShowAddGoogle(true)}
-              className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-              style={{ borderColor: 'var(--border)' }}>
-              <Plus size={14} /> Google Fonts
-            </button>
-            <button onClick={() => inputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-              style={{ borderColor: 'var(--border)' }}>
-              <Upload size={14} /> Uploader une police
-            </button>
-          </>
-        )}
-      </div>}
-      {isEditing && <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />}
+      {isEditing && (
+        <div className="flex gap-3">
+          {showAddGoogle ? (
+            <div className="flex-1 flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
+              <Type size={16} className="text-gray-400 flex-shrink-0" />
+              <input
+                autoFocus
+                className="flex-1 outline-none text-sm"
+                placeholder="Nom de la police (ex: Roboto, Playfair Display)"
+                value={googleFamily}
+                onChange={e => setGoogleFamily(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') addGoogleFont(); if (e.key === 'Escape') setShowAddGoogle(false); }}
+              />
+              <button onClick={addGoogleFont} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: brandColor }}>
+                Ajouter
+              </button>
+              <button onClick={() => setShowAddGoogle(false)} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
+                Annuler
+              </button>
+            </div>
+          ) : (
+            <>
+              <button onClick={() => setShowAddGoogle(true)}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                style={{ borderColor: 'var(--border)' }}>
+                <Plus size={14} /> Google Fonts
+              </button>
+              <button onClick={() => inputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                style={{ borderColor: 'var(--border)' }}>
+                <Upload size={14} /> Uploader une police
+              </button>
+            </>
+          )}
+        </div>
+      )}
+      {isEditing && (
+        <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />
+      )}
     </div>
   );
 }

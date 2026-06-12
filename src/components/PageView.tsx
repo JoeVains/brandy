@@ -47,7 +47,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
   const [subMenu, setSubMenu] = useState<'move' | 'copy' | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const meta = MODULE_TYPES.find(t => t.type === module.type)!;
-  const otherSections = sections.filter(s => s.id !== currentSectionId);
+  const otherSections = (sections ?? []).filter(s => s.id !== currentSectionId);
 
   useEffect(() => {
     if (!menuOpen) { setSubMenu(null); return; }
@@ -95,6 +95,8 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                   value={titleDraft}
                   onChange={e => setTitleDraft(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') { setEditingTitle(false); setTitleDraft(module.title); } }}
+                  onDragStart={e => e.stopPropagation()}
+                  onMouseDown={e => e.stopPropagation()}
                 />
                 <button onClick={saveTitle} className="text-green-600"><Check size={13} /></button>
                 <button onClick={() => { setEditingTitle(false); setTitleDraft(module.title); }} className="text-gray-400"><X size={13} /></button>
@@ -111,17 +113,13 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             )}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {isEditing && (
-              <button onClick={onDelete} className="text-gray-400 hover:text-red-500 transition-colors p-1">
-                <Trash2 size={14} />
-              </button>
-            )}
             <button
               onClick={() => setIsEditing(e => !e)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
-              style={isEditing ? { background: brandColor, color: 'white' } : { background: 'var(--border)', color: '#6b7280' }}
+              className="p-1.5 rounded-lg transition-colors"
+              title={isEditing ? 'Terminé' : 'Éditer'}
+              style={isEditing ? { background: brandColor, color: 'white' } : { color: '#9ca3af' }}
             >
-              {isEditing ? <><Check size={11} /> Terminé</> : <><PenLine size={11} /> Éditer</>}
+              {isEditing ? <Check size={14} /> : <PenLine size={14} />}
             </button>
 
             {/* Context menu */}
@@ -141,8 +139,6 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                   >
                     <Copy size={14} className="text-gray-400" /> Dupliquer le module
                   </button>
-
-                  <div className="h-px mx-3 my-1" style={{ background: 'var(--border)' }} />
 
                   {/* Move to */}
                   <button
@@ -187,6 +183,15 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                       ))}
                     </div>
                   )}
+
+                  <div className="h-px mx-3 my-1" style={{ background: 'var(--border)' }} />
+
+                  <button
+                    onClick={() => { onDelete(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 size={14} /> Supprimer le module
+                  </button>
                 </div>
               )}
             </div>
@@ -382,8 +387,6 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
         {modules.map(module => (
           <div
             key={module.id}
-            draggable
-            onDragStart={e => onDragStart(e, module)}
             onDragOver={e => onDragOver(e, module.id)}
             onDragLeave={onDragLeave}
             onDrop={() => onDrop(module.id)}
@@ -403,7 +406,8 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
               onCopyTo={targetId => copyModuleTo(module, targetId)}
               isDragging={dragId === module.id}
               dragHandleProps={{
-                onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
+                draggable: true,
+                onDragStart: (e: React.DragEvent) => onDragStart(e, module),
               }}
             />
           </div>

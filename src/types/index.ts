@@ -31,6 +31,13 @@ export interface FontItem {
   size?: number;
 }
 
+export interface ImageItem {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
 export interface AttachmentItem {
   id: string;
   name: string;
@@ -49,15 +56,19 @@ export interface Module {
   title: string;
   order: number;
   // colors
+  colorMode?: 'cards' | 'drops';
+  colorDescription?: string;
   colorItems?: ColorItem[];
   // typography
   fontItems?: FontItem[];
   // text
   content?: string;
   // image
+  imageMode?: 'single' | 'gallery';
   imageFilename?: string;
   imageMimeType?: string;
   imageSize?: number;
+  imageItems?: ImageItem[];
   // attachments
   attachmentItems?: AttachmentItem[];
   createdAt: string;

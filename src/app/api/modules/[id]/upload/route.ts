@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { AttachmentItem, FontItem } from '@/types';
+import { AttachmentItem, FontItem, ImageItem } from '@/types';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -36,6 +36,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     module.imageFilename = filename;
     module.imageMimeType = file.type;
     module.imageSize = file.size;
+  } else if (slot === 'image-item') {
+    const item: ImageItem = {
+      id: randomUUID(),
+      filename,
+      mimeType: file.type,
+      size: file.size,
+    };
+    module.imageItems = [...(module.imageItems ?? []), item];
   } else if (slot === 'font') {
     const item: FontItem = {
       id: randomUUID(),
