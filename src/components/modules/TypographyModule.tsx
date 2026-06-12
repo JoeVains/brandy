@@ -16,6 +16,26 @@ const SAMPLE_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const SAMPLE_LOWER = 'abcdefghijklmnopqrstuvwxyz';
 const SAMPLE_NUMS  = '1234567890(..::?!$&*)';
 
+function CodeBlock({ lang, code }: { lang: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  }
+  return (
+    <div className="rounded-lg overflow-hidden border text-xs" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 border-b" style={{ borderColor: 'var(--border)' }}>
+        <span className="text-gray-400 font-medium">{lang}</span>
+        <button onClick={copy} className="text-gray-400 hover:text-gray-700 transition-colors">
+          {copied ? 'Copié !' : 'Copier'}
+        </button>
+      </div>
+      <pre className="px-3 py-2.5 bg-white text-gray-700 overflow-x-auto leading-relaxed font-mono">{code}</pre>
+    </div>
+  );
+}
+
 const WEIGHT_NAMES: Record<number, string> = {
   100: 'Thin', 200: 'ExtraLight', 300: 'Light', 400: 'Regular',
   500: 'Medium', 600: 'SemiBold', 700: 'Bold', 800: 'ExtraBold', 900: 'Black',
@@ -195,12 +215,29 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                   <p className="font-semibold text-gray-800">{item.name}</p>
                   <p className="text-xs text-gray-400">{item.source === 'google' ? 'Google Fonts' : 'Police uploadée'}</p>
                 </div>
-                {isEditing && (
-                  <button onClick={() => deleteFontItem(item.id)}
-                    className="p-1.5 rounded-lg border hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors" style={{ borderColor: 'var(--border)' }}>
-                    <Trash2 size={13} />
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {item.source === 'google' && item.family && (
+                    <a href={`https://fonts.google.com/specimen/${encodeURIComponent(item.family.replace(/ /g, '+'))}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-gray-500 hover:text-gray-800 transition-colors border rounded-lg px-3 py-1.5"
+                      style={{ borderColor: 'var(--border)' }}>
+                      Voir sur Google Fonts ↗
+                    </a>
+                  )}
+                  {item.source === 'upload' && item.filename && (
+                    <a href={`/uploads/${item.filename}`} download={item.filename}
+                      className="text-xs text-gray-500 hover:text-gray-800 transition-colors border rounded-lg px-3 py-1.5"
+                      style={{ borderColor: 'var(--border)' }}>
+                      Télécharger ↓
+                    </a>
+                  )}
+                  {isEditing && (
+                    <button onClick={() => deleteFontItem(item.id)}
+                      className="p-1.5 rounded-lg border hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Load Google font for all variants */}
@@ -231,6 +268,39 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                       onDelete={() => deleteVariant(item.id, v)}
                     />
                   ))}
+              </div>
+
+              {/* Usage */}
+              <div className="border-t" style={{ borderColor: 'var(--border)' }}>
+                <div className="px-5 py-4 space-y-3">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Usage</p>
+
+                  {item.source === 'google' && item.family ? (
+                    <>
+                      <CodeBlock lang="HTML" code={`<link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(item.family)}" rel="stylesheet" type="text/css">`} />
+                      <CodeBlock lang="CSS" code={`font-family: "${item.family}", sans-serif;`} />
+                      <a
+                        href={`https://fonts.google.com/specimen/${encodeURIComponent(item.family.replace(/ /g, '+'))}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors border rounded-lg px-3 py-1.5"
+                        style={{ borderColor: 'var(--border)' }}>
+                        Voir sur Google Fonts ↗
+                      </a>
+                    </>
+                  ) : item.filename ? (
+                    <>
+                      <CodeBlock lang="CSS" code={`@font-face {\n  font-family: "${item.name}";\n  src: url("${item.filename}");\n}`} />
+                      <CodeBlock lang="CSS" code={`font-family: "${item.name}", sans-serif;`} />
+                      <a
+                        href={`/uploads/${item.filename}`}
+                        download={item.filename}
+                        className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors border rounded-lg px-3 py-1.5"
+                        style={{ borderColor: 'var(--border)' }}>
+                        Télécharger la police ↓
+                      </a>
+                    </>
+                  ) : null}
+                </div>
               </div>
 
               {/* Add variant */}
