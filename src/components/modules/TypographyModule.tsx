@@ -298,25 +298,11 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                     <>
                       <CodeBlock lang="HTML" code={`<link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(item.family)}" rel="stylesheet" type="text/css">`} />
                       <CodeBlock lang="CSS" code={`font-family: "${item.family}", sans-serif;`} />
-                      <a
-                        href={`https://fonts.google.com/specimen/${encodeURIComponent(item.family.replace(/ /g, '+'))}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors border rounded-lg px-3 py-1.5"
-                        style={{ borderColor: 'var(--border)' }}>
-                        Voir sur Google Fonts ↗
-                      </a>
                     </>
                   ) : item.filename ? (
                     <>
                       <CodeBlock lang="CSS" code={`@font-face {\n  font-family: "${item.name}";\n  src: url("${item.filename}");\n}`} />
                       <CodeBlock lang="CSS" code={`font-family: "${item.name}", sans-serif;`} />
-                      <a
-                        href={`/uploads/${item.filename}`}
-                        download={item.filename}
-                        className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors border rounded-lg px-3 py-1.5"
-                        style={{ borderColor: 'var(--border)' }}>
-                        Télécharger la police ↓
-                      </a>
                     </>
                   ) : null}
                 </div>
