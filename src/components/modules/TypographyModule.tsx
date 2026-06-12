@@ -270,6 +270,25 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                   ))}
               </div>
 
+              {/* Add variant */}
+              {isEditing && item.source === 'google' && (
+                <div className="px-5 pb-4">
+                  {addingVariantFor === item.id ? (
+                    <AddVariantPicker
+                      existing={variants}
+                      onAdd={v => addVariant(item.id, v)}
+                      onClose={() => setAddingVariantFor(null)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setAddingVariantFor(item.id)}
+                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors mt-2">
+                      <Plus size={12} /> Ajouter une variante
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Usage */}
               <div className="border-t" style={{ borderColor: 'var(--border)' }}>
                 <div className="px-5 py-4 space-y-3">
@@ -303,24 +322,6 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                 </div>
               </div>
 
-              {/* Add variant */}
-              {isEditing && item.source === 'google' && (
-                <div className="px-5 pb-4">
-                  {addingVariantFor === item.id ? (
-                    <AddVariantPicker
-                      existing={variants}
-                      onAdd={v => addVariant(item.id, v)}
-                      onClose={() => setAddingVariantFor(null)}
-                    />
-                  ) : (
-                    <button
-                      onClick={() => setAddingVariantFor(item.id)}
-                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors mt-2">
-                      <Plus size={12} /> Ajouter une variante
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           );
         })}
