@@ -11,13 +11,15 @@ interface Props {
   module: Module;
   brandColor: string;
   onUpdate: (updated: Module) => void;
+  isEditing?: boolean;
 }
 
-function ColorSwatch({ item, brandColor, onSave, onDelete }: {
+function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
   item: ColorItem;
   brandColor: string;
   onSave: (updated: ColorItem) => void;
   onDelete: () => void;
+  isEditing?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -92,15 +94,17 @@ function ColorSwatch({ item, brandColor, onSave, onDelete }: {
   return (
     <div className="border rounded-xl overflow-hidden group" style={{ borderColor: 'var(--border)' }}>
       <div className="h-24 relative" style={{ background: item.value }}>
-        <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-          <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
-            className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
-            <Pencil size={12} />
-          </button>
-          <button onClick={onDelete} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-red-500">
-            <Trash2 size={12} />
-          </button>
-        </div>
+        {isEditing && (
+          <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+            <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
+              className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
+              <Pencil size={12} />
+            </button>
+            <button onClick={onDelete} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-red-500">
+              <Trash2 size={12} />
+            </button>
+          </div>
+        )}
       </div>
       <div className="p-3 bg-white space-y-1">
         <p className="text-xs font-medium text-gray-800 truncate">{item.name}</p>
@@ -121,7 +125,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete }: {
   );
 }
 
-export default function ColorsModule({ module, brandColor, onUpdate }: Props) {
+export default function ColorsModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [newHex, setNewHex] = useState('#000000');
   const [newHexInput, setNewHexInput] = useState('#000000');
@@ -173,10 +177,10 @@ export default function ColorsModule({ module, brandColor, onUpdate }: Props) {
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
         {items.map(item => (
           <ColorSwatch key={item.id} item={item} brandColor={brandColor}
-            onSave={updateItem} onDelete={() => deleteItem(item.id)} />
+            onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing} />
         ))}
 
-        {showAdd ? (
+        {isEditing && showAdd ? (
           <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
             <div className="h-24 relative" style={{ background: newHex }}>
               <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -197,14 +201,14 @@ export default function ColorsModule({ module, brandColor, onUpdate }: Props) {
               </div>
             </div>
           </div>
-        ) : (
+        ) : isEditing ? (
           <button onClick={() => setShowAdd(true)}
             className="h-full min-h-[160px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <Plus size={20} />
             <span className="text-xs">Ajouter une couleur</span>
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -8,10 +8,11 @@ interface Props {
   module: Module;
   brandColor: string;
   onUpdate: (updated: Module) => void;
+  isEditing?: boolean;
 }
 
-export default function TextModule({ module, brandColor, onUpdate }: Props) {
-  const [editing, setEditing] = useState(!module.content);
+export default function TextModule({ module, brandColor, onUpdate, isEditing: isEditMode }: Props) {
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(module.content ?? '');
 
   async function save() {
@@ -48,13 +49,16 @@ export default function TextModule({ module, brandColor, onUpdate }: Props) {
   }
 
   return (
-    <div className="group relative">
-      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{module.content || <span className="text-gray-400 italic">Aucun texte</span>}</p>
-      <button onClick={() => setEditing(true)}
-        className="absolute top-0 right-0 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-700 bg-white border"
-        style={{ borderColor: 'var(--border)' }}>
-        <Pencil size={13} />
-      </button>
+    <div className="relative">
+      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        {module.content || <span className="text-gray-400 italic">Aucun texte</span>}
+      </p>
+      {isEditMode && (
+        <button onClick={() => setEditing(true)}
+          className="mt-2 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+          <Pencil size={11} /> Modifier le texte
+        </button>
+      )}
     </div>
   );
 }

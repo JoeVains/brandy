@@ -8,6 +8,7 @@ interface Props {
   module: Module;
   brandColor: string;
   onUpdate: (updated: Module) => void;
+  isEditing?: boolean;
 }
 
 function formatSize(bytes: number) {
@@ -16,7 +17,7 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default function AttachmentsModule({ module, brandColor, onUpdate }: Props) {
+export default function AttachmentsModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const items = module.attachmentItems ?? [];
 
@@ -63,19 +64,25 @@ export default function AttachmentsModule({ module, brandColor, onUpdate }: Prop
               className="p-1.5 rounded-lg border hover:bg-white transition-colors text-gray-500" style={{ borderColor: 'var(--border)' }}>
               <Download size={13} />
             </a>
-            <button onClick={() => deleteItem(item.id)}
-              className="p-1.5 rounded-lg border hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500" style={{ borderColor: 'var(--border)' }}>
-              <Trash2 size={13} />
-            </button>
+            {isEditing && (
+              <button onClick={() => deleteItem(item.id)}
+                className="p-1.5 rounded-lg border hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500" style={{ borderColor: 'var(--border)' }}>
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         </div>
       ))}
-      <button onClick={() => inputRef.current?.click()}
-        className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-        style={{ borderColor: 'var(--border)' }}>
-        <Plus size={16} /> Ajouter un fichier
-      </button>
-      <input ref={inputRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && upload(e.target.files[0])} />
+      {isEditing && (
+        <>
+          <button onClick={() => inputRef.current?.click()}
+            className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed rounded-xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+            style={{ borderColor: 'var(--border)' }}>
+            <Plus size={16} /> Ajouter un fichier
+          </button>
+          <input ref={inputRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && upload(e.target.files[0])} />
+        </>
+      )}
     </div>
   );
 }

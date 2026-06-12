@@ -8,9 +8,10 @@ interface Props {
   module: Module;
   brandColor: string;
   onUpdate: (updated: Module) => void;
+  isEditing?: boolean;
 }
 
-export default function ImageModule({ module, brandColor, onUpdate }: Props) {
+export default function ImageModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function upload(file: File) {
@@ -34,16 +35,27 @@ export default function ImageModule({ module, brandColor, onUpdate }: Props) {
     return (
       <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
         <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full object-contain max-h-[500px] bg-gray-50" />
-        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => inputRef.current?.click()}
-            className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
-            <Upload size={14} />
-          </button>
-          <button onClick={removeImage} className="p-2 rounded-lg bg-white border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
-            <Trash2 size={14} />
-          </button>
-        </div>
+        {isEditing && (
+          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => inputRef.current?.click()}
+              className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+              <Upload size={14} />
+            </button>
+            <button onClick={removeImage} className="p-2 rounded-lg bg-white border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )}
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && upload(e.target.files[0])} />
+      </div>
+    );
+  }
+
+  if (!isEditing) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300">
+        <ImageIcon size={28} />
+        <span className="text-sm">Aucune image</span>
       </div>
     );
   }

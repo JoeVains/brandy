@@ -8,6 +8,7 @@ interface Props {
   module: Module;
   brandColor: string;
   onUpdate: (updated: Module) => void;
+  isEditing?: boolean;
 }
 
 const SAMPLE_TEXT = 'The quick brown fox jumps over the lazy dog';
@@ -44,7 +45,7 @@ function UploadFontPreview({ filename, name }: { filename: string; name: string 
   );
 }
 
-export default function TypographyModule({ module, brandColor, onUpdate }: Props) {
+export default function TypographyModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const [showAddGoogle, setShowAddGoogle] = useState(false);
   const [googleFamily, setGoogleFamily] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,10 +98,12 @@ export default function TypographyModule({ module, brandColor, onUpdate }: Props
               <p className="font-semibold text-gray-800">{item.name}</p>
               <p className="text-xs text-gray-400 mt-0.5">{item.source === 'google' ? 'Google Fonts' : 'Police uploadée'}</p>
             </div>
-            <button onClick={() => deleteItem(item.id)}
-              className="p-1.5 rounded-lg border opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500 text-gray-400" style={{ borderColor: 'var(--border)' }}>
-              <Trash2 size={13} />
-            </button>
+            {isEditing && (
+              <button onClick={() => deleteItem(item.id)}
+                className="p-1.5 rounded-lg border opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500 text-gray-400" style={{ borderColor: 'var(--border)' }}>
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
           {item.source === 'google' && item.family ? (
             <GoogleFontPreview family={item.family} />
@@ -110,7 +113,7 @@ export default function TypographyModule({ module, brandColor, onUpdate }: Props
         </div>
       ))}
 
-      <div className="flex gap-3">
+      {isEditing && <div className="flex gap-3">
         {showAddGoogle ? (
           <div className="flex-1 flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
             <Type size={16} className="text-gray-400 flex-shrink-0" />
@@ -143,8 +146,8 @@ export default function TypographyModule({ module, brandColor, onUpdate }: Props
             </button>
           </>
         )}
-      </div>
-      <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />
+      </div>}
+      {isEditing && <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />}
     </div>
   );
 }
