@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Module, FontItem } from '@/types';
 import { Plus, Trash2, Upload, Type } from 'lucide-react';
+import ModuleDescription from './ModuleDescription';
 
 interface Props {
   module: Module;
@@ -90,6 +91,13 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
   }
 
   return (
+    <div>
+      <ModuleDescription
+        moduleId={module.id}
+        value={module.description}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, description: desc })}
+      />
     <div className="space-y-6">
       {items.map(item => (
         <div key={item.id} className="border rounded-xl p-5 group relative" style={{ borderColor: 'var(--border)' }}>
@@ -152,6 +160,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
       {isEditing && (
         <input ref={inputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={e => e.target.files?.[0] && uploadFont(e.target.files[0])} />
       )}
+    </div>
     </div>
   );
 }

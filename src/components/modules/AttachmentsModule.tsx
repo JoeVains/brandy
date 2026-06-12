@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { Module, AttachmentItem } from '@/types';
 import { Paperclip, Download, Trash2, Plus } from 'lucide-react';
+import ModuleDescription from './ModuleDescription';
 
 interface Props {
   module: Module;
@@ -51,6 +52,13 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
   }
 
   return (
+    <div>
+      <ModuleDescription
+        moduleId={module.id}
+        value={module.description}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, description: desc })}
+      />
     <div className="space-y-2">
       {items.map(item => (
         <div key={item.id} className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50 group" style={{ borderColor: 'var(--border)' }}>
@@ -83,6 +91,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
           <input ref={inputRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && upload(e.target.files[0])} />
         </>
       )}
+    </div>
     </div>
   );
 }

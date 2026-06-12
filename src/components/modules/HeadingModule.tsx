@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Module } from '@/types';
+import ModuleDescription from './ModuleDescription';
 
 interface Props {
   module: Module;
@@ -22,21 +23,29 @@ export default function HeadingModule({ module, onUpdate, isEditing }: Props) {
     onUpdate(await res.json());
   }
 
-  if (isEditing) {
-    return (
-      <input
-        className="w-full text-3xl font-bold text-gray-900 outline-none bg-transparent border-b-2 pb-1 focus:border-gray-400 border-transparent transition-colors"
-        placeholder="Titre…"
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onBlur={() => save(draft)}
-        onDragStart={e => e.stopPropagation()}
-        onMouseDown={e => e.stopPropagation()}
+  return (
+    <div>
+      {isEditing ? (
+        <input
+          className="w-full text-3xl font-bold text-gray-900 outline-none bg-transparent border-b-2 pb-1 focus:border-gray-400 border-transparent transition-colors mb-3"
+          placeholder="Titre…"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={() => save(draft)}
+          onDragStart={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+        />
+      ) : module.content ? (
+        <h2 className="text-3xl font-bold text-gray-900 mb-3">{module.content}</h2>
+      ) : (
+        <p className="text-sm text-gray-300 italic mb-3">Aucun titre</p>
+      )}
+      <ModuleDescription
+        moduleId={module.id}
+        value={module.description}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, description: desc })}
       />
-    );
-  }
-
-  return module.content
-    ? <h2 className="text-3xl font-bold text-gray-900">{module.content}</h2>
-    : <p className="text-sm text-gray-300 italic">Aucun titre</p>;
+    </div>
+  );
 }

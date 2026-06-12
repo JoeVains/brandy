@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Module, ColorItem } from '@/types';
 import { suggestColorName } from '@/lib/colorNames';
 import { hexToRgb, rgbToHsl } from '@/lib/colorUtils';
-import { Plus, Trash2, Check, X, Pencil, Copy } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, Copy, Download } from 'lucide-react';
 import { randomUUID } from 'crypto';
 
 interface Props {
@@ -312,6 +312,26 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
     await patch({ colorItems: reordered });
   }
 
+  function downloadExport(format: 'ase' | 'less' | 'scss') {
+    const a = document.createElement('a');
+    a.href = `/api/modules/${module.id}/export?format=${format}`;
+    a.click();
+  }
+
+  const ExportButtons = () => items.length > 0 ? (
+    <div className="flex items-center gap-2 mb-4 justify-end">
+      <span className="text-xs text-gray-400 mr-1">Exporter :</span>
+      {(['scss', 'less', 'ase'] as const).map(fmt => (
+        <button key={fmt} onClick={() => downloadExport(fmt)}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+          style={{ borderColor: 'var(--border)' }}>
+          <Download size={10} />
+          .{fmt}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   const ModeToggle = () => (
     <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 rounded-lg w-fit">
       <button onClick={() => setMode('cards')}
@@ -346,6 +366,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
         ) : module.colorDescription ? (
           <p className="text-sm text-gray-500 mb-4">{module.colorDescription}</p>
         ) : null}
+        <ExportButtons />
         {isEditing && <ModeToggle />}
         <div className="flex flex-wrap gap-8">
           {items.map((item, idx) => (
@@ -398,6 +419,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
   // — Cards mode —
   return (
     <div>
+      <ExportButtons />
       {isEditing ? (
         <textarea
           className="w-full text-sm text-gray-500 resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"

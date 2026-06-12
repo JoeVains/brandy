@@ -62,6 +62,8 @@ export interface Module {
   type: ModuleType;
   title: string;
   order: number;
+  // shared description (heading, typography, attachments)
+  description?: string;
   // colors
   colorMode?: 'cards' | 'drops';
   colorDescription?: string;

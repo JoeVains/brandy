@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { Module } from '@/types';
-import { Plus, Trash2, Download, Check, X } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search } from 'lucide-react';
 
 interface Props {
   module: Module;
@@ -17,10 +17,12 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState('');
+  const [search, setSearch] = useState('');
   const [descDraft, setDescDraft] = useState(module.iconDescription ?? '');
   const [descFocused, setDescFocused] = useState(false);
   const prevEditing = useRef(isEditing);
   const items = module.iconItems ?? [];
+  const filtered = search.trim() ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : items;
 
   useEffect(() => {
     if (prevEditing.current && !isEditing) {
@@ -135,6 +137,25 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         <p className="text-sm text-gray-500 mb-4">{module.iconDescription}</p>
       ) : null}
 
+      {/* Search */}
+      {items.length > 0 && (
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-xl border outline-none bg-white transition-colors focus:border-gray-400"
+            style={{ borderColor: 'var(--border)' }}
+            placeholder="Rechercher une icône…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Toolbar */}
       {items.length > 0 && (
         <div className="flex items-center justify-between mb-4 gap-3">
@@ -176,7 +197,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
 
       {/* Grid */}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
-        {items.map(item => {
+        {filtered.length === 0 && search && (
+          <div className="col-span-full py-8 text-center text-sm text-gray-400">Aucune icône ne correspond à « {search} »</div>
+        )}
+        {filtered.map(item => {
           const isSelected = selected.has(item.id);
           return (
             <div key={item.id} className="group flex flex-col items-center gap-2">

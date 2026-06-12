@@ -1,8 +1,10 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Module, ImageItem } from '@/types';
-import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square } from 'lucide-react';
+import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square, X, Download, ZoomIn } from 'lucide-react';
+import ModuleDescription from './ModuleDescription';
 
 interface Props {
   module: Module;
@@ -11,9 +13,43 @@ interface Props {
   isEditing?: boolean;
 }
 
+function Lightbox({ src, filename, onClose }: { src: string; filename: string; onClose: () => void }) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="absolute top-4 right-4 flex gap-2">
+        <a
+          href={src}
+          download={filename}
+          onClick={e => e.stopPropagation()}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+        >
+          <Download size={14} /> Télécharger
+        </a>
+        <button
+          onClick={onClose}
+          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+        >
+          <X size={16} />
+        </button>
+      </div>
+      <img
+        src={src}
+        alt=""
+        className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      />
+    </div>,
+    document.body
+  );
+}
+
 export default function ImageModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [lightbox, setLightbox] = useState<{ src: string; filename: string } | null>(null);
   const mode = module.imageMode ?? 'single';
   const imageItems = module.imageItems ?? [];
 
@@ -21,7 +57,6 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     const patch: Record<string, unknown> = { imageMode: newMode };
 
     if (newMode === 'gallery' && module.imageFilename) {
-      // Migrate single image into gallery items
       patch.imageItems = [
         ...(module.imageItems ?? []),
         {
@@ -44,8 +79,6 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     onUpdate(await res.json());
   }
 
-  // — Single mode —
-
   async function uploadSingle(file: File) {
     const fd = new FormData();
     fd.append('file', file);
@@ -62,8 +95,6 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     });
     onUpdate(await res.json());
   }
-
-  // — Gallery mode —
 
   async function uploadGalleryItem(file: File) {
     const fd = new FormData();
@@ -83,7 +114,6 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     onUpdate(await res.json());
   }
 
-  // — Mode toggle (edit only) —
   const ModeToggle = () => (
     <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 rounded-lg w-fit">
       <button
@@ -103,33 +133,56 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     </div>
   );
 
+  const descriptionBlock = (
+    <ModuleDescription
+      moduleId={module.id}
+      value={module.description}
+      isEditing={isEditing}
+      onUpdate={desc => onUpdate({ ...module, description: desc })}
+    />
+  );
+
   // ——— Single ———
   if (mode === 'single') {
     if (module.imageFilename) {
       return (
         <div>
           {isEditing && <ModeToggle />}
+          {descriptionBlock}
           <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
             <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full object-contain max-h-[500px] bg-gray-50" />
-            {isEditing && (
-              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => inputRef.current?.click()}
-                  className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
-                  <Upload size={14} />
-                </button>
-                <button onClick={removeSingle} className="p-2 rounded-lg bg-white border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            )}
+            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => setLightbox({ src: `/uploads/${module.imageFilename}`, filename: module.imageFilename! })}
+                className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+                <ZoomIn size={14} />
+              </button>
+              <a href={`/uploads/${module.imageFilename}`} download={module.imageFilename}
+                className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50 flex items-center" style={{ borderColor: 'var(--border)' }}>
+                <Download size={14} />
+              </a>
+              {isEditing && (
+                <>
+                  <button onClick={() => inputRef.current?.click()}
+                    className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+                    <Upload size={14} />
+                  </button>
+                  <button onClick={removeSingle} className="p-2 rounded-lg bg-white border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
+                    <Trash2 size={14} />
+                  </button>
+                </>
+              )}
+            </div>
             <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && uploadSingle(e.target.files[0])} />
           </div>
+          {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} onClose={() => setLightbox(null)} />}
         </div>
       );
     }
     return (
       <div>
         {isEditing && <ModeToggle />}
+        {descriptionBlock}
         {isEditing ? (
           <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-12 cursor-pointer hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-600" style={{ borderColor: 'var(--border)' }}>
             <ImageIcon size={32} />
@@ -150,13 +203,18 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   return (
     <div>
       {isEditing && <ModeToggle />}
+      {descriptionBlock}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {imageItems.map(item => (
-          <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+          <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer" style={{ borderColor: 'var(--border)' }}
+            onClick={() => setLightbox({ src: `/uploads/${item.filename}`, filename: item.filename })}>
             <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40 object-cover" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+            </div>
             {isEditing && (
               <button
-                onClick={() => removeGalleryItem(item.id)}
+                onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
                 className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
               >
                 <Trash2 size={13} />
@@ -184,6 +242,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         )}
       </div>
       <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && uploadGalleryItem(e.target.files[0])} />
+      {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} onClose={() => setLightbox(null)} />}
     </div>
   );
 }
