@@ -243,6 +243,18 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
           </button>
         )}
       </div>
+
+      <div className="px-4 py-4 border-t text-center" style={{ borderColor: 'var(--border)' }}>
+        <p className="text-[10px] text-gray-400 leading-relaxed">
+          Made with 🩷 in Paris<br />
+          by{' '}
+          <a href="https://joevains.com" target="_blank" rel="noopener noreferrer"
+            className="hover:text-gray-600 transition-colors underline underline-offset-2">
+            Sylvain &ldquo;Joe Vains&rdquo; Guizard
+          </a>
+          {' '}© {new Date().getFullYear()}
+        </p>
+      </div>
     </aside>
   );
 }
