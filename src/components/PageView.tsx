@@ -13,6 +13,8 @@ import DividerModule from './modules/DividerModule';
 interface Props {
   brand: Brand;
   section: Section;
+  onModuleDragStart?: (module: Module) => void;
+  onModuleDragEnd?: () => void;
 }
 
 const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
@@ -132,7 +134,7 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
   );
 }
 
-export default function PageView({ brand, section }: Props) {
+export default function PageView({ brand, section, onModuleDragStart, onModuleDragEnd }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
@@ -166,8 +168,13 @@ export default function PageView({ brand, section }: Props) {
     setModules(prev => prev.filter(m => m.id !== id));
   }
 
-  // Drag-and-drop reordering
-  function onDragStart(id: string) { setDragId(id); }
+  // Drag-and-drop reordering + cross-section move
+  function onDragStart(e: React.DragEvent, module: Module) {
+    setDragId(module.id);
+    e.dataTransfer.setData('brandy/module', module.id);
+    e.dataTransfer.effectAllowed = 'move';
+    onModuleDragStart?.(module);
+  }
   function onDragOver(e: React.DragEvent, id: string) {
     e.preventDefault();
     if (id !== dragId) setDragOverId(id);
@@ -217,11 +224,11 @@ export default function PageView({ brand, section }: Props) {
           <div
             key={module.id}
             draggable
-            onDragStart={() => onDragStart(module.id)}
+            onDragStart={e => onDragStart(e, module)}
             onDragOver={e => onDragOver(e, module.id)}
             onDragLeave={onDragLeave}
             onDrop={() => onDrop(module.id)}
-            onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+            onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
             className={`transition-all ${dragOverId === module.id ? 'scale-[0.98]' : ''}`}
             style={dragOverId === module.id ? { outline: `2px solid ${brand.color}`, outlineOffset: 4, borderRadius: 16 } : {}}
           >

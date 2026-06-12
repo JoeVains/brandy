@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Brand, Section } from '@/types';
+import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
-import { Plus, Trash2, Check, X, Pencil } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen } from 'lucide-react';
 
 const BRAND_COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
@@ -127,6 +127,8 @@ export default function BrandyApp() {
   const [editingAnchorRect, setEditingAnchorRect] = useState<DOMRect | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [draggingModule, setDraggingModule] = useState<Module | null>(null);
+  const [pageViewKey, setPageViewKey] = useState(0);
 
   const fetchAll = useCallback(async () => {
     const [b, s] = await Promise.all([
@@ -188,6 +190,17 @@ export default function BrandyApp() {
     setBrands(prev => prev.map(b => b.id === id ? { ...b, name, color } : b));
     setEditingBrandId(null);
     setEditingAnchorRect(null);
+  }
+
+  async function handleModuleDrop(targetSectionId: string) {
+    if (!draggingModule || draggingModule.sectionId === targetSectionId) return;
+    await fetch(`/api/modules/${draggingModule.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sectionId: targetSectionId }),
+    });
+    setDraggingModule(null);
+    setPageViewKey(k => k + 1);
   }
 
   const activeBrand = brands.find(b => b.id === activeBrandId) ?? null;
@@ -292,16 +305,68 @@ export default function BrandyApp() {
               activeSectionId={activeSectionId}
               onSelectSection={setActiveSectionId}
               onSectionsChange={updated => setSections(prev => [...prev.filter(s => s.brandId !== activeBrand.id), ...updated])}
+              draggingModuleId={draggingModule?.id ?? null}
+              onModuleDrop={handleModuleDrop}
             />
-            {activeSection ? (
-              <PageView brand={activeBrand} section={activeSection} />
+            {activeSection && brandSections.filter(s => s.parentId === activeSection.id).length === 0 ? (
+              <PageView
+                key={pageViewKey}
+                brand={activeBrand}
+                section={activeSection}
+                onModuleDragStart={setDraggingModule}
+                onModuleDragEnd={() => setDraggingModule(null)}
+              />
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-400">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-bold text-white" style={{ background: activeBrand.color }}>
-                  {activeBrand.name.charAt(0).toUpperCase()}
+              <div className="flex-1 overflow-y-auto">
+                <div className="max-w-4xl mx-auto px-8 py-8">
+                  <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {activeSection ? activeSection.name : activeBrand.name}
+                    </h1>
+                  </div>
+                  {(() => {
+                    const children = activeSection
+                      ? brandSections.filter(s => s.parentId === activeSection.id)
+                      : brandSections.filter(s => s.parentId === null);
+                    const sorted = children.sort((a, b) => a.order - b.order);
+                    if (sorted.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
+                          <FolderOpen size={36} />
+                          <p className="text-sm">Aucune rubrique. Créez-en une dans la sidebar.</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {sorted.map(section => {
+                          const childCount = brandSections.filter(s => s.parentId === section.id).length;
+                          return (
+                            <button
+                              key={section.id}
+                              onClick={() => setActiveSectionId(section.id)}
+                              className="flex items-center gap-3 p-4 border rounded-xl bg-white text-left hover:shadow-md transition-all"
+                              style={{ borderColor: 'var(--border)' }}
+                            >
+                              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
+                                style={{ background: activeBrand.color }}>
+                                {section.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-800 truncate">{section.name}</p>
+                                {childCount > 0 && (
+                                  <p className="text-xs text-gray-400 mt-0.5">
+                                    {childCount} sous-rubrique{childCount > 1 ? 's' : ''}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
-                <p className="text-sm font-medium text-gray-600">{activeBrand.name}</p>
-                <p className="text-xs text-gray-400">Sélectionnez une rubrique dans la sidebar</p>
               </div>
             )}
           </>

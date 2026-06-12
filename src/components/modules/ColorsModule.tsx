@@ -110,10 +110,10 @@ function ColorSwatch({ item, brandColor, onSave, onDelete }: {
           { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—', key: 'hsl' },
         ].map(row => (
           <button key={row.key} onClick={() => copyText(row.text, row.key)}
-            className="w-full flex justify-between items-center text-xs text-gray-500 hover:text-gray-800 group/row">
-            <span className="font-mono text-gray-400 text-[10px] w-7 text-left">{row.label}</span>
-            <span className="font-mono">{copied === row.key ? '✓ copié' : row.text}</span>
-            <Copy size={9} className="opacity-0 group-hover/row:opacity-50" />
+            className="w-full flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 group/row">
+            <span className="font-mono text-gray-400 text-[10px] w-7 flex-shrink-0 text-left">{row.label}</span>
+            <span className="font-mono text-left flex-1">{copied === row.key ? '✓ copié' : row.text}</span>
+            <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
           </button>
         ))}
       </div>
@@ -170,7 +170,7 @@ export default function ColorsModule({ module, brandColor, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
         {items.map(item => (
           <ColorSwatch key={item.id} item={item} brandColor={brandColor}
             onSave={updateItem} onDelete={() => deleteItem(item.id)} />

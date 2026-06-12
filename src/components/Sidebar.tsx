@@ -10,6 +10,8 @@ interface Props {
   activeSectionId: string | null;
   onSelectSection: (id: string | null) => void;
   onSectionsChange: (sections: Section[]) => void;
+  draggingModuleId?: string | null;
+  onModuleDrop?: (targetSectionId: string) => void;
 }
 
 interface SectionNodeProps {
@@ -21,12 +23,15 @@ interface SectionNodeProps {
   brandId: string;
   brandColor: string;
   depth: number;
+  draggingModuleId?: string | null;
+  onModuleDrop?: (targetSectionId: string) => void;
 }
 
-function SectionNode({ section, allSections, activeSectionId, onSelect, onSectionsChange, brandId, brandColor, depth }: SectionNodeProps) {
+function SectionNode({ section, allSections, activeSectionId, onSelect, onSectionsChange, brandId, brandColor, depth, draggingModuleId, onModuleDrop }: SectionNodeProps) {
   const children = allSections.filter(s => s.parentId === section.id).sort((a, b) => a.order - b.order);
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [isDropTarget, setIsDropTarget] = useState(false);
   const [editName, setEditName] = useState(section.name);
   const [showAddChild, setShowAddChild] = useState(false);
   const [childName, setChildName] = useState('');
@@ -73,12 +78,26 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
   return (
     <div>
       <div
-        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isDropTarget ? '' : 'text-gray-600 hover:bg-gray-100'}`}
         style={{
           paddingLeft: `${8 + depth * 14}px`,
           ...(isActive ? { background: brandColor } : {}),
+          ...(isDropTarget ? { background: `${brandColor}20`, color: brandColor, outline: `2px solid ${brandColor}`, outlineOffset: '-2px' } : {}),
         }}
         onClick={() => onSelect(section.id)}
+        onDragOver={e => {
+          if (!draggingModuleId) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setIsDropTarget(true);
+        }}
+        onDragLeave={() => setIsDropTarget(false)}
+        onDrop={e => {
+          e.preventDefault();
+          setIsDropTarget(false);
+          const moduleId = e.dataTransfer.getData('brandy/module');
+          if (moduleId) onModuleDrop?.(section.id);
+        }}
       >
         {children.length > 0 ? (
           <button onClick={e => { e.stopPropagation(); setExpanded(!expanded); }} className="flex-shrink-0 opacity-50">
@@ -141,6 +160,8 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
           brandId={brandId}
           brandColor={brandColor}
           depth={depth + 1}
+          draggingModuleId={draggingModuleId}
+          onModuleDrop={onModuleDrop}
         />
       ))}
     </div>
@@ -148,7 +169,7 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
 }
 
 
-export default function Sidebar({ brand, sections, activeSectionId, onSelectSection, onSectionsChange }: Props) {
+export default function Sidebar({ brand, sections, activeSectionId, onSelectSection, onSectionsChange, draggingModuleId, onModuleDrop }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const roots = sections.filter(s => s.parentId === null).sort((a, b) => a.order - b.order);
@@ -194,6 +215,8 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
               brandId={brand.id}
               brandColor={brand.color}
               depth={0}
+              draggingModuleId={draggingModuleId}
+              onModuleDrop={onModuleDrop}
             />
           ))}
         </div>
