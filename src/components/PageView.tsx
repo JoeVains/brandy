@@ -9,6 +9,8 @@ import TextModule from './modules/TextModule';
 import ImageModule from './modules/ImageModule';
 import AttachmentsModule from './modules/AttachmentsModule';
 import DividerModule from './modules/DividerModule';
+import HeadingModule from './modules/HeadingModule';
+import IconsModule from './modules/IconsModule';
 
 interface Props {
   brand: Brand;
@@ -21,9 +23,11 @@ interface Props {
 const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
   { type: 'colors', label: 'Couleurs', icon: <Palette size={18} />, description: 'Nuancier de couleurs avec valeurs HEX, RVB et TSL' },
   { type: 'typography', label: 'Typographie', icon: <Type size={18} />, description: 'Polices Google Fonts ou fichiers locaux' },
+  { type: 'heading', label: 'Titre', icon: <span className="font-bold text-base leading-none">H</span>, description: 'Titre de section en grand format' },
   { type: 'text', label: 'Texte', icon: <AlignLeft size={18} />, description: 'Bloc de texte libre' },
   { type: 'image', label: 'Image', icon: <Image size={18} />, description: 'Une image par module' },
   { type: 'attachments', label: 'Fichiers', icon: <Paperclip size={18} />, description: 'ZIP, PDF et autres pièces jointes' },
+  { type: 'icons', label: 'Icônes', icon: <span className="font-bold text-base leading-none">❖</span>, description: 'Bibliothèque d\'icônes SVG téléchargeables en ZIP' },
   { type: 'divider', label: 'Séparateur', icon: <Minus size={18} />, description: 'Ligne de séparation horizontale' },
 ];
 
@@ -203,9 +207,11 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
       <div className={module.type === 'divider' ? 'px-5 py-4' : 'p-5'}>
         {module.type === 'colors' && <ColorsModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'typography' && <TypographyModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
+        {module.type === 'heading' && <HeadingModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'text' && <TextModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'image' && <ImageModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'attachments' && <AttachmentsModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
+        {module.type === 'icons' && <IconsModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'divider' && (
           <div className="flex items-center gap-3">
             <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
@@ -368,7 +374,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-8 py-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-8 py-8 space-y-6">
         {/* Page header */}
         <div className="pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
           <h1 className="text-2xl font-bold text-gray-900">{section.name}</h1>

@@ -38,6 +38,13 @@ export interface ImageItem {
   size: number;
 }
 
+export interface IconItem {
+  id: string;
+  name: string;
+  filename: string;
+  size: number;
+}
+
 export interface AttachmentItem {
   id: string;
   name: string;
@@ -46,7 +53,7 @@ export interface AttachmentItem {
   size: number;
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'image' | 'attachments' | 'divider';
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'divider';
 
 export interface Module {
   id: string;
@@ -71,6 +78,9 @@ export interface Module {
   imageItems?: ImageItem[];
   // attachments
   attachmentItems?: AttachmentItem[];
+  // icons
+  iconDescription?: string;
+  iconItems?: IconItem[];
   createdAt: string;
 }
 

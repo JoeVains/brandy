@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
   if (type === 'typography') module.fontItems = [];
   if (type === 'attachments') module.attachmentItems = [];
   if (type === 'text') module.content = '';
+  if (type === 'icons') module.iconItems = [];
 
   db.modules.save([...all, module]);
   return NextResponse.json(module);

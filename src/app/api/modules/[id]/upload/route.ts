@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { AttachmentItem, FontItem, ImageItem } from '@/types';
+import { AttachmentItem, FontItem, IconItem, ImageItem } from '@/types';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -54,6 +54,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       size: file.size,
     };
     module.fontItems = [...(module.fontItems ?? []), item];
+  } else if (slot === 'icon') {
+    const item: IconItem = {
+      id: randomUUID(),
+      name: (itemName ?? file.name).replace(/\.svg$/i, ''),
+      filename,
+      size: file.size,
+    };
+    module.iconItems = [...(module.iconItems ?? []), item];
   } else if (slot === 'attachment') {
     const item: AttachmentItem = {
       id: randomUUID(),
