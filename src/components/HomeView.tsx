@@ -151,10 +151,27 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                   onDragEnd={() => { setDragId(null); setDragOverId(null); }}
                   onClick={() => onOpenBrand(brand.id)}
                 >
-                  {/* Color band */}
-                  <div className="h-24 flex items-end p-4" style={{ background: brand.color }}>
+                  {/* Color band with action buttons */}
+                  <div className="h-24 flex items-end p-4 relative" style={{ background: brand.color }}>
                     <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
                       {initial}
+                    </div>
+                    <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => duplicateBrand(brand.id)}
+                        disabled={duplicating === brand.id}
+                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors disabled:opacity-40"
+                        title="Dupliquer"
+                      >
+                        <Copy size={13} />
+                      </button>
+                      <button
+                        onClick={() => deleteBrand(brand.id)}
+                        className="p-1.5 rounded-lg bg-white/20 hover:bg-red-500/80 text-white transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
 
@@ -166,31 +183,14 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     </p>
                   </div>
 
-                  {/* Actions */}
-                  <div className="px-4 pb-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                  {/* Open button */}
+                  <div className="px-4 pb-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => onOpenBrand(brand.id)}
-                      className="flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-90"
+                      className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-opacity"
                       style={{ background: brand.color }}
                     >
                       Ouvrir <ArrowRight size={12} />
-                    </button>
-                    <button
-                      onClick={() => duplicateBrand(brand.id)}
-                      disabled={duplicating === brand.id}
-                      className="p-1.5 rounded-lg border hover:bg-gray-50 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-40"
-                      style={{ borderColor: 'var(--border)' }}
-                      title="Dupliquer"
-                    >
-                      <Copy size={13} />
-                    </button>
-                    <button
-                      onClick={() => deleteBrand(brand.id)}
-                      className="p-1.5 rounded-lg border hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                      style={{ borderColor: 'var(--border)' }}
-                      title="Supprimer"
-                    >
-                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
