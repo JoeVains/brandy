@@ -92,7 +92,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
   }
 
   return (
-    <div className="border rounded-xl overflow-hidden group" style={{ borderColor: 'var(--border)' }}>
+    <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
       <div className="h-24 relative" style={{ background: item.value }}>
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
@@ -198,7 +198,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
   return (
     <div className="flex flex-col items-center gap-3 text-center group">
       <div className="relative">
-        <div className="w-20 h-20 rounded-full" style={{ background: item.value }} />
+        <div className="w-20 h-20 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value }} />
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/20">
             <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
