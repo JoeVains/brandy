@@ -6,7 +6,8 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock } from 'lucide-react';
+import HistoryPanel from './HistoryPanel';
 
 const BRAND_COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
@@ -128,6 +129,7 @@ export default function BrandyApp() {
   const [editingAnchorRect, setEditingAnchorRect] = useState<DOMRect | null>(null);
   const [view, setView] = useState<'home' | 'brand'>('home');
   const [dragId, setDragId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
   const [pageViewKey, setPageViewKey] = useState(0);
@@ -312,7 +314,16 @@ export default function BrandyApp() {
             </button>
           )}
         </div>
+
+        {/* History button */}
+        <button onClick={() => setShowHistory(v => !v)}
+          className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          title="Historique">
+          <Clock size={15} />
+        </button>
       </header>
+
+      {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">

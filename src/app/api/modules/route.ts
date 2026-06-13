@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { Module } from '@/types';
 import { randomUUID } from 'crypto';
+import { logHistory } from '@/lib/history';
 
 export async function GET(req: NextRequest) {
   const sectionId = req.nextUrl.searchParams.get('sectionId');
@@ -34,5 +35,10 @@ export async function POST(req: NextRequest) {
   if (type === 'icons') module.iconItems = [];
 
   db.modules.save([...all, module]);
+
+  const brand = db.brands.all().find(b => b.id === brandId);
+  const section = db.sections.all().find(s => s.id === sectionId);
+  logHistory({ action: 'module.create', brandName: brand?.name, sectionName: section?.name, entityName: title ?? type, entityType: type });
+
   return NextResponse.json(module);
 }

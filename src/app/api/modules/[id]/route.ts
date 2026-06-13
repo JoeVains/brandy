@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logHistory } from '@/lib/history';
 import fs from 'fs';
 import path from 'path';
 
@@ -10,8 +11,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const idx = all.findIndex(m => m.id === id);
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  all[idx] = { ...all[idx], ...body };
+  const prev = all[idx];
+  all[idx] = { ...prev, ...body };
   db.modules.save(all);
+
+  const brand = db.brands.all().find(b => b.id === prev.brandId);
+  const section = db.sections.all().find(s => s.id === prev.sectionId);
+  logHistory({ action: 'module.edit', brandName: brand?.name, sectionName: section?.name, entityName: prev.title || prev.type, entityType: prev.type });
+
   return NextResponse.json(all[idx]);
 }
 
@@ -37,5 +44,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   });
 
   db.modules.save(all.filter(m => m.id !== id));
+
+  const brand = db.brands.all().find(b => b.id === module.brandId);
+  const section = db.sections.all().find(s => s.id === module.sectionId);
+  logHistory({ action: 'module.delete', brandName: brand?.name, sectionName: section?.name, entityName: module.title || module.type, entityType: module.type });
+
   return NextResponse.json({ ok: true });
 }
