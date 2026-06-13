@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, Copy, Trash2 } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight } from 'lucide-react';
 
 interface Props {
   brands: Brand[];
@@ -167,7 +167,14 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                   </div>
 
                   {/* Actions */}
-                  <div className="px-4 pb-4 flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                  <div className="px-4 pb-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => onOpenBrand(brand.id)}
+                      className="flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-90"
+                      style={{ background: brand.color }}
+                    >
+                      Ouvrir <ArrowRight size={12} />
+                    </button>
                     <button
                       onClick={() => duplicateBrand(brand.id)}
                       disabled={duplicating === brand.id}
