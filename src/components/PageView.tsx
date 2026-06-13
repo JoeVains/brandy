@@ -56,6 +56,13 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
   const [menuOpen, setMenuOpen] = useState(false);
   const [subMenu, setSubMenu] = useState<'move' | 'copy' | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (defaultEditing && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
   const meta = MODULE_TYPES.find(t => t.type === module.type)!;
   const otherSections = (sections ?? []).filter(s => s.id !== currentSectionId);
 
@@ -86,7 +93,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
   }
 
   return (
-    <div className={`border rounded-2xl bg-white transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
+    <div ref={cardRef} className={`border rounded-2xl bg-white transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
       style={{ borderColor: 'var(--border)', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
       {/* Module header */}
       {module.type !== 'divider' && (
