@@ -127,6 +127,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const inputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
   const mode = module.imageMode ?? 'single';
@@ -392,7 +393,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       {/* Download bar */}
       {imageItems.length > 0 && (
         <div className="flex items-center gap-3 mb-4">
-          {hasSelection && (
+          {selectMode && hasSelection && (
             <>
               <span className="text-xs text-gray-500">{selected.size} sélectionnée{selected.size > 1 ? 's' : ''}</span>
               <button
@@ -408,7 +409,16 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               </button>
             </>
           )}
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => { setSelectMode(s => !s); setSelected(new Set()); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors"
+              style={selectMode
+                ? { borderColor: brandColor, color: brandColor, background: `${brandColor}10` }
+                : { borderColor: 'var(--border)', color: '#374151' }}
+            >
+              {selectMode ? 'Annuler' : 'Sélectionner'}
+            </button>
             <button
               onClick={() => downloadZip()}
               disabled={downloading}
@@ -427,21 +437,20 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
           return (
           <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer"
             style={{ borderColor: isSelected ? brandColor : 'var(--border)', outline: isSelected ? `2px solid ${brandColor}` : 'none' }}
-            onClick={() => setLightboxIndex(imageItems.indexOf(item))}>
+            onClick={() => selectMode ? toggleSelect(item.id) : setLightboxIndex(imageItems.indexOf(item))}>
             <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-              <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+              {!selectMode && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
             </div>
-            {/* Select checkbox */}
-            <div
-              className={`absolute top-2 left-2 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-              onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
-            >
-              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
-                style={isSelected ? { background: brandColor } : {}}>
-                {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            {/* Select checkbox — visible uniquement en mode sélection */}
+            {selectMode && (
+              <div className="absolute top-2 left-2">
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
+                  style={isSelected ? { background: brandColor } : {}}>
+                  {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
               </div>
-            </div>
+            )}
             {isEditing && (
               <button
                 onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
