@@ -163,19 +163,21 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
             placeholder="Nom du dégradé"
           />
 
-          {/* Type + angle */}
-          <div className="flex items-center gap-2">
-            <div className="flex p-0.5 bg-gray-100 rounded-lg">
-              {(['linear', 'radial'] as const).map(t => (
-                <button key={t} onClick={() => setType(t)}
-                  className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-                  style={type === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
-                  {t === 'linear' ? 'Linéaire' : 'Radial'}
-                </button>
-              ))}
-            </div>
-            {type === 'linear' && (
-              <div className="flex items-center gap-1.5 flex-1">
+          {/* Type */}
+          <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
+            {(['linear', 'radial'] as const).map(t => (
+              <button key={t} onClick={() => setType(t)}
+                className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                style={type === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+                {t === 'linear' ? 'Linéaire' : 'Radial'}
+              </button>
+            ))}
+          </div>
+
+          {/* Angle */}
+          {type === 'linear' && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
                 <AngleDial angle={angle} onChange={setAngle} />
                 <input type="range" min={0} max={360} value={angle}
                   onChange={e => setAngle(Number(e.target.value))}
@@ -186,8 +188,8 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
                   style={{ borderColor: 'var(--border)' }} />
                 <span className="text-xs text-gray-400">°</span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Stops */}
           <div className="space-y-2">
@@ -377,29 +379,27 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
             <div className="p-3 bg-white space-y-2.5">
               <input className="w-full border rounded-lg px-2 py-1.5 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
                 value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nom" />
-              <div className="flex items-center gap-2">
-                <div className="flex p-0.5 bg-gray-100 rounded-lg">
-                  {(['linear', 'radial'] as const).map(t => (
-                    <button key={t} onClick={() => setNewType(t)}
-                      className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors"
-                      style={newType === t ? { background: 'white', color: '#111' } : { color: '#6b7280' }}>
-                      {t === 'linear' ? 'Linéaire' : 'Radial'}
-                    </button>
-                  ))}
-                </div>
-                {newType === 'linear' && (
-                  <div className="flex items-center gap-1.5 flex-1">
-                    <AngleDial angle={newAngle} onChange={setNewAngle} />
-                    <input type="range" min={0} max={360} value={newAngle}
-                      onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
-                    <input type="number" min={0} max={360} value={newAngle}
-                      onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
-                      className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
-                      style={{ borderColor: 'var(--border)' }} />
-                    <span className="text-xs text-gray-400">°</span>
-                  </div>
-                )}
+              <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
+                {(['linear', 'radial'] as const).map(t => (
+                  <button key={t} onClick={() => setNewType(t)}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors"
+                    style={newType === t ? { background: 'white', color: '#111' } : { color: '#6b7280' }}>
+                    {t === 'linear' ? 'Linéaire' : 'Radial'}
+                  </button>
+                ))}
               </div>
+              {newType === 'linear' && (
+                <div className="flex items-center gap-1.5">
+                  <AngleDial angle={newAngle} onChange={setNewAngle} />
+                  <input type="range" min={0} max={360} value={newAngle}
+                    onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
+                  <input type="number" min={0} max={360} value={newAngle}
+                    onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
+                    className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
+                    style={{ borderColor: 'var(--border)' }} />
+                  <span className="text-xs text-gray-400">°</span>
+                </div>
+              )}
               {newStops.map((stop, idx) => (
                 <ColorStopRow key={idx} stop={stop}
                   onUpdate={p => updateNewStop(idx, p)}
