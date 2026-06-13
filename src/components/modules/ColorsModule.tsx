@@ -310,7 +310,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
     if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDragOverIdx(null); return; }
     const reordered = [...items];
     const [moved] = reordered.splice(dragIdx, 1);
-    reordered.splice(idx, 0, moved);
+    reordered.splice(dragIdx < idx ? idx - 1 : idx, 0, moved);
     setDragIdx(null);
     setDragOverIdx(null);
     await patch({ colorItems: reordered });

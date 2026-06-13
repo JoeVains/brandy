@@ -149,7 +149,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
     if (dragStopIdx === null || dragStopIdx === toIdx) { setDragStopIdx(null); return; }
     const reordered = [...stops];
     const [moved] = reordered.splice(dragStopIdx, 1);
-    reordered.splice(toIdx, 0, moved);
+    reordered.splice(dragStopIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
     setStops(reordered);
     setDragStopIdx(null);
   }
@@ -425,7 +425,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDragOverIdx(null); return; }
     const reordered = [...items];
     const [moved] = reordered.splice(dragIdx, 1);
-    reordered.splice(idx, 0, moved);
+    reordered.splice(dragIdx < idx ? idx - 1 : idx, 0, moved);
     setDragIdx(null);
     setDragOverIdx(null);
     await patch(reordered);

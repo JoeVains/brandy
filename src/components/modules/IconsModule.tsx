@@ -57,7 +57,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   async function reorderItems(fromIdx: number, toIdx: number) {
     const reordered = [...items];
     const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, moved);
+    reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
     const res = await fetch(`/api/modules/${module.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
