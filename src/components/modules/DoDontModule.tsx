@@ -16,13 +16,14 @@ const DO_COLOR = '#16a34a';
 const DONT_COLOR = '#dc2626';
 
 function Column({
-  label, icon, color, items, isEditing, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete,
+  label, icon, color, items, isEditing, layout, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete,
 }: {
   label: string;
   icon: string;
   color: string;
   items: DoDontItem[];
   isEditing?: boolean;
+  layout: 'stacked' | 'sidebyside';
   onAdd: (file: File) => void;
   onAddText: () => void;
   onUpdateCaption: (id: string, caption: string) => void;
@@ -43,11 +44,14 @@ function Column({
       {/* Items */}
       <div className="space-y-3">
         {items.map(item => (
-          <div key={item.id} className="group relative border-2 rounded-xl overflow-hidden" style={{ borderColor: color }}>
+          <div key={item.id} className={`group relative border-2 rounded-xl overflow-hidden ${layout === 'sidebyside' ? 'flex' : ''}`} style={{ borderColor: color }}>
+
             {/* Image item */}
             {item.type === 'image' && item.filename && (
-              <>
-                <img src={`/uploads/${item.filename}`} alt="" className="w-full max-h-64 bg-gray-50" style={{ objectFit: item.fit ?? 'cover' }} />
+              <div className={`relative ${layout === 'sidebyside' ? 'w-1/2 shrink-0' : ''}`}>
+                <img src={`/uploads/${item.filename}`} alt=""
+                  className={`bg-gray-50 ${layout === 'sidebyside' ? 'w-full h-full object-cover' : 'w-full max-h-64'}`}
+                  style={{ objectFit: item.fit ?? 'cover' }} />
                 {isEditing && (
                   <div className="flex p-1 gap-1 bg-black/5 absolute top-2 left-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                     {(['cover', 'contain'] as const).map(f => (
@@ -59,46 +63,59 @@ function Column({
                     ))}
                   </div>
                 )}
-              </>
+              </div>
             )}
 
-            {/* Text item */}
-            {item.type === 'text' && (
+            {/* Text item (stacked) */}
+            {item.type === 'text' && layout === 'stacked' && (
               <div className="p-4 min-h-[80px]" style={{ background: `${color}08` }}>
                 {isEditing ? (
-                  <textarea
-                    className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none"
-                    rows={3}
-                    placeholder="Décrivez ce cas…"
-                    value={item.content ?? ''}
-                    onChange={e => onUpdateContent(item.id, e.target.value)}
-                  />
+                  <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none" rows={3}
+                    placeholder="Décrivez ce cas…" value={item.content ?? ''}
+                    onChange={e => onUpdateContent(item.id, e.target.value)} />
                 ) : (
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.content || <span className="text-gray-300 italic">Vide</span>}</p>
                 )}
               </div>
             )}
 
-            {/* Caption */}
-            <div className="px-3 py-2 bg-white border-t" style={{ borderColor: `${color}30` }}>
-              {isEditing ? (
-                <input
-                  className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
-                  placeholder="Légende…"
-                  value={item.caption ?? ''}
-                  onChange={e => onUpdateCaption(item.id, e.target.value)}
-                />
-              ) : (
-                <p className="text-xs text-gray-400">{item.caption || ''}</p>
-              )}
-            </div>
+            {/* Caption + text (side-by-side: right column) */}
+            {layout === 'sidebyside' ? (
+              <div className="flex-1 flex flex-col justify-center p-4 gap-2 min-w-0" style={{ background: item.type === 'text' ? `${color}08` : undefined }}>
+                {item.type === 'text' && (
+                  isEditing ? (
+                    <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none" rows={3}
+                      placeholder="Décrivez ce cas…" value={item.content ?? ''}
+                      onChange={e => onUpdateContent(item.id, e.target.value)} />
+                  ) : (
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.content || <span className="text-gray-300 italic">Vide</span>}</p>
+                  )
+                )}
+                {isEditing ? (
+                  <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300 border-t pt-2" style={{ borderColor: `${color}20` }}
+                    placeholder="Légende…" value={item.caption ?? ''}
+                    onChange={e => onUpdateCaption(item.id, e.target.value)} />
+                ) : (
+                  item.caption ? <p className="text-xs text-gray-400 border-t pt-2" style={{ borderColor: `${color}20` }}>{item.caption}</p> : null
+                )}
+              </div>
+            ) : (
+              /* Caption (stacked) */
+              <div className="px-3 py-2 bg-white border-t" style={{ borderColor: `${color}30` }}>
+                {isEditing ? (
+                  <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
+                    placeholder="Légende…" value={item.caption ?? ''}
+                    onChange={e => onUpdateCaption(item.id, e.target.value)} />
+                ) : (
+                  <p className="text-xs text-gray-400">{item.caption || ''}</p>
+                )}
+              </div>
+            )}
 
             {/* Delete button */}
             {isEditing && (
-              <button
-                onClick={() => onDelete(item.id)}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-              >
+              <button onClick={() => onDelete(item.id)}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                 <Trash2 size={12} />
               </button>
             )}
@@ -143,6 +160,16 @@ function Column({
 export default function DoDontModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const doItems = module.doItems ?? [];
   const dontItems = module.dontItems ?? [];
+  const layout = module.doDontLayout ?? 'stacked';
+
+  async function setLayout(value: 'stacked' | 'sidebyside') {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ doDontLayout: value }),
+    });
+    onUpdate(await res.json());
+  }
 
   async function patch(patch: Partial<Module>) {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -181,6 +208,20 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
 
   return (
     <div>
+      {isEditing && (
+        <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 rounded-lg w-fit">
+          <button onClick={() => setLayout('stacked')}
+            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            style={layout === 'stacked' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+            Empilé
+          </button>
+          <button onClick={() => setLayout('sidebyside')}
+            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            style={layout === 'sidebyside' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+            Côte à côte
+          </button>
+        </div>
+      )}
       <ModuleDescription
         moduleId={module.id}
         value={module.description}
@@ -190,7 +231,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
       <div className="flex gap-5">
         <Column
           label="À faire" icon="✓" color={DO_COLOR}
-          items={doItems} isEditing={isEditing}
+          items={doItems} isEditing={isEditing} layout={layout}
           onAdd={f => uploadItem('do', f)}
           onAddText={() => addTextItem('do')}
           onUpdateCaption={(id, caption) => updateItem('do', id, { caption })}
@@ -200,7 +241,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
         />
         <Column
           label="À éviter" icon="✗" color={DONT_COLOR}
-          items={dontItems} isEditing={isEditing}
+          items={dontItems} isEditing={isEditing} layout={layout}
           onAdd={f => uploadItem('dont', f)}
           onAddText={() => addTextItem('dont')}
           onUpdateCaption={(id, caption) => updateItem('dont', id, { caption })}

@@ -103,6 +103,7 @@ export interface Module {
   spacingBase?: number;
   spacingSteps?: number[];
   // do & don't
+  doDontLayout?: 'stacked' | 'sidebyside';
   doItems?: DoDontItem[];
   dontItems?: DoDontItem[];
   createdAt: string;
