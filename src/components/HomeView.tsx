@@ -179,8 +179,12 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                       : { background: editingId === brand.id ? editColor : brand.color }
                   }>
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
-                      {initial}
+                    <div className="w-10 h-10 rounded-full border-2 border-white/60 overflow-hidden flex items-center justify-center"
+                      style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.2)' }}>
+                      {brand.logoImage
+                        ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain" />
+                        : <span className="text-white text-lg font-bold">{initial}</span>
+                      }
                     </div>
                     <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button

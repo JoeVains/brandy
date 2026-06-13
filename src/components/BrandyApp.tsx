@@ -119,24 +119,38 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
 }
 
 function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Brand) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const headerInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [hovering, setHovering] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
 
-  async function handleFile(file: File) {
+  async function handleHeaderFile(file: File) {
     setUploading(true);
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch(`/api/brands/${brand.id}/header`, { method: 'POST', body: fd });
-    const updated = await res.json();
-    onUpdate(updated);
+    onUpdate(await res.json());
     setUploading(false);
   }
 
   async function removeHeader() {
     const res = await fetch(`/api/brands/${brand.id}/header`, { method: 'DELETE' });
-    const updated = await res.json();
-    onUpdate(updated);
+    onUpdate(await res.json());
+  }
+
+  async function handleLogoFile(file: File) {
+    setLogoUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/brands/${brand.id}/logo`, { method: 'POST', body: fd });
+    onUpdate(await res.json());
+    setLogoUploading(false);
+  }
+
+  async function removeLogo() {
+    const res = await fetch(`/api/brands/${brand.id}/logo`, { method: 'DELETE' });
+    onUpdate(await res.json());
   }
 
   const bgStyle = brand.headerImage
@@ -144,41 +158,73 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
     : { background: brand.color };
 
   return (
-    <div
-      className="relative w-full h-40 flex-shrink-0 group"
-      style={bgStyle}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-      onDragOver={e => { e.preventDefault(); setHovering(true); }}
-      onDragLeave={() => setHovering(false)}
-      onDrop={e => { e.preventDefault(); setHovering(false); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) handleFile(f); }}
-    >
-      {/* Overlay on hover */}
-      {hovering && !uploading && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3 transition-opacity">
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-gray-800 text-sm font-medium transition-colors shadow">
-            <Upload size={14} />
-            {brand.headerImage ? 'Remplacer' : 'Ajouter une image'}
-          </button>
-          {brand.headerImage && (
-            <button
-              onClick={removeHeader}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-red-500 text-sm font-medium transition-colors shadow">
-              <Trash size={14} />
-              Supprimer
+    <div className="relative w-full flex-shrink-0" style={{ paddingBottom: 40 }}>
+      {/* Header band */}
+      <div
+        className="relative w-full h-[200px] group"
+        style={bgStyle}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        onDragOver={e => { e.preventDefault(); setHovering(true); }}
+        onDragLeave={() => setHovering(false)}
+        onDrop={e => { e.preventDefault(); setHovering(false); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) handleHeaderFile(f); }}
+      >
+        {hovering && !uploading && (
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3">
+            <button onClick={() => headerInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-gray-800 text-sm font-medium shadow">
+              <Upload size={14} />
+              {brand.headerImage ? 'Remplacer' : 'Ajouter une image'}
             </button>
+            {brand.headerImage && (
+              <button onClick={removeHeader}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-red-500 text-sm font-medium shadow">
+                <Trash size={14} /> Supprimer
+              </button>
+            )}
+          </div>
+        )}
+        {uploading && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        <input ref={headerInputRef} type="file" accept="image/*" className="sr-only"
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleHeaderFile(f); e.target.value = ''; }} />
+      </div>
+
+      {/* Logo circle — straddles the bottom edge of the header */}
+      <div className="absolute left-8 group/logo" style={{ bottom: 0, width: 80, height: 80 }}>
+        <div
+          className="w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden cursor-pointer flex items-center justify-center"
+          style={{ background: brand.logoImage ? 'white' : brand.color }}
+          onClick={() => logoInputRef.current?.click()}
+        >
+          {logoUploading ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : brand.logoImage ? (
+            <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-white text-2xl font-bold select-none">
+              {brand.name.charAt(0).toUpperCase()}
+            </span>
           )}
         </div>
-      )}
-      {uploading && (
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        {/* Hover overlay on the logo */}
+        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center gap-1 pointer-events-none">
+          <Upload size={14} className="text-white" />
         </div>
-      )}
-      <input ref={inputRef} type="file" accept="image/*" className="sr-only"
-        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+        {brand.logoImage && (
+          <button
+            onClick={e => { e.stopPropagation(); removeLogo(); }}
+            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-red-400 hover:text-red-600 opacity-0 group-hover/logo:opacity-100 transition-opacity"
+          >
+            <X size={10} />
+          </button>
+        )}
+        <input ref={logoInputRef} type="file" accept="image/*" className="sr-only"
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoFile(f); e.target.value = ''; }} />
+      </div>
     </div>
   );
 }

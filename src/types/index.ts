@@ -4,6 +4,7 @@ export interface Brand {
   color: string;
   createdAt: string;
   headerImage?: string;
+  logoImage?: string;
 }
 
 export interface Section {
