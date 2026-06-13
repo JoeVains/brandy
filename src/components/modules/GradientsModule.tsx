@@ -67,10 +67,18 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
-        {/* Plain div drag handle — no input inside, so ghost is clean */}
+        {/* Plain div drag handle */}
         <div draggable
           onClick={() => colorInputRef.current?.click()}
-          onDragStart={e => { e.dataTransfer.setDragImage(e.currentTarget, 12, 12); onDragStart?.(e); }}
+          onDragStart={e => {
+            const size = 24;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (ctx) { ctx.fillStyle = stop.color; ctx.fillRect(0, 0, size, size); }
+            e.dataTransfer.setDragImage(canvas, size / 2, size / 2);
+            onDragStart?.(e);
+          }}
           className="w-6 h-6 rounded border flex-shrink-0"
           style={{ background: stop.color, borderColor: 'var(--border)', cursor: 'grab' }} />
         {/* Color input hidden, triggered by clicking the div above */}
