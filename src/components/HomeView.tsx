@@ -173,8 +173,12 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                   onDragEnd={() => { setDragId(null); setDragOverId(null); }}
                   onClick={() => onOpenBrand(brand.id)}
                 >
-                  {/* Color band with action buttons */}
-                  <div className="h-24 flex items-end p-4 relative" style={{ background: editingId === brand.id ? editColor : brand.color }}>
+                  {/* Header band with action buttons */}
+                  <div className="h-24 flex items-end p-4 relative" style={
+                    brand.headerImage && editingId !== brand.id
+                      ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                      : { background: editingId === brand.id ? editColor : brand.color }
+                  }>
                     <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
                       {initial}
                     </div>

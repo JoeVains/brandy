@@ -3,6 +3,7 @@ export interface Brand {
   name: string;
   color: string;
   createdAt: string;
+  headerImage?: string;
 }
 
 export interface Section {

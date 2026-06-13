@@ -6,7 +6,7 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import SearchModal from './SearchModal';
 
@@ -115,6 +115,71 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
       </div>
     </div>,
     document.body
+  );
+}
+
+function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Brand) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [hovering, setHovering] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/brands/${brand.id}/header`, { method: 'POST', body: fd });
+    const updated = await res.json();
+    onUpdate(updated);
+    setUploading(false);
+  }
+
+  async function removeHeader() {
+    const res = await fetch(`/api/brands/${brand.id}/header`, { method: 'DELETE' });
+    const updated = await res.json();
+    onUpdate(updated);
+  }
+
+  const bgStyle = brand.headerImage
+    ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { background: brand.color };
+
+  return (
+    <div
+      className="relative w-full h-40 flex-shrink-0 group"
+      style={bgStyle}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      onDragOver={e => { e.preventDefault(); setHovering(true); }}
+      onDragLeave={() => setHovering(false)}
+      onDrop={e => { e.preventDefault(); setHovering(false); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) handleFile(f); }}
+    >
+      {/* Overlay on hover */}
+      {hovering && !uploading && (
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3 transition-opacity">
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-gray-800 text-sm font-medium transition-colors shadow">
+            <Upload size={14} />
+            {brand.headerImage ? 'Remplacer' : 'Ajouter une image'}
+          </button>
+          {brand.headerImage && (
+            <button
+              onClick={removeHeader}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-red-500 text-sm font-medium transition-colors shadow">
+              <Trash size={14} />
+              Supprimer
+            </button>
+          )}
+        </div>
+      )}
+      {uploading && (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" className="sr-only"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+    </div>
   );
 }
 
@@ -399,6 +464,12 @@ export default function BrandyApp() {
               />
             ) : (
               <div className="flex-1 overflow-y-auto">
+                {!activeSection && (
+                  <BrandHeader
+                    brand={activeBrand}
+                    onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))}
+                  />
+                )}
                 <div className="max-w-4xl mx-auto px-8 py-8">
                   <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
                     <h1 className="text-2xl font-bold text-gray-900">
