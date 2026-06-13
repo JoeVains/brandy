@@ -26,6 +26,8 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(BRAND_COLORS[0]);
   const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   async function createBrand() {
     if (!newName.trim()) return;
@@ -39,6 +41,20 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     setNewName('');
     setShowNew(false);
     onOpenBrand(brand.id);
+  }
+
+  function reorder(draggedId: string, targetId: string) {
+    if (draggedId === targetId) return;
+    const next = [...brands];
+    const from = next.findIndex(b => b.id === draggedId);
+    const to = next.findIndex(b => b.id === targetId);
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    onBrandsChange(next);
+    fetch('/api/brands/reorder', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ids: next.map(b => b.id) }),
+    });
   }
 
   async function duplicateBrand(id: string) {
@@ -121,10 +137,18 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             {brands.map(brand => {
               const sectionCount = sections.filter(s => s.brandId === brand.id && s.parentId === null).length;
               const initial = brand.name.charAt(0).toUpperCase();
+              const isDragging = dragId === brand.id;
+              const isOver = dragOverId === brand.id;
               return (
                 <div key={brand.id}
-                  className="group bg-white border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col"
-                  style={{ borderColor: 'var(--border)' }}
+                  className="group bg-white border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg"
+                  style={{ borderColor: isOver && !isDragging ? brand.color : 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
+                  draggable
+                  onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
+                  onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverId(brand.id); }}
+                  onDragLeave={() => setDragOverId(null)}
+                  onDrop={e => { e.preventDefault(); if (dragId) reorder(dragId, brand.id); setDragId(null); setDragOverId(null); }}
+                  onDragEnd={() => { setDragId(null); setDragOverId(null); }}
                   onClick={() => onOpenBrand(brand.id)}
                 >
                   {/* Color band */}
