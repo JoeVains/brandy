@@ -116,6 +116,7 @@ export interface Module {
   spacingBase?: number;
   spacingSteps?: number[];
   // gradients
+  gradientMode?: 'cards' | 'drops';
   gradientItems?: GradientItem[];
   // do & don't
   doDontLayout?: 'stacked' | 'sidebyside';

@@ -105,13 +105,14 @@ function gradientToCss(type: string, angle: number, stops: GradientStop[]): stri
     : `linear-gradient(${angle}deg, ${s})`;
 }
 
-function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
+function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart, drops }: {
   item: GradientItem;
   brandColor: string;
   onSave: (updated: GradientItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  drops?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -258,6 +259,34 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
     );
   }
 
+  if (drops) {
+    return (
+      <div className="flex flex-col items-center gap-2 group">
+        <div className="w-28 h-28 rounded-full relative transition-all duration-200 hover:scale-105 hover:shadow-md"
+          style={{ background: savedCss, cursor: isEditing ? 'grab' : 'default' }}
+          draggable={isEditing} onDragStart={onDragStart}>
+          {isEditing && (
+            <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-full">
+              <button onClick={() => setEditing(true)}
+                className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
+                <Pencil size={12} />
+              </button>
+              <button onClick={onDelete} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-red-500">
+                <Trash2 size={12} />
+              </button>
+            </div>
+          )}
+        </div>
+        <p className="text-xs font-medium text-gray-800 text-center">{item.name}</p>
+        <button onClick={copy}
+          className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-700 transition-colors">
+          <span className="font-mono">{copied ? '✓ copié' : `${item.type === 'linear' ? `${item.angle ?? 135}°` : 'Radial'}`}</span>
+          <Copy size={8} className="opacity-0 group-hover:opacity-50" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.02] hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
       <div className="h-24 relative" style={{ background: savedCss, cursor: isEditing ? 'grab' : 'default' }}
@@ -295,6 +324,31 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const items = module.gradientItems ?? [];
+  const gradientMode = module.gradientMode ?? 'cards';
+
+  async function setMode(newMode: 'cards' | 'drops') {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ gradientMode: newMode }),
+    });
+    onUpdate(await res.json());
+  }
+
+  const ModeToggle = () => (
+    <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+      <button onClick={() => setMode('cards')}
+        className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+        style={gradientMode === 'cards' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+        Cards
+      </button>
+      <button onClick={() => setMode('drops')}
+        className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+        style={gradientMode === 'drops' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+        Drops
+      </button>
+    </div>
+  );
 
   const DEFAULT_STOPS: GradientStop[] = [
     { color: '#667eea', position: 0 },
@@ -377,25 +431,66 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     URL.revokeObjectURL(a.href);
   }
 
+  const Description = (
+    <ModuleDescription
+      moduleId={module.id}
+      value={module.description}
+      isEditing={isEditing}
+      onUpdate={desc => onUpdate({ ...module, description: desc })}
+    />
+  );
+
+  const Toolbar = items.length > 0 ? (
+    <div className="flex items-center justify-between mb-4">
+      {isEditing ? <ModeToggle /> : <div />}
+      <button onClick={downloadCss}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+        style={{ borderColor: 'var(--border)' }}>
+        <Download size={10} /> .css
+      </button>
+    </div>
+  ) : isEditing ? (
+    <div className="mb-4"><ModeToggle /></div>
+  ) : null;
+
+  if (gradientMode === 'drops') {
+    return (
+      <div>
+        {Description}
+        {Toolbar}
+        <div className="flex flex-wrap gap-8">
+          {items.map((item, idx) => {
+            const css = gradientToCss(item.type, item.angle ?? 135, item.stops);
+            return (
+              <div key={item.id}
+                onDragOver={e => onDragOver(e, idx)}
+                onDrop={() => onDrop(idx)}
+                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                className="transition-opacity"
+                style={{ opacity: dragIdx === idx ? 0.4 : 1, outline: dragOverIdx === idx && dragIdx !== idx ? `2px solid ${brandColor}` : undefined, borderRadius: 999 }}
+              >
+                <GradientSwatch item={item} brandColor={brandColor}
+                  onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+                  onDragStart={e => onDragStart(e, idx)} drops />
+              </div>
+            );
+          })}
+          {isEditing && !showAdd && (
+            <button onClick={() => setShowAdd(true)}
+              className="w-28 h-28 border-2 border-dashed rounded-full flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+              style={{ borderColor: 'var(--border)' }}>
+              <Plus size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <ModuleDescription
-        moduleId={module.id}
-        value={module.description}
-        isEditing={isEditing}
-        onUpdate={desc => onUpdate({ ...module, description: desc })}
-      />
-
-      {items.length > 0 && (
-        <div className="flex justify-end mb-4">
-          <button onClick={downloadCss}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
-            style={{ borderColor: 'var(--border)' }}>
-            <Download size={10} /> .css
-          </button>
-        </div>
-      )}
-
+      {Description}
+      {Toolbar}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
