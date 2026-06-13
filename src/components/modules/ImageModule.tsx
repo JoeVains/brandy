@@ -435,7 +435,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         {imageItems.map(item => {
           const isSelected = selected.has(item.id);
           return (
-          <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer"
+          <div key={item.id} data-item-id={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer"
             style={{ borderColor: isSelected ? brandColor : 'var(--border)', outline: isSelected ? `2px solid ${brandColor}` : 'none' }}
             onClick={() => selectMode ? toggleSelect(item.id) : setLightboxIndex(imageItems.indexOf(item))}>
             <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />

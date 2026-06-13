@@ -203,7 +203,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         {filtered.map(item => {
           const isSelected = selected.has(item.id);
           return (
-            <div key={item.id} className="group flex flex-col items-center gap-2">
+            <div key={item.id} data-item-id={item.id} className="group flex flex-col items-center gap-2">
               {/* Card */}
               <div
                 onClick={() => toggleSelect(item.id)}

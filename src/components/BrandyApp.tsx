@@ -349,21 +349,24 @@ export default function BrandyApp() {
         <SearchModal
           brandId={activeBrandId}
           sections={brandSections}
-          onNavigate={(sectionId, moduleId) => {
+          onNavigate={(sectionId, moduleId, itemId) => {
             setActiveSectionId(sectionId);
-            // Wait for PageView to render the section, then scroll + flash
             setTimeout(() => {
-              const el = document.querySelector(`[data-module-id="${moduleId}"]`) as HTMLElement | null;
+              const el = (
+                (itemId ? document.querySelector(`[data-item-id="${itemId}"]`) : null) ??
+                document.querySelector(`[data-module-id="${moduleId}"]`)
+              ) as HTMLElement | null;
               if (!el) return;
+              const color = activeBrand?.color ?? '#6366f1';
+              const radius = itemId ? '12px' : '16px';
               el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.style.transition = 'outline 0s, outline-offset 0s';
-              el.style.outline = `2px solid ${activeBrand?.color ?? '#6366f1'}`;
+              el.style.transition = 'none';
+              el.style.outline = `2px solid ${color}`;
               el.style.outlineOffset = '4px';
-              el.style.borderRadius = '16px';
+              el.style.borderRadius = radius;
               setTimeout(() => {
                 el.style.transition = 'outline 0.6s, outline-offset 0.6s, border-radius 0.6s';
                 el.style.outline = '2px solid transparent';
-                el.style.outlineOffset = '4px';
                 setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; el.style.borderRadius = ''; el.style.transition = ''; }, 700);
               }, 1600);
             }, 150);

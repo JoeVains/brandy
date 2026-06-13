@@ -13,6 +13,7 @@ interface SearchResult {
   sectionName: string;
   match: string;
   matchLabel: string;
+  itemId?: string;
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -36,9 +37,9 @@ function searchModules(modules: Module[], sections: Section[], q: string): Searc
   const results: SearchResult[] = [];
   const section = (m: Module) => sections.find(s => s.id === m.sectionId);
 
-  function push(m: Module, match: string, matchLabel: string) {
+  function push(m: Module, match: string, matchLabel: string, itemId?: string) {
     const s = section(m);
-    results.push({ moduleId: m.id, moduleType: m.type, moduleTitle: m.title, sectionId: m.sectionId, sectionName: s?.name ?? '', match, matchLabel });
+    results.push({ moduleId: m.id, moduleType: m.type, moduleTitle: m.title, sectionId: m.sectionId, sectionName: s?.name ?? '', match, matchLabel, itemId });
   }
 
   for (const m of modules) {
@@ -47,35 +48,35 @@ function searchModules(modules: Module[], sections: Section[], q: string): Searc
 
     // Colors
     m.colorItems?.forEach(c => {
-      if (c.name.toLowerCase().includes(query)) push(m, c.name, 'couleur');
-      else if (c.value.toLowerCase().includes(query)) push(m, c.value, 'hex');
+      if (c.name.toLowerCase().includes(query)) push(m, c.name, 'couleur', c.id);
+      else if (c.value.toLowerCase().includes(query)) push(m, c.value, 'hex', c.id);
     });
 
     // Typography
     m.fontItems?.forEach(f => {
-      if (f.name.toLowerCase().includes(query)) push(m, f.name, 'police');
-      else if (f.family?.toLowerCase().includes(query)) push(m, f.family, 'famille');
+      if (f.name.toLowerCase().includes(query)) push(m, f.name, 'police', f.id);
+      else if (f.family?.toLowerCase().includes(query)) push(m, f.family, 'famille', f.id);
     });
 
     // Icons
     m.iconItems?.forEach(i => {
-      if (i.name.toLowerCase().includes(query)) push(m, i.name, 'icône');
+      if (i.name.toLowerCase().includes(query)) push(m, i.name, 'icône', i.id);
     });
 
     // Attachments
     m.attachmentItems?.forEach(a => {
-      if (a.name.toLowerCase().includes(query)) push(m, a.name, 'fichier');
+      if (a.name.toLowerCase().includes(query)) push(m, a.name, 'fichier', a.id);
     });
 
     // Images
     m.imageItems?.forEach(img => {
-      if (img.filename.toLowerCase().includes(query)) push(m, img.filename, 'image');
+      if (img.filename.toLowerCase().includes(query)) push(m, img.filename, 'image', img.id);
     });
     if (m.imageFilename?.toLowerCase().includes(query)) push(m, m.imageFilename, 'image');
 
     // Gradients
     m.gradientItems?.forEach(g => {
-      if (g.name.toLowerCase().includes(query)) push(m, g.name, 'dégradé');
+      if (g.name.toLowerCase().includes(query)) push(m, g.name, 'dégradé', g.id);
     });
 
     // Text content
@@ -83,7 +84,7 @@ function searchModules(modules: Module[], sections: Section[], q: string): Searc
 
     // Do & Don't captions
     [...(m.doItems ?? []), ...(m.dontItems ?? [])].forEach(item => {
-      if (item.caption?.toLowerCase().includes(query)) push(m, item.caption, 'légende');
+      if (item.caption?.toLowerCase().includes(query)) push(m, item.caption, 'légende', item.id);
     });
 
     // Audio / video titles
@@ -104,7 +105,7 @@ function searchModules(modules: Module[], sections: Section[], q: string): Searc
 interface Props {
   brandId: string;
   sections: Section[];
-  onNavigate: (sectionId: string, moduleId: string) => void;
+  onNavigate: (sectionId: string, moduleId: string, itemId?: string) => void;
   onClose: () => void;
 }
 
@@ -128,7 +129,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
   useEffect(() => { setActiveIdx(0); }, [query]);
 
   const go = useCallback((result: SearchResult) => {
-    onNavigate(result.sectionId, result.moduleId);
+    onNavigate(result.sectionId, result.moduleId, result.itemId);
     onClose();
   }, [onNavigate, onClose]);
 

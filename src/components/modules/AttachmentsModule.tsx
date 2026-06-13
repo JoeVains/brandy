@@ -61,7 +61,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
       />
     <div className="space-y-2">
       {items.map(item => (
-        <div key={item.id} className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50 group" style={{ borderColor: 'var(--border)' }}>
+        <div key={item.id} data-item-id={item.id} className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50 group" style={{ borderColor: 'var(--border)' }}>
           <span className="text-xl">{getIcon(item.mimeType)}</span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>

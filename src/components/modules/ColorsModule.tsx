@@ -375,6 +375,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
         <div className="flex flex-wrap gap-8">
           {items.map((item, idx) => (
             <div key={item.id}
+              data-item-id={item.id}
               onDragOver={e => onDragOver(e, idx)}
               onDrop={() => onDrop(idx)}
               onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
@@ -443,6 +444,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
+            data-item-id={item.id}
             onDragOver={e => onDragOver(e, idx)}
             onDrop={() => onDrop(idx)}
             onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}

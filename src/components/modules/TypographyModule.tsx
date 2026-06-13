@@ -221,7 +221,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
             : undefined;
 
           return (
-            <div key={item.id} className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+            <div key={item.id} data-item-id={item.id} className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
               {/* Font header */}
               <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b" style={{ borderColor: 'var(--border)' }}>
                 <div>

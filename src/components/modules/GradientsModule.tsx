@@ -527,6 +527,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
             const css = gradientToCss(item.type, item.angle ?? 135, item.stops);
             return (
               <div key={item.id}
+                data-item-id={item.id}
                 onDragOver={e => onDragOver(e, idx)}
                 onDrop={() => onDrop(idx)}
                 onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
@@ -559,6 +560,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
+            data-item-id={item.id}
             onDragOver={e => onDragOver(e, idx)}
             onDrop={() => onDrop(idx)}
             onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
