@@ -58,6 +58,19 @@ export interface AttachmentItem {
   size: number;
 }
 
+export interface GradientStop {
+  color: string;
+  position: number;
+}
+
+export interface GradientItem {
+  id: string;
+  name: string;
+  type: 'linear' | 'radial';
+  angle?: number;
+  stops: GradientStop[];
+}
+
 export interface DoDontItem {
   id: string;
   type: 'image' | 'text';
@@ -68,7 +81,7 @@ export interface DoDontItem {
   fit?: 'cover' | 'contain';
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'divider';
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'divider';
 
 export interface Module {
   id: string;
@@ -102,6 +115,8 @@ export interface Module {
   // spacing
   spacingBase?: number;
   spacingSteps?: number[];
+  // gradients
+  gradientItems?: GradientItem[];
   // do & don't
   doDontLayout?: 'stacked' | 'sidebyside';
   doItems?: DoDontItem[];
