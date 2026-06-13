@@ -13,21 +13,63 @@ interface Props {
   isEditing?: boolean;
 }
 
-function Lightbox({ src, filename, onClose }: { src: string; filename: string; onClose: () => void }) {
+function downloadAsPng(src: string, filename: string) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth || 800;
+    canvas.height = img.naturalHeight || 800;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0);
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename.replace(/\.svg$/i, '.png');
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+  img.src = src;
+}
+
+function Lightbox({ src, filename, mimeType, onClose }: { src: string; filename: string; mimeType?: string; onClose: () => void }) {
+  const isSvg = mimeType === 'image/svg+xml' || filename.toLowerCase().endsWith('.svg');
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div className="absolute top-4 right-4 flex gap-2">
-        <a
-          href={src}
-          download={filename}
-          onClick={e => e.stopPropagation()}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
-        >
-          <Download size={14} /> Télécharger
-        </a>
+        {isSvg ? (
+          <>
+            <a
+              href={src}
+              download={filename}
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+            >
+              <Download size={14} /> SVG
+            </a>
+            <button
+              onClick={e => { e.stopPropagation(); downloadAsPng(src, filename); }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+            >
+              <Download size={14} /> PNG
+            </button>
+          </>
+        ) : (
+          <a
+            href={src}
+            download={filename}
+            onClick={e => e.stopPropagation()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+          >
+            <Download size={14} /> Télécharger
+          </a>
+        )}
         <button
           onClick={onClose}
           className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
@@ -49,7 +91,7 @@ function Lightbox({ src, filename, onClose }: { src: string; filename: string; o
 export default function ImageModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const [lightbox, setLightbox] = useState<{ src: string; filename: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ src: string; filename: string; mimeType?: string } | null>(null);
   const mode = module.imageMode ?? 'single';
   const fit = module.imageFit ?? 'contain';
   const imageItems = module.imageItems ?? [];
@@ -226,7 +268,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full max-h-[500px] bg-gray-50" style={{ objectFit: fit }} />
             <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={() => setLightbox({ src: `/uploads/${module.imageFilename}`, filename: module.imageFilename! })}
+                onClick={() => setLightbox({ src: `/uploads/${module.imageFilename}`, filename: module.imageFilename!, mimeType: module.imageMimeType })}
                 className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
                 <ZoomIn size={14} />
               </button>
@@ -248,7 +290,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             </div>
             <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleSingleInput(e.target.files)} />
           </div>
-          {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} onClose={() => setLightbox(null)} />}
+          {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} mimeType={lightbox.mimeType} onClose={() => setLightbox(null)} />}
         </div>
       );
     }
@@ -281,7 +323,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {imageItems.map(item => (
           <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer" style={{ borderColor: 'var(--border)' }}
-            onClick={() => setLightbox({ src: `/uploads/${item.filename}`, filename: item.filename })}>
+            onClick={() => setLightbox({ src: `/uploads/${item.filename}`, filename: item.filename, mimeType: item.mimeType })}>
             <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
@@ -316,7 +358,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         )}
       </div>
       <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleGalleryInput(e.target.files)} />
-      {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} onClose={() => setLightbox(null)} />}
+      {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} mimeType={lightbox.mimeType} onClose={() => setLightbox(null)} />}
     </div>
   );
 }
