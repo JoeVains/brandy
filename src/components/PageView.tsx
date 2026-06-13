@@ -516,9 +516,10 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
               onDragLeave={onDragLeave}
               onDrop={() => onDrop(module.id)}
               onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
-              className={`transition-all ${dragOverId === module.id ? 'scale-[0.98]' : ''}`}
-              style={dragOverId === module.id ? { outline: `2px solid ${brand.color}`, outlineOffset: 4, borderRadius: 16 } : {}}
             >
+              {dragOverId === module.id && dragId && dragId !== module.id && (
+                <div className="h-0.5 rounded-full mb-2" style={{ background: brand.color }} />
+              )}
               <ModuleCard
                 module={module}
                 brandColor={brand.color}
