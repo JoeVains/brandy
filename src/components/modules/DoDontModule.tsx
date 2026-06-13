@@ -81,7 +81,7 @@ function Column({
 
             {/* Caption + text (side-by-side: right column) */}
             {layout === 'sidebyside' ? (
-              <div className="flex-1 flex flex-col justify-center p-4 gap-2 min-w-0" style={{ background: item.type === 'text' ? `${color}08` : undefined }}>
+              <div className="flex-1 flex flex-col justify-center p-4 gap-2 min-w-0 border-l" style={{ background: item.type === 'text' ? `${color}08` : undefined, borderColor: `${color}30` }}>
                 {item.type === 'text' && (
                   isEditing ? (
                     <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none" rows={3}
@@ -92,11 +92,11 @@ function Column({
                   )
                 )}
                 {isEditing ? (
-                  <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300 border-t pt-2" style={{ borderColor: `${color}20` }}
+                  <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
                     placeholder="Légende…" value={item.caption ?? ''}
                     onChange={e => onUpdateCaption(item.id, e.target.value)} />
                 ) : (
-                  item.caption ? <p className="text-xs text-gray-400 border-t pt-2" style={{ borderColor: `${color}20` }}>{item.caption}</p> : null
+                  item.caption ? <p className="text-xs text-gray-400">{item.caption}</p> : null
                 )}
               </div>
             ) : (
