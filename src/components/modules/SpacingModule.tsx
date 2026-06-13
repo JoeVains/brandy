@@ -70,8 +70,12 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
     await patchSteps(steps.filter(s => s !== step));
   }
 
+  // Use live input value for preview, fall back to saved base
+  const liveBase = parseFloat(baseInput);
+  const previewBase = isEditing && !isNaN(liveBase) && liveBase > 0 ? liveBase : base;
+
   // Largest px value for proportional bar width
-  const maxPx = Math.max(...steps.map(s => base * s));
+  const maxPx = Math.max(...steps.map(s => previewBase * s));
   const BAR_MAX_WIDTH = 480; // px, logical max width for the bar
 
   return (
@@ -103,9 +107,9 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
       {/* Spacing scale */}
       <div className="space-y-2">
         {steps.map(step => {
-          const px = base * step;
+          const px = previewBase * step;
           const barWidth = Math.round((px / maxPx) * BAR_MAX_WIDTH);
-          const label = tokenName(base, step);
+          const label = tokenName(previewBase, step);
           return (
             <div key={step} className="flex items-center gap-4 group">
               {/* Token name */}
@@ -155,7 +159,7 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
                 onChange={e => setNewStep(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') addStep(); if (e.key === 'Escape') setShowAdd(false); }}
               />
-              <span className="text-xs text-gray-400">→ {parseFloat(newStep) > 0 ? `${base * parseFloat(newStep)}px` : '—'}</span>
+              <span className="text-xs text-gray-400">→ {parseFloat(newStep) > 0 ? `${previewBase * parseFloat(newStep)}px` : '—'}</span>
               <button onClick={addStep} className="text-xs px-3 py-1 rounded-lg text-white" style={{ background: brandColor }}>Ajouter</button>
               <button onClick={() => setShowAdd(false)} className="text-xs text-gray-400 hover:text-gray-700">Annuler</button>
             </div>
