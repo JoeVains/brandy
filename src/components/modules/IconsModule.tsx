@@ -218,7 +218,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
                 <img src={`/uploads/${item.filename}`} alt={item.name} className="w-full h-full object-contain" />
 
                 {/* Selection checkmark */}
-                <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
+                <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
                   style={{ background: isSelected ? brandColor : 'white', borderColor: isSelected ? brandColor : '#d1d5db' }}>
                   {isSelected && <Check size={10} color="white" strokeWidth={3} />}
                 </div>
