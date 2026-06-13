@@ -345,7 +345,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       el.removeEventListener('drop', onDragEnd);
       if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
     };
-  }, []);
+  }, [loading]);
 
   async function addModule(type: ModuleType) {
     const res = await fetch('/api/modules', {
