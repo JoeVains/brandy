@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, ImageItem } from '@/types';
-import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square, X, Download, ZoomIn } from 'lucide-react';
+import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square, X, Download, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -34,55 +34,89 @@ function downloadAsPng(src: string, filename: string) {
   img.src = src;
 }
 
-function Lightbox({ src, filename, mimeType, onClose }: { src: string; filename: string; mimeType?: string; onClose: () => void }) {
+interface LightboxItem { src: string; filename: string; mimeType?: string; }
+
+function Lightbox({ items, index, onNavigate, onClose }: {
+  items: LightboxItem[];
+  index: number;
+  onNavigate: (i: number) => void;
+  onClose: () => void;
+}) {
+  const { src, filename, mimeType } = items[index];
   const isSvg = mimeType === 'image/svg+xml' || filename.toLowerCase().endsWith('.svg');
+  const hasPrev = index > 0;
+  const hasNext = index < items.length - 1;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && hasPrev) onNavigate(index - 1);
+      else if (e.key === 'ArrowRight' && hasNext) onNavigate(index + 1);
+      else if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [index, hasPrev, hasNext, onNavigate, onClose]);
 
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
+      {/* Top-right controls */}
       <div className="absolute top-4 right-4 flex gap-2">
         {isSvg ? (
           <>
-            <a
-              href={src}
-              download={filename}
-              onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
-            >
+            <a href={src} download={filename} onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
               <Download size={14} /> SVG
             </a>
-            <button
-              onClick={e => { e.stopPropagation(); downloadAsPng(src, filename); }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
-            >
+            <button onClick={e => { e.stopPropagation(); downloadAsPng(src, filename); }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
               <Download size={14} /> PNG
             </button>
           </>
         ) : (
-          <a
-            href={src}
-            download={filename}
-            onClick={e => e.stopPropagation()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
-          >
+          <a href={src} download={filename} onClick={e => e.stopPropagation()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
             <Download size={14} /> Télécharger
           </a>
         )}
-        <button
-          onClick={onClose}
-          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-        >
+        <button onClick={onClose}
+          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors">
           <X size={16} />
         </button>
       </div>
-      <img
-        src={src}
-        alt=""
-        className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      />
+
+      {/* Prev */}
+      {hasPrev && (
+        <button
+          onClick={e => { e.stopPropagation(); onNavigate(index - 1); }}
+          className="absolute left-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+        >
+          <ChevronLeft size={24} />
+        </button>
+      )}
+
+      {/* Image */}
+      <img src={src} alt="" className="max-w-[80vw] max-h-[90vh] object-contain rounded-xl shadow-2xl"
+        onClick={e => e.stopPropagation()} />
+
+      {/* Next */}
+      {hasNext && (
+        <button
+          onClick={e => { e.stopPropagation(); onNavigate(index + 1); }}
+          className="absolute right-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+        >
+          <ChevronRight size={24} />
+        </button>
+      )}
+
+      {/* Counter */}
+      {items.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 text-white text-xs">
+          {index + 1} / {items.length}
+        </div>
+      )}
     </div>,
     document.body
   );
@@ -91,10 +125,16 @@ function Lightbox({ src, filename, mimeType, onClose }: { src: string; filename:
 export default function ImageModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const [lightbox, setLightbox] = useState<{ src: string; filename: string; mimeType?: string } | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const mode = module.imageMode ?? 'single';
   const fit = module.imageFit ?? 'contain';
   const imageItems = module.imageItems ?? [];
+
+  const lightboxItems: LightboxItem[] = mode === 'gallery'
+    ? imageItems.map(i => ({ src: `/uploads/${i.filename}`, filename: i.filename, mimeType: i.mimeType }))
+    : module.imageFilename
+      ? [{ src: `/uploads/${module.imageFilename}`, filename: module.imageFilename, mimeType: module.imageMimeType }]
+      : [];
 
   async function setFit(newFit: 'cover' | 'contain') {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -268,7 +308,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full max-h-[500px] bg-gray-50" style={{ objectFit: fit }} />
             <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={() => setLightbox({ src: `/uploads/${module.imageFilename}`, filename: module.imageFilename!, mimeType: module.imageMimeType })}
+                onClick={() => setLightboxIndex(0)}
                 className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
                 <ZoomIn size={14} />
               </button>
@@ -290,7 +330,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             </div>
             <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleSingleInput(e.target.files)} />
           </div>
-          {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} mimeType={lightbox.mimeType} onClose={() => setLightbox(null)} />}
+          {lightboxIndex !== null && <Lightbox items={lightboxItems} index={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} />}
         </div>
       );
     }
@@ -323,7 +363,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {imageItems.map(item => (
           <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer" style={{ borderColor: 'var(--border)' }}
-            onClick={() => setLightbox({ src: `/uploads/${item.filename}`, filename: item.filename, mimeType: item.mimeType })}>
+            onClick={() => setLightboxIndex(imageItems.indexOf(item))}>
             <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
@@ -358,7 +398,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         )}
       </div>
       <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleGalleryInput(e.target.files)} />
-      {lightbox && <Lightbox src={lightbox.src} filename={lightbox.filename} mimeType={lightbox.mimeType} onClose={() => setLightbox(null)} />}
+      {lightboxIndex !== null && <Lightbox items={lightboxItems} index={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} />}
     </div>
   );
 }
