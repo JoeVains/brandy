@@ -44,13 +44,14 @@ function Lightbox({ items, index, onNavigate, onClose }: {
 }) {
   const { src, filename, mimeType } = items[index];
   const isSvg = mimeType === 'image/svg+xml' || filename.toLowerCase().endsWith('.svg');
-  const hasPrev = index > 0;
-  const hasNext = index < items.length - 1;
+  const total = items.length;
+  const prevIndex = (index - 1 + total) % total;
+  const nextIndex = (index + 1) % total;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && hasPrev) onNavigate(index - 1);
-      else if (e.key === 'ArrowRight' && hasNext) onNavigate(index + 1);
+      if (e.key === 'ArrowLeft') onNavigate(prevIndex);
+      else if (e.key === 'ArrowRight') onNavigate(nextIndex);
       else if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handler);
@@ -88,9 +89,9 @@ function Lightbox({ items, index, onNavigate, onClose }: {
       </div>
 
       {/* Prev */}
-      {hasPrev && (
+      {total > 1 && (
         <button
-          onClick={e => { e.stopPropagation(); onNavigate(index - 1); }}
+          onClick={e => { e.stopPropagation(); onNavigate(prevIndex); }}
           className="absolute left-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
         >
           <ChevronLeft size={24} />
@@ -102,9 +103,9 @@ function Lightbox({ items, index, onNavigate, onClose }: {
         onClick={e => e.stopPropagation()} />
 
       {/* Next */}
-      {hasNext && (
+      {total > 1 && (
         <button
-          onClick={e => { e.stopPropagation(); onNavigate(index + 1); }}
+          onClick={e => { e.stopPropagation(); onNavigate(nextIndex); }}
           className="absolute right-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
         >
           <ChevronRight size={24} />
