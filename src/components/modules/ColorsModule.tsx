@@ -441,7 +441,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
         <p className="text-sm text-gray-500 mb-4">{module.colorDescription}</p>
       ) : null}
       {isEditing && <ModeToggle />}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
             data-item-id={item.id}
