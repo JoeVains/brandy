@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Module, ModuleType, Section, Brand } from '@/types';
 import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight } from 'lucide-react';
 import ColorsModule from './modules/ColorsModule';
@@ -235,26 +236,29 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
 }
 
 function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAdd: (type: ModuleType) => void; onClose: () => void }) {
-  return (
-    <div className="border rounded-2xl bg-white shadow-lg overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-      <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-        <p className="font-semibold text-gray-800">Ajouter un module</p>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={16} /></button>
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.25)' }} onClick={onClose}>
+      <div className="border rounded-2xl bg-white shadow-xl overflow-hidden w-[480px] max-w-[90vw]" style={{ borderColor: 'var(--border)' }} onClick={e => e.stopPropagation()}>
+        <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+          <p className="font-semibold text-gray-800">Ajouter un module</p>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={16} /></button>
+        </div>
+        <div className="p-4 grid grid-cols-2 gap-3">
+          {MODULE_TYPES.map(({ type, label, icon, description }) => (
+            <button key={type} onClick={() => { onAdd(type); onClose(); }}
+              className="flex items-start gap-3 p-4 border rounded-xl text-left hover:bg-gray-50 transition-colors group"
+              style={{ borderColor: 'var(--border)' }}>
+              <span className="mt-0.5 text-gray-400 group-hover:text-gray-700 transition-colors flex-shrink-0">{icon}</span>
+              <div>
+                <p className="text-sm font-medium text-gray-800">{label}</p>
+                <p className="text-xs text-gray-400 mt-0.5 leading-tight">{description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="p-4 grid grid-cols-2 gap-3">
-        {MODULE_TYPES.map(({ type, label, icon, description }) => (
-          <button key={type} onClick={() => { onAdd(type); onClose(); }}
-            className="flex items-start gap-3 p-4 border rounded-xl text-left hover:bg-gray-50 transition-colors group"
-            style={{ borderColor: 'var(--border)' }}>
-            <span className="mt-0.5 text-gray-400 group-hover:text-gray-700 transition-colors flex-shrink-0">{icon}</span>
-            <div>
-              <p className="text-sm font-medium text-gray-800">{label}</p>
-              <p className="text-xs text-gray-400 mt-0.5 leading-tight">{description}</p>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -426,17 +430,14 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
         ))}
 
         {/* Add module */}
-        {showPicker ? (
-          <ModulePicker brandColor={brand.color} onAdd={addModule} onClose={() => setShowPicker(false)} />
-        ) : (
-          <button
-            onClick={() => setShowPicker(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <Plus size={16} /> Ajouter un module
-          </button>
-        )}
+        <button
+          onClick={() => setShowPicker(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <Plus size={16} /> Ajouter un module
+        </button>
+        {showPicker && <ModulePicker brandColor={brand.color} onAdd={addModule} onClose={() => setShowPicker(false)} />}
       </div>
     </div>
   );
