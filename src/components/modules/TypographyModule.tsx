@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Module, FontItem, FontVariant } from '@/types';
 import { Plus, Trash2, Upload, Type, ChevronDown } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
@@ -135,6 +135,7 @@ function AddVariantPicker({ existing, onAdd, onClose }: {
 export default function TypographyModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const [showAddGoogle, setShowAddGoogle] = useState(false);
   const [googleFamily, setGoogleFamily] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [addingVariantFor, setAddingVariantFor] = useState<string | null>(null);
   const [previewText, setPreviewText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -149,6 +150,16 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
     });
     onUpdate(await res.json());
   }
+
+  useEffect(() => {
+    if (googleFamily.length < 2) { setSuggestions([]); return; }
+    const controller = new AbortController();
+    fetch(`/api/fonts/search?q=${encodeURIComponent(googleFamily)}`, { signal: controller.signal })
+      .then(r => r.json())
+      .then(setSuggestions)
+      .catch(() => {});
+    return () => controller.abort();
+  }, [googleFamily]);
 
   async function addGoogleFont() {
     if (!googleFamily.trim()) return;
@@ -333,22 +344,41 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
         {isEditing && (
           <div className="flex gap-3">
             {showAddGoogle ? (
-              <div className="flex-1 flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
-                <Type size={16} className="text-gray-400 flex-shrink-0" />
-                <input
-                  autoFocus
-                  className="flex-1 outline-none text-sm"
-                  placeholder="Nom de la police (ex: Rubik, Playfair Display)"
-                  value={googleFamily}
-                  onChange={e => setGoogleFamily(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') addGoogleFont(); if (e.key === 'Escape') setShowAddGoogle(false); }}
-                />
-                <button onClick={addGoogleFont} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: brandColor }}>
-                  Ajouter
-                </button>
-                <button onClick={() => setShowAddGoogle(false)} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
-                  Annuler
-                </button>
+              <div className="flex-1 relative">
+                <div className="flex gap-2 border rounded-xl px-4 py-3 items-center" style={{ borderColor: 'var(--border)' }}>
+                  <Type size={16} className="text-gray-400 flex-shrink-0" />
+                  <input
+                    autoFocus
+                    className="flex-1 outline-none text-sm"
+                    placeholder="Nom de la police (ex: Rubik, Playfair Display)"
+                    value={googleFamily}
+                    onChange={e => setGoogleFamily(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { addGoogleFont(); setSuggestions([]); }
+                      if (e.key === 'Escape') { if (suggestions.length) setSuggestions([]); else setShowAddGoogle(false); }
+                    }}
+                  />
+                  <button onClick={() => { addGoogleFont(); setSuggestions([]); }} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: brandColor }}>
+                    Ajouter
+                  </button>
+                  <button onClick={() => { setShowAddGoogle(false); setSuggestions([]); }} className="text-xs px-3 py-1.5 rounded-lg border text-gray-500" style={{ borderColor: 'var(--border)' }}>
+                    Annuler
+                  </button>
+                </div>
+                {suggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg overflow-hidden z-10" style={{ borderColor: 'var(--border)' }}>
+                    {suggestions.map(name => (
+                      <button
+                        key={name}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b last:border-b-0"
+                        style={{ borderColor: 'var(--border)' }}
+                        onMouseDown={e => { e.preventDefault(); setGoogleFamily(name); setSuggestions([]); }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <>
