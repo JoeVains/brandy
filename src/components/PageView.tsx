@@ -471,7 +471,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
     const fromIdx = reordered.findIndex(m => m.id === dragId);
     const toIdx = reordered.findIndex(m => m.id === targetId);
     const [item] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, item);
+    reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, item);
     setModules(reordered);
     setDragId(null);
     setDragOverId(null);

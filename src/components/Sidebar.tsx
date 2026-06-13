@@ -31,6 +31,8 @@ interface SectionNodeProps {
   onSectionDragOver: (id: string) => void;
   onSectionDragEnd: () => void;
   onSectionDrop: (targetId: string) => void;
+  headings: Module[];
+  onScrollToHeading: (moduleId: string) => void;
 }
 
 function SectionNode({
@@ -38,6 +40,7 @@ function SectionNode({
   brandId, brandColor, depth, draggingModuleId, onModuleDrop,
   dragSectionId, dragOverSectionId,
   onSectionDragStart, onSectionDragOver, onSectionDragEnd, onSectionDrop,
+  headings, onScrollToHeading,
 }: SectionNodeProps) {
   const children = allSections.filter(s => s.parentId === section.id).sort((a, b) => a.order - b.order);
   const [expanded, setExpanded] = useState(true);
@@ -93,6 +96,7 @@ function SectionNode({
     draggingModuleId, onModuleDrop,
     dragSectionId, dragOverSectionId,
     onSectionDragStart, onSectionDragOver, onSectionDragEnd, onSectionDrop,
+    headings, onScrollToHeading,
   };
 
   return (
@@ -205,6 +209,17 @@ function SectionNode({
           {...sharedProps}
         />
       ))}
+      {expanded && activeSectionId === section.id && headings.map(h => (
+        <button
+          key={h.id}
+          onClick={() => onScrollToHeading(h.id)}
+          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-left"
+          style={{ paddingLeft: `${8 + (depth + 1) * 14 + 8}px` }}
+        >
+          <Hash size={10} className="flex-shrink-0 opacity-50" />
+          <span className="truncate">{h.content || h.title || 'Sans titre'}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -296,6 +311,8 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
     onSectionDragOver: setDragOverSectionId,
     onSectionDragEnd: () => { setDragSectionId(null); setDragOverSectionId(null); },
     onSectionDrop: handleSectionDrop,
+    headings,
+    onScrollToHeading: scrollToHeading,
   };
 
   return (
@@ -325,25 +342,6 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
           ))}
         </div>
 
-        {/* Heading anchors for active section */}
-        {headings.length > 0 && (
-          <>
-            <div className="h-px my-2" style={{ background: 'var(--border)' }} />
-            <div className="space-y-0.5">
-              {headings.map(h => (
-                <button
-                  key={h.id}
-                  onClick={() => scrollToHeading(h.id)}
-                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-left"
-                  style={{ paddingLeft: 22 }}
-                >
-                  <Hash size={10} className="flex-shrink-0 opacity-50" />
-                  <span className="truncate">{h.content || h.title || 'Sans titre'}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
 
         {showAdd ? (
           <div className="flex items-center gap-1 px-2 py-1 mt-1 rounded-lg bg-gray-50 border" style={{ borderColor: 'var(--border)' }}>
