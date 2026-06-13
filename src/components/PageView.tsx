@@ -36,7 +36,7 @@ const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; de
   { type: 'divider', label: 'Séparateur', icon: <Minus size={18} />, description: 'Ligne de séparation horizontale' },
 ];
 
-function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, onDelete, onDuplicate, onMoveTo, onCopyTo, dragHandleProps, isDragging }: {
+function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, onDelete, onDuplicate, onMoveTo, onCopyTo, dragHandleProps, isDragging, defaultEditing }: {
   module: Module;
   brandColor: string;
   sections: Section[];
@@ -48,8 +48,9 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
   onCopyTo: (targetSectionId: string) => void;
   dragHandleProps: React.HTMLAttributes<HTMLDivElement>;
   isDragging: boolean;
+  defaultEditing?: boolean;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(defaultEditing ?? false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(module.title);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -264,6 +265,7 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
 
 export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
+  const [newModuleId, setNewModuleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -284,6 +286,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
     });
     const m = await res.json();
     setModules(prev => [...prev, m]);
+    setNewModuleId(m.id);
   }
 
   function updateModule(updated: Module) {
@@ -421,6 +424,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
               onMoveTo={targetId => moveModuleTo(module, targetId)}
               onCopyTo={targetId => copyModuleTo(module, targetId)}
               isDragging={dragId === module.id}
+              defaultEditing={newModuleId === module.id}
               dragHandleProps={{
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => onDragStart(e, module),
