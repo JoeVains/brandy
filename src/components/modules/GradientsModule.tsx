@@ -65,7 +65,15 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
-        <label draggable onDragStart={onDragStart}
+        <label draggable
+          onDragStart={e => {
+            const ghost = document.createElement('div');
+            ghost.style.cssText = `width:24px;height:24px;background:${stop.color};border-radius:4px;position:fixed;top:-100px;left:-100px`;
+            document.body.appendChild(ghost);
+            e.dataTransfer.setDragImage(ghost, 12, 12);
+            setTimeout(() => document.body.removeChild(ghost), 0);
+            onDragStart?.(e);
+          }}
           className="relative w-6 h-6 rounded border flex-shrink-0"
           style={{ borderColor: 'var(--border)', background: stop.color, cursor: 'grab' }}>
           <input type="color" value={stop.color} onChange={e => onUpdate({ color: e.target.value })}
