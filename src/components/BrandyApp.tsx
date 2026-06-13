@@ -6,8 +6,9 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
+import SearchModal from './SearchModal';
 
 const BRAND_COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
@@ -130,6 +131,7 @@ export default function BrandyApp() {
   const [view, setView] = useState<'home' | 'brand'>('home');
   const [dragId, setDragId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
   const [pageViewKey, setPageViewKey] = useState(0);
@@ -146,6 +148,13 @@ export default function BrandyApp() {
 
   useEffect(() => { fetchAll(); }, []);
   useEffect(() => { setActiveSectionId(null); }, [activeBrandId]);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowSearch(v => !v); }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   async function createBrand() {
     if (!newBrandName.trim()) return;
@@ -315,6 +324,18 @@ export default function BrandyApp() {
           )}
         </div>
 
+        {/* Search button */}
+        {activeBrandId && (
+          <button onClick={() => setShowSearch(v => !v)}
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm border"
+            style={{ borderColor: 'var(--border)' }}
+            title="Rechercher (⌘K)">
+            <Search size={13} />
+            <span className="text-xs hidden sm:inline">Rechercher</span>
+            <kbd className="text-[10px] font-mono hidden sm:inline">⌘K</kbd>
+          </button>
+        )}
+
         {/* History button */}
         <button onClick={() => setShowHistory(v => !v)}
           className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
@@ -324,6 +345,14 @@ export default function BrandyApp() {
       </header>
 
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
+      {showSearch && activeBrandId && (
+        <SearchModal
+          brandId={activeBrandId}
+          sections={brandSections}
+          onNavigate={sectionId => { setActiveSectionId(sectionId); }}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">

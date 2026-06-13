@@ -6,8 +6,11 @@ import { logHistory } from '@/lib/history';
 
 export async function GET(req: NextRequest) {
   const sectionId = req.nextUrl.searchParams.get('sectionId');
+  const brandId = req.nextUrl.searchParams.get('brandId');
   const all = db.modules.all();
-  const filtered = sectionId ? all.filter(m => m.sectionId === sectionId) : all;
+  let filtered = all;
+  if (sectionId) filtered = filtered.filter(m => m.sectionId === sectionId);
+  if (brandId) filtered = filtered.filter(m => m.brandId === brandId);
   return NextResponse.json(filtered.sort((a, b) => a.order - b.order));
 }
 
