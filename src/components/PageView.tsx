@@ -279,11 +279,27 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
   );
 }
 
+function InsertSeparator({ color, onClick }: { color: string; onClick: () => void }) {
+  return (
+    <div className="group relative flex items-center justify-center h-4 -my-1 z-10">
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-transparent group-hover:bg-gray-200 transition-colors" />
+      <button
+        onClick={onClick}
+        className="relative opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md hover:scale-110 active:scale-95"
+        style={{ background: color }}
+      >
+        <Plus size={11} />
+      </button>
+    </div>
+  );
+}
+
 export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
   const [newModuleId, setNewModuleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
+  const [insertAfterIdx, setInsertAfterIdx] = useState<number | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
@@ -301,8 +317,25 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       body: JSON.stringify({ sectionId: section.id, brandId: brand.id, type, title: '' }),
     });
     const m = await res.json();
-    setModules(prev => [...prev, m]);
-    setNewModuleId(m.id);
+
+    if (insertAfterIdx !== null) {
+      // Insert at specific position: splice into list then reorder
+      const next = [...modules];
+      next.splice(insertAfterIdx + 1, 0, m);
+      setModules(next);
+      setNewModuleId(m.id);
+      await fetch('/api/modules/reorder', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sectionId: section.id, ids: next.map(x => x.id) }),
+      });
+    } else {
+      setModules(prev => [...prev, m]);
+      setNewModuleId(m.id);
+    }
+
+    setInsertAfterIdx(null);
+    setShowPicker(false);
     window.dispatchEvent(new Event('brandy:modules-changed'));
   }
 
@@ -422,46 +455,55 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
           </div>
         )}
 
-        {modules.map(module => (
-          <div
-            key={module.id}
-            data-module-id={module.id}
-            onDragOver={e => onDragOver(e, module.id)}
-            onDragLeave={onDragLeave}
-            onDrop={() => onDrop(module.id)}
-            onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
-            className={`transition-all ${dragOverId === module.id ? 'scale-[0.98]' : ''}`}
-            style={dragOverId === module.id ? { outline: `2px solid ${brand.color}`, outlineOffset: 4, borderRadius: 16 } : {}}
-          >
-            <ModuleCard
-              module={module}
-              brandColor={brand.color}
-              sections={sections}
-              currentSectionId={section.id}
-              onUpdate={updateModule}
-              onDelete={() => deleteModule(module.id)}
-              onDuplicate={() => duplicateModule(module)}
-              onMoveTo={targetId => moveModuleTo(module, targetId)}
-              onCopyTo={targetId => copyModuleTo(module, targetId)}
-              isDragging={dragId === module.id}
-              defaultEditing={newModuleId === module.id}
-              dragHandleProps={{
-                draggable: true,
-                onDragStart: (e: React.DragEvent) => onDragStart(e, module),
-              }}
-            />
+        {modules.map((module, idx) => (
+          <div key={module.id}>
+            {/* Insert-before separator (shown above first module too) */}
+            {idx === 0 && (
+              <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }} />
+            )}
+
+            <div
+              data-module-id={module.id}
+              onDragOver={e => onDragOver(e, module.id)}
+              onDragLeave={onDragLeave}
+              onDrop={() => onDrop(module.id)}
+              onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
+              className={`transition-all ${dragOverId === module.id ? 'scale-[0.98]' : ''}`}
+              style={dragOverId === module.id ? { outline: `2px solid ${brand.color}`, outlineOffset: 4, borderRadius: 16 } : {}}
+            >
+              <ModuleCard
+                module={module}
+                brandColor={brand.color}
+                sections={sections}
+                currentSectionId={section.id}
+                onUpdate={updateModule}
+                onDelete={() => deleteModule(module.id)}
+                onDuplicate={() => duplicateModule(module)}
+                onMoveTo={targetId => moveModuleTo(module, targetId)}
+                onCopyTo={targetId => copyModuleTo(module, targetId)}
+                isDragging={dragId === module.id}
+                defaultEditing={newModuleId === module.id}
+                dragHandleProps={{
+                  draggable: true,
+                  onDragStart: (e: React.DragEvent) => onDragStart(e, module),
+                }}
+              />
+            </div>
+
+            {/* Insert-after separator */}
+            <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(idx); setShowPicker(true); }} />
           </div>
         ))}
 
         {/* Add module */}
         <button
-          onClick={() => setShowPicker(true)}
+          onClick={() => { setInsertAfterIdx(null); setShowPicker(true); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
           style={{ borderColor: 'var(--border)' }}
         >
           <Plus size={16} /> Ajouter un module
         </button>
-        {showPicker && <ModulePicker brandColor={brand.color} onAdd={addModule} onClose={() => setShowPicker(false)} />}
+        {showPicker && <ModulePicker brandColor={brand.color} onAdd={addModule} onClose={() => { setShowPicker(false); setInsertAfterIdx(null); }} />}
       </div>
     </div>
   );
