@@ -81,7 +81,7 @@ export interface DoDontItem {
   fit?: 'cover' | 'contain';
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'video' | 'divider';
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'video' | 'audio' | 'divider';
 
 export interface Module {
   id: string;
@@ -126,6 +126,14 @@ export interface Module {
   videoSize?: number;
   videoTitle?: string;
   videoCaption?: string;
+  // audio
+  audioMode?: 'embed' | 'upload';
+  audioUrl?: string;
+  audioFilename?: string;
+  audioMimeType?: string;
+  audioSize?: number;
+  audioTitle?: string;
+  audioCaption?: string;
   // do & don't
   doDontLayout?: 'stacked' | 'sidebyside';
   doItems?: DoDontItem[];

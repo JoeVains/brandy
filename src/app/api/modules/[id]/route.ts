@@ -29,6 +29,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (module.fontItems) module.fontItems.forEach(f => { if (f.filename) filesToDelete.push(f.filename); });
   if (module.attachmentItems) module.attachmentItems.forEach(a => filesToDelete.push(a.filename));
   if (module.videoFilename) filesToDelete.push(module.videoFilename);
+  if (module.audioFilename) filesToDelete.push(module.audioFilename);
 
   filesToDelete.forEach(filename => {
     const p = path.join(uploadsDir, filename);
