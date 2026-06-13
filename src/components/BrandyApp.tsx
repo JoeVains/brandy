@@ -349,7 +349,25 @@ export default function BrandyApp() {
         <SearchModal
           brandId={activeBrandId}
           sections={brandSections}
-          onNavigate={sectionId => { setActiveSectionId(sectionId); }}
+          onNavigate={(sectionId, moduleId) => {
+            setActiveSectionId(sectionId);
+            // Wait for PageView to render the section, then scroll + flash
+            setTimeout(() => {
+              const el = document.querySelector(`[data-module-id="${moduleId}"]`) as HTMLElement | null;
+              if (!el) return;
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.style.transition = 'outline 0s, outline-offset 0s';
+              el.style.outline = `2px solid ${activeBrand?.color ?? '#6366f1'}`;
+              el.style.outlineOffset = '4px';
+              el.style.borderRadius = '16px';
+              setTimeout(() => {
+                el.style.transition = 'outline 0.6s, outline-offset 0.6s, border-radius 0.6s';
+                el.style.outline = '2px solid transparent';
+                el.style.outlineOffset = '4px';
+                setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; el.style.borderRadius = ''; el.style.transition = ''; }, 700);
+              }, 800);
+            }, 150);
+          }}
           onClose={() => setShowSearch(false)}
         />
       )}

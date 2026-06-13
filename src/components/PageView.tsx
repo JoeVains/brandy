@@ -422,6 +422,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
         {modules.map(module => (
           <div
             key={module.id}
+            data-module-id={module.id}
             onDragOver={e => onDragOver(e, module.id)}
             onDragLeave={onDragLeave}
             onDrop={() => onDrop(module.id)}

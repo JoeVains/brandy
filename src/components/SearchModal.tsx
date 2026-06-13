@@ -104,7 +104,7 @@ function searchModules(modules: Module[], sections: Section[], q: string): Searc
 interface Props {
   brandId: string;
   sections: Section[];
-  onNavigate: (sectionId: string) => void;
+  onNavigate: (sectionId: string, moduleId: string) => void;
   onClose: () => void;
 }
 
@@ -128,7 +128,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
   useEffect(() => { setActiveIdx(0); }, [query]);
 
   const go = useCallback((result: SearchResult) => {
-    onNavigate(result.sectionId);
+    onNavigate(result.sectionId, result.moduleId);
     onClose();
   }, [onNavigate, onClose]);
 
