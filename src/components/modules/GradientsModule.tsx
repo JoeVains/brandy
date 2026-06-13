@@ -1,9 +1,78 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Module, GradientItem, GradientStop } from '@/types';
 import { Plus, Trash2, Check, X, Pencil, Copy, Download } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
+
+function HexInput({ color, onChange }: { color: string; onChange: (c: string) => void }) {
+  const [hex, setHex] = useState(color);
+  useEffect(() => { setHex(color); }, [color]);
+
+  function handleChange(v: string) {
+    setHex(v);
+    const normalized = v.startsWith('#') ? v : `#${v}`;
+    if (/^#[0-9a-fA-F]{6}$/.test(normalized)) onChange(normalized);
+  }
+
+  return (
+    <input type="text" value={hex} maxLength={7}
+      onChange={e => handleChange(e.target.value)}
+      onBlur={() => setHex(color)}
+      className="text-xs font-mono w-16 border rounded px-1.5 py-0.5 outline-none"
+      style={{ borderColor: 'var(--border)' }} />
+  );
+}
+
+function AngleDial({ angle, onChange }: { angle: number; onChange: (a: number) => void }) {
+  const S = 34, cx = S / 2, cy = S / 2, r = S / 2 - 2.5;
+  const rad = ((angle - 90) * Math.PI) / 180;
+  const lx = cx + r * Math.cos(rad), ly = cy + r * Math.sin(rad);
+
+  function handleClick(e: React.MouseEvent<SVGSVGElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    let deg = Math.round(Math.atan2(e.clientY - rect.top - cy, e.clientX - rect.left - cx) * (180 / Math.PI)) + 90;
+    if (deg < 0) deg += 360;
+    if (deg >= 360) deg -= 360;
+    onChange(deg);
+  }
+
+  return (
+    <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`}
+      className="cursor-crosshair flex-shrink-0" onClick={handleClick}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e5e7eb" strokeWidth={1.5} />
+      <circle cx={cx} cy={cy} r={1.5} fill="#9ca3af" />
+      <line x1={cx} y1={cy} x2={lx} y2={ly} stroke="#4b5563" strokeWidth={1.5} strokeLinecap="round" />
+      <circle cx={lx} cy={ly} r={2.5} fill="#4b5563" />
+    </svg>
+  );
+}
+
+function ColorStopRow({ stop, onUpdate, onRemove, canRemove }: {
+  stop: GradientStop;
+  onUpdate: (p: Partial<GradientStop>) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <label className="relative w-7 h-7 rounded-md border cursor-pointer flex-shrink-0"
+        style={{ borderColor: 'var(--border)', background: stop.color }}>
+        <input type="color" value={stop.color} onChange={e => onUpdate({ color: e.target.value })}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+      </label>
+      <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
+      <input type="range" min={0} max={100} value={stop.position}
+        onChange={e => onUpdate({ position: Number(e.target.value) })}
+        className="flex-1 h-1 accent-gray-600" />
+      <span className="text-xs text-gray-500 w-8 text-right">{stop.position}%</span>
+      <button onClick={onRemove} disabled={!canRemove}
+        className="text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
+        <X size={12} />
+      </button>
+    </div>
+  );
+}
 
 interface Props {
   module: Module;
@@ -99,10 +168,15 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
             </div>
             {type === 'linear' && (
               <div className="flex items-center gap-1.5 flex-1">
+                <AngleDial angle={angle} onChange={setAngle} />
                 <input type="range" min={0} max={360} value={angle}
                   onChange={e => setAngle(Number(e.target.value))}
                   className="flex-1 h-1 accent-gray-600" />
-                <span className="text-xs text-gray-500 w-10 text-right">{angle}°</span>
+                <input type="number" min={0} max={360} value={angle}
+                  onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setAngle(v); }}
+                  className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
+                  style={{ borderColor: 'var(--border)' }} />
+                <span className="text-xs text-gray-400">°</span>
               </div>
             )}
           </div>
@@ -110,19 +184,10 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
           {/* Stops */}
           <div className="space-y-2">
             {stops.map((stop, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <input type="color" value={stop.color} onChange={e => updateStop(idx, { color: e.target.value })}
-                  className="w-7 h-7 rounded-md border cursor-pointer p-0.5" style={{ borderColor: 'var(--border)' }} />
-                <span className="text-xs text-gray-400 font-mono w-14">{stop.color}</span>
-                <input type="range" min={0} max={100} value={stop.position}
-                  onChange={e => updateStop(idx, { position: Number(e.target.value) })}
-                  className="flex-1 h-1 accent-gray-600" />
-                <span className="text-xs text-gray-500 w-8 text-right">{stop.position}%</span>
-                <button onClick={() => removeStop(idx)} disabled={stops.length <= 2}
-                  className="text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
-                  <X size={12} />
-                </button>
-              </div>
+              <ColorStopRow key={idx} stop={stop}
+                onUpdate={p => updateStop(idx, p)}
+                onRemove={() => removeStop(idx)}
+                canRemove={stops.length > 2} />
             ))}
             <button onClick={addStop}
               className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">
@@ -315,21 +380,23 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
                   ))}
                 </div>
                 {newType === 'linear' && (
-                  <div className="flex items-center gap-1 flex-1">
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <AngleDial angle={newAngle} onChange={setNewAngle} />
                     <input type="range" min={0} max={360} value={newAngle}
                       onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
-                    <span className="text-[10px] text-gray-500 w-8 text-right">{newAngle}°</span>
+                    <input type="number" min={0} max={360} value={newAngle}
+                      onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
+                      className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
+                      style={{ borderColor: 'var(--border)' }} />
+                    <span className="text-xs text-gray-400">°</span>
                   </div>
                 )}
               </div>
               {newStops.map((stop, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <input type="color" value={stop.color} onChange={e => updateNewStop(idx, { color: e.target.value })}
-                    className="w-6 h-6 rounded border cursor-pointer p-0.5" style={{ borderColor: 'var(--border)' }} />
-                  <input type="range" min={0} max={100} value={stop.position}
-                    onChange={e => updateNewStop(idx, { position: Number(e.target.value) })} className="flex-1 h-1 accent-gray-600" />
-                  <span className="text-[10px] text-gray-400 w-7 text-right">{stop.position}%</span>
-                </div>
+                <ColorStopRow key={idx} stop={stop}
+                  onUpdate={p => updateNewStop(idx, p)}
+                  onRemove={() => setNewStops(prev => prev.filter((_, i) => i !== idx))}
+                  canRemove={newStops.length > 2} />
               ))}
               <div className="flex gap-2 pt-1">
                 <button onClick={addGradient} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
