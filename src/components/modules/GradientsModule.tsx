@@ -55,25 +55,29 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove }: {
   canRemove: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <label className="relative w-7 h-7 rounded-md border cursor-pointer flex-shrink-0"
-        style={{ borderColor: 'var(--border)', background: stop.color }}>
-        <input type="color" value={stop.color} onChange={e => onUpdate({ color: e.target.value })}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-      </label>
-      <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
-      <input type="range" min={0} max={100} value={stop.position}
-        onChange={e => onUpdate({ position: Number(e.target.value) })}
-        className="flex-1 h-1 accent-gray-600" />
-      <input type="number" min={0} max={100} value={stop.position}
-        onChange={e => { const v = Math.min(100, Math.max(0, Number(e.target.value))); onUpdate({ position: v }); }}
-        className="text-xs w-10 border rounded px-1 py-0.5 outline-none text-right"
-        style={{ borderColor: 'var(--border)' }} />
-      <span className="text-xs text-gray-400">%</span>
-      <button onClick={onRemove} disabled={!canRemove}
-        className="text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
-        <X size={12} />
-      </button>
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <label className="relative w-6 h-6 rounded border cursor-pointer flex-shrink-0"
+          style={{ borderColor: 'var(--border)', background: stop.color }}>
+          <input type="color" value={stop.color} onChange={e => onUpdate({ color: e.target.value })}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+        </label>
+        <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
+        <button onClick={onRemove} disabled={!canRemove}
+          className="ml-auto text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
+          <X size={12} />
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <input type="range" min={0} max={100} value={stop.position}
+          onChange={e => onUpdate({ position: Number(e.target.value) })}
+          className="flex-1 h-1 accent-gray-600" />
+        <input type="number" min={0} max={100} value={stop.position}
+          onChange={e => { const v = Math.min(100, Math.max(0, Number(e.target.value))); onUpdate({ position: v }); }}
+          className="text-xs w-10 border rounded px-1 py-0.5 outline-none text-right"
+          style={{ borderColor: 'var(--border)' }} />
+        <span className="text-xs text-gray-400">%</span>
+      </div>
     </div>
   );
 }
