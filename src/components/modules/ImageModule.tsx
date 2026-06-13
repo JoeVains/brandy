@@ -56,7 +56,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [index, hasPrev, hasNext, onNavigate, onClose]);
+  }, [prevIndex, nextIndex, onNavigate, onClose]);
 
   return createPortal(
     <div
