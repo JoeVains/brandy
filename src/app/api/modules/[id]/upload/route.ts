@@ -66,6 +66,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const item: DoDontItem = { id: randomUUID(), type: 'image', filename, mimeType: file.type };
     if (slot === 'do') module.doItems = [...(module.doItems ?? []), item];
     else module.dontItems = [...(module.dontItems ?? []), item];
+  } else if (slot === 'video') {
+    if (module.videoFilename) {
+      const old = path.join(uploadsDir, module.videoFilename);
+      if (fs.existsSync(old)) fs.unlinkSync(old);
+    }
+    module.videoFilename = filename;
+    module.videoMimeType = file.type;
+    module.videoSize = file.size;
   } else if (slot === 'attachment') {
     const item: AttachmentItem = {
       id: randomUUID(),
