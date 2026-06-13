@@ -60,8 +60,6 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
   onDrop?: () => void;
   onDragEnd?: () => void;
 }) {
-  const inputId = useRef(`stop-color-${Math.random().toString(36).slice(2)}`);
-
   return (
     <div className="space-y-1 transition-opacity" style={{ opacity: isDragging ? 0.35 : 1 }}
       onDragOver={e => { e.preventDefault(); onDragOver?.(e); }}
@@ -80,13 +78,14 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
           style={{ cursor: 'grab', fontSize: 10, letterSpacing: '-1px', lineHeight: 1 }}>
           ⠿
         </div>
-        {/* Label wrapping the hidden input — click on swatch = click on input, no JS chain needed */}
-        <label htmlFor={inputId.current}
-          className="w-6 h-6 rounded border flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
-          style={{ background: stop.color, borderColor: 'var(--border)' }} />
-        <input id={inputId.current} type="color" value={stop.color}
-          onChange={e => onUpdate({ color: e.target.value })}
-          className="sr-only" />
+        {/* Color swatch with transparent input overlaid on top */}
+        <div className="relative w-6 h-6 flex-shrink-0 rounded border hover:scale-110 transition-transform"
+          style={{ background: stop.color, borderColor: 'var(--border)' }}>
+          <input type="color" value={stop.color}
+            onChange={e => onUpdate({ color: e.target.value })}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            style={{ padding: 0, border: 'none' }} />
+        </div>
         <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
         <button onClick={onRemove} disabled={!canRemove}
           className="ml-auto text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
