@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Module, GradientItem, GradientStop } from '@/types';
 import { Plus, Trash2, Check, X, Pencil, Copy, Download, ArrowLeftRight } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
+import { suggestGradientName } from '@/lib/gradientNames';
 
 function HexInput({ color, onChange }: { color: string; onChange: (c: string) => void }) {
   const [hex, setHex] = useState(color);
@@ -365,7 +366,8 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     { color: '#667eea', position: 0 },
     { color: '#764ba2', position: 100 },
   ];
-  const [newName, setNewName] = useState('Nouveau dégradé');
+  const [newName, setNewName] = useState(() => suggestGradientName(DEFAULT_STOPS));
+  const [newNameTouched, setNewNameTouched] = useState(false);
   const [newType, setNewType] = useState<'linear' | 'radial'>('linear');
   const [newAngle, setNewAngle] = useState(135);
   const [newStops, setNewStops] = useState<GradientStop[]>(DEFAULT_STOPS);
@@ -390,7 +392,8 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
       stops: newStops,
     };
     await patch([...items, item]);
-    setNewName('Nouveau dégradé');
+    setNewName(suggestGradientName(DEFAULT_STOPS));
+    setNewNameTouched(false);
     setNewType('linear');
     setNewAngle(135);
     setNewStops(DEFAULT_STOPS);
@@ -426,7 +429,11 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
   }
 
   function updateNewStop(idx: number, p: Partial<GradientStop>) {
-    setNewStops(prev => prev.map((s, i) => i === idx ? { ...s, ...p } : s));
+    setNewStops(prev => {
+      const next = prev.map((s, i) => i === idx ? { ...s, ...p } : s);
+      if (!newNameTouched) setNewName(suggestGradientName(next));
+      return next;
+    });
   }
 
   function downloadCss() {
@@ -447,7 +454,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
       <div className="h-16" style={{ background: newCss }} />
       <div className="p-3 bg-white space-y-2.5">
         <input className="w-full border rounded-lg px-2 py-1.5 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
-          value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nom" />
+          value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
         <div className="flex items-center gap-2">
           <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
             {(['linear', 'radial'] as const).map(t => (
@@ -458,7 +465,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
               </button>
             ))}
           </div>
-          <button onClick={() => setNewStops(prev => [...prev].reverse().map(s => ({ ...s, position: 100 - s.position })))}
+          <button onClick={() => setNewStops(prev => { const next = [...prev].reverse().map(s => ({ ...s, position: 100 - s.position })); if (!newNameTouched) setNewName(suggestGradientName(next)); return next; })}
             title="Inverser le dégradé"
             className="p-1.5 rounded-lg border text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
@@ -480,7 +487,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
         {newStops.map((stop, idx) => (
           <ColorStopRow key={idx} stop={stop}
             onUpdate={p => updateNewStop(idx, p)}
-            onRemove={() => setNewStops(prev => prev.filter((_, i) => i !== idx))}
+            onRemove={() => setNewStops(prev => { const next = prev.filter((_, i) => i !== idx); if (!newNameTouched) setNewName(suggestGradientName(next)); return next; })}
             canRemove={newStops.length > 2} />
         ))}
         <div className="flex gap-2 pt-1">
