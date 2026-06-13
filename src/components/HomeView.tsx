@@ -1,0 +1,192 @@
+'use client';
+
+import { useState } from 'react';
+import { Brand, Section } from '@/types';
+import { Plus, Copy, Trash2, ArrowRight } from 'lucide-react';
+
+interface Props {
+  brands: Brand[];
+  sections: Section[];
+  onOpenBrand: (id: string) => void;
+  onBrandsChange: (brands: Brand[]) => void;
+  onSectionsChange: (sections: Section[]) => void;
+}
+
+const BRAND_COLORS = [
+  '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
+  '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#06b6d4',
+];
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange, onSectionsChange }: Props) {
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newColor, setNewColor] = useState(BRAND_COLORS[0]);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
+
+  async function createBrand() {
+    if (!newName.trim()) return;
+    const res = await fetch('/api/brands', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), color: newColor }),
+    });
+    const brand = await res.json();
+    onBrandsChange([...brands, brand]);
+    setNewName('');
+    setShowNew(false);
+    onOpenBrand(brand.id);
+  }
+
+  async function duplicateBrand(id: string) {
+    setDuplicating(id);
+    const res = await fetch(`/api/brands/${id}/duplicate`, { method: 'POST' });
+    const newBrand = await res.json();
+    const newSections = await fetch('/api/sections').then(r => r.json());
+    onBrandsChange([...brands, newBrand]);
+    onSectionsChange(newSections);
+    setDuplicating(null);
+  }
+
+  async function deleteBrand(id: string) {
+    if (!confirm('Supprimer cette marque et tout son contenu ?')) return;
+    await fetch(`/api/brands/${id}`, { method: 'DELETE' });
+    onBrandsChange(brands.filter(b => b.id !== id));
+    onSectionsChange(sections.filter(s => s.brandId !== id));
+  }
+
+  return (
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+      {/* Header */}
+      <header className="bg-white border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ background: 'var(--accent)' }}>B</div>
+          <span className="font-semibold text-xl tracking-tight">Brandy</span>
+        </div>
+        <button
+          onClick={() => setShowNew(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-opacity"
+          style={{ background: 'var(--accent)' }}
+        >
+          <Plus size={15} /> Nouvelle marque
+        </button>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-8 py-10">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Mes marques</h1>
+        <p className="text-sm text-gray-400 mb-8">{brands.length} marque{brands.length !== 1 ? 's' : ''}</p>
+
+        {/* New brand inline form */}
+        {showNew && (
+          <div className="mb-6 p-5 border-2 border-dashed rounded-2xl bg-white flex flex-col gap-3" style={{ borderColor: 'var(--border)' }}>
+            <input
+              autoFocus
+              className="w-full text-lg font-medium outline-none placeholder-gray-300"
+              placeholder="Nom de la marque…"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') createBrand(); if (e.key === 'Escape') setShowNew(false); }}
+            />
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                {BRAND_COLORS.map(c => (
+                  <button key={c}
+                    className={`w-6 h-6 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-110'}`}
+                    style={{ background: c }}
+                    onClick={() => setNewColor(c)} />
+                ))}
+              </div>
+              <div className="ml-auto flex gap-2">
+                <button onClick={() => setShowNew(false)} className="px-4 py-1.5 rounded-lg border text-sm text-gray-500" style={{ borderColor: 'var(--border)' }}>Annuler</button>
+                <button onClick={createBrand} className="px-4 py-1.5 rounded-lg text-sm text-white font-medium" style={{ background: newColor }}>Créer</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Brand grid */}
+        {brands.length === 0 && !showNew ? (
+          <div className="flex flex-col items-center justify-center py-32 gap-4 text-gray-400">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-bold" style={{ background: 'var(--border)', color: 'white' }}>B</div>
+            <p className="text-sm">Aucune marque pour l'instant.</p>
+            <button onClick={() => setShowNew(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium" style={{ background: 'var(--accent)' }}>
+              <Plus size={15} /> Créer ma première marque
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {brands.map(brand => {
+              const sectionCount = sections.filter(s => s.brandId === brand.id && s.parentId === null).length;
+              const initial = brand.name.charAt(0).toUpperCase();
+              return (
+                <div key={brand.id}
+                  className="group bg-white border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col"
+                  style={{ borderColor: 'var(--border)' }}
+                  onClick={() => onOpenBrand(brand.id)}
+                >
+                  {/* Color band */}
+                  <div className="h-24 flex items-end p-4" style={{ background: brand.color }}>
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+                      {initial}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4 flex-1 flex flex-col gap-1">
+                    <p className="font-semibold text-gray-900 text-base">{brand.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {sectionCount} rubrique{sectionCount !== 1 ? 's' : ''} · Créée le {formatDate(brand.createdAt)}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="px-4 pb-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => onOpenBrand(brand.id)}
+                      className="flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-90"
+                      style={{ background: brand.color }}
+                    >
+                      Ouvrir <ArrowRight size={12} />
+                    </button>
+                    <button
+                      onClick={() => duplicateBrand(brand.id)}
+                      disabled={duplicating === brand.id}
+                      className="p-1.5 rounded-lg border hover:bg-gray-50 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-40"
+                      style={{ borderColor: 'var(--border)' }}
+                      title="Dupliquer"
+                    >
+                      <Copy size={13} />
+                    </button>
+                    <button
+                      onClick={() => deleteBrand(brand.id)}
+                      className="p-1.5 rounded-lg border hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                      style={{ borderColor: 'var(--border)' }}
+                      title="Supprimer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* New brand card */}
+            {!showNew && (
+              <button
+                onClick={() => setShowNew(true)}
+                className="border-2 border-dashed rounded-2xl h-48 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <Plus size={22} />
+                <span className="text-sm font-medium">Nouvelle marque</span>
+              </button>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen } from 'lucide-react';
+import HomeView from './HomeView';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft } from 'lucide-react';
 
 const BRAND_COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
@@ -125,6 +126,7 @@ export default function BrandyApp() {
   const [newBrandColor, setNewBrandColor] = useState(BRAND_COLORS[0]);
   const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
   const [editingAnchorRect, setEditingAnchorRect] = useState<DOMRect | null>(null);
+  const [view, setView] = useState<'home' | 'brand'>('home');
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
@@ -137,7 +139,7 @@ export default function BrandyApp() {
     ]);
     setBrands(b);
     setSections(s);
-    if (!activeBrandId && b.length > 0) setActiveBrandId(b[0].id);
+    if (!activeBrandId && b.length > 0) { setActiveBrandId(b[0].id); }
   }, [activeBrandId]);
 
   useEffect(() => { fetchAll(); }, []);
@@ -207,14 +209,31 @@ export default function BrandyApp() {
   const brandSections = sections.filter(s => s.brandId === activeBrandId);
   const activeSection = brandSections.find(s => s.id === activeSectionId) ?? null;
 
+  if (view === 'home') {
+    return (
+      <HomeView
+        brands={brands}
+        sections={sections}
+        onOpenBrand={id => { setActiveBrandId(id); setActiveSectionId(null); setView('brand'); }}
+        onBrandsChange={setBrands}
+        onSectionsChange={setSections}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-3 bg-white border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2 mr-4">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>B</div>
-          <span className="font-semibold text-lg tracking-tight">Brandy</span>
+          <button onClick={() => setView('home')} className="flex items-center gap-2 hover:opacity-70 transition-opacity">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>B</div>
+            <span className="font-semibold text-lg tracking-tight">Brandy</span>
+          </button>
         </div>
+        <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 transition-colors mr-2">
+          <ChevronLeft size={14} /> Accueil
+        </button>
 
         {/* Brand tabs */}
         <div className="flex items-center gap-1 flex-1 overflow-x-auto">
@@ -373,14 +392,9 @@ export default function BrandyApp() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--border)' }}>B</div>
-            <p className="text-sm">Créez votre première marque pour commencer</p>
-            <button
-              onClick={() => setShowNewBrand(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-medium"
-              style={{ background: 'var(--accent)' }}
-            >
-              <Plus size={16} /> Nouvelle marque
+            <p className="text-sm">Aucune marque sélectionnée.</p>
+            <button onClick={() => setView('home')} className="text-sm text-indigo-500 hover:text-indigo-700 transition-colors">
+              ← Retour à l'accueil
             </button>
           </div>
         )}
