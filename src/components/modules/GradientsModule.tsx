@@ -68,18 +68,22 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
-        {/* Plain div drag handle */}
+        {/* Drag handle (separate from color swatch) */}
         <div draggable
-          onClick={() => colorInputRef.current?.click()}
           onDragStart={e => {
             const img = new Image();
             img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             e.dataTransfer.setDragImage(img, 0, 0);
             onDragStart?.(e);
           }}
-          className="w-6 h-6 rounded border flex-shrink-0"
-          style={{ background: stop.color, borderColor: 'var(--border)', cursor: 'grab' }} />
-        {/* Color input hidden, triggered by clicking the div above */}
+          className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors select-none"
+          style={{ cursor: 'grab', fontSize: 10, letterSpacing: '-1px', lineHeight: 1 }}>
+          ⠿
+        </div>
+        {/* Clickable color swatch → opens native picker */}
+        <button onClick={() => colorInputRef.current?.click()}
+          className="w-6 h-6 rounded border flex-shrink-0 hover:scale-110 transition-transform"
+          style={{ background: stop.color, borderColor: 'var(--border)' }} />
         <input ref={colorInputRef} type="color" value={stop.color}
           onChange={e => onUpdate({ color: e.target.value })}
           className="sr-only" />
