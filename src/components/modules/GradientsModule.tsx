@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Module, GradientItem, GradientStop } from '@/types';
 import { Plus, Trash2, Check, X, Pencil, Copy, Download, ArrowLeftRight } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
@@ -59,26 +59,24 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
   onDrop?: () => void;
   onDragEnd?: () => void;
 }) {
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className="space-y-1 transition-opacity" style={{ opacity: isDragging ? 0.35 : 1 }}
       onDragOver={e => { e.preventDefault(); onDragOver?.(e); }}
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
-        <label draggable
-          onDragStart={e => {
-            const ghost = document.createElement('div');
-            ghost.style.cssText = `width:24px;height:24px;background:${stop.color};border-radius:4px;position:fixed;top:-100px;left:-100px`;
-            document.body.appendChild(ghost);
-            e.dataTransfer.setDragImage(ghost, 12, 12);
-            setTimeout(() => document.body.removeChild(ghost), 0);
-            onDragStart?.(e);
-          }}
-          className="relative w-6 h-6 rounded border flex-shrink-0"
-          style={{ borderColor: 'var(--border)', background: stop.color, cursor: 'grab' }}>
-          <input type="color" value={stop.color} onChange={e => onUpdate({ color: e.target.value })}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-        </label>
+        {/* Plain div drag handle — no input inside, so ghost is clean */}
+        <div draggable
+          onClick={() => colorInputRef.current?.click()}
+          onDragStart={e => { e.dataTransfer.setDragImage(e.currentTarget, 12, 12); onDragStart?.(e); }}
+          className="w-6 h-6 rounded border flex-shrink-0"
+          style={{ background: stop.color, borderColor: 'var(--border)', cursor: 'grab' }} />
+        {/* Color input hidden, triggered by clicking the div above */}
+        <input ref={colorInputRef} type="color" value={stop.color}
+          onChange={e => onUpdate({ color: e.target.value })}
+          className="sr-only" />
         <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
         <button onClick={onRemove} disabled={!canRemove}
           className="ml-auto text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
