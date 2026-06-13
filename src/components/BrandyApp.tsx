@@ -499,74 +499,77 @@ export default function BrandyApp() {
               draggingModuleId={draggingModule?.id ?? null}
               onModuleDrop={handleModuleDrop}
             />
-            {activeSection && brandSections.filter(s => s.parentId === activeSection.id).length === 0 ? (
-              <PageView
-                key={pageViewKey}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Always-visible brand header */}
+              <BrandHeader
                 brand={activeBrand}
-                section={activeSection}
-                sections={brandSections}
-                onModuleDragStart={setDraggingModule}
-                onModuleDragEnd={() => setDraggingModule(null)}
+                onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))}
               />
-            ) : (
-              <div className="flex-1 overflow-y-auto">
-                {!activeSection && (
-                  <BrandHeader
-                    brand={activeBrand}
-                    onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))}
-                  />
-                )}
-                <div className="max-w-4xl mx-auto px-8 py-8">
-                  <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      {activeSection ? activeSection.name : activeBrand.name}
-                    </h1>
-                  </div>
-                  {(() => {
-                    const children = activeSection
-                      ? brandSections.filter(s => s.parentId === activeSection.id)
-                      : brandSections.filter(s => s.parentId === null);
-                    const sorted = children.sort((a, b) => a.order - b.order);
-                    if (sorted.length === 0) {
+
+              {/* Content below the header */}
+              {activeSection && brandSections.filter(s => s.parentId === activeSection.id).length === 0 ? (
+                <PageView
+                  key={pageViewKey}
+                  brand={activeBrand}
+                  section={activeSection}
+                  sections={brandSections}
+                  onModuleDragStart={setDraggingModule}
+                  onModuleDragEnd={() => setDraggingModule(null)}
+                />
+              ) : (
+                <div className="flex-1 overflow-y-auto">
+                  <div className="max-w-4xl mx-auto px-8 py-8">
+                    <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
+                      <h1 className="text-2xl font-bold text-gray-900">
+                        {activeSection ? activeSection.name : activeBrand.name}
+                      </h1>
+                    </div>
+                    {(() => {
+                      const children = activeSection
+                        ? brandSections.filter(s => s.parentId === activeSection.id)
+                        : brandSections.filter(s => s.parentId === null);
+                      const sorted = children.sort((a, b) => a.order - b.order);
+                      if (sorted.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
+                            <FolderOpen size={36} />
+                            <p className="text-sm">Aucune rubrique. Créez-en une dans la sidebar.</p>
+                          </div>
+                        );
+                      }
                       return (
-                        <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
-                          <FolderOpen size={36} />
-                          <p className="text-sm">Aucune rubrique. Créez-en une dans la sidebar.</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {sorted.map(section => {
+                            const childCount = brandSections.filter(s => s.parentId === section.id).length;
+                            return (
+                              <button
+                                key={section.id}
+                                onClick={() => setActiveSectionId(section.id)}
+                                className="flex items-center gap-3 p-4 border rounded-xl bg-white text-left hover:shadow-md transition-all"
+                                style={{ borderColor: 'var(--border)' }}
+                              >
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
+                                  style={{ background: activeBrand.color }}>
+                                  {section.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-gray-800 truncate">{section.name}</p>
+                                  {childCount > 0 && (
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {childCount} sous-rubrique{childCount > 1 ? 's' : ''}
+                                    </p>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       );
-                    }
-                    return (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {sorted.map(section => {
-                          const childCount = brandSections.filter(s => s.parentId === section.id).length;
-                          return (
-                            <button
-                              key={section.id}
-                              onClick={() => setActiveSectionId(section.id)}
-                              className="flex items-center gap-3 p-4 border rounded-xl bg-white text-left hover:shadow-md transition-all"
-                              style={{ borderColor: 'var(--border)' }}
-                            >
-                              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
-                                style={{ background: activeBrand.color }}>
-                                {section.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-800 truncate">{section.name}</p>
-                                {childCount > 0 && (
-                                  <p className="text-xs text-gray-400 mt-0.5">
-                                    {childCount} sous-rubrique{childCount > 1 ? 's' : ''}
-                                  </p>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
+                    })()}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
