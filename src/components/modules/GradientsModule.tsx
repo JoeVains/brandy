@@ -431,6 +431,51 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     URL.revokeObjectURL(a.href);
   }
 
+  const AddForm = isEditing && showAdd ? (
+    <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+      <div className="h-16" style={{ background: newCss }} />
+      <div className="p-3 bg-white space-y-2.5">
+        <input className="w-full border rounded-lg px-2 py-1.5 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+          value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nom" />
+        <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
+          {(['linear', 'radial'] as const).map(t => (
+            <button key={t} onClick={() => setNewType(t)}
+              className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors"
+              style={newType === t ? { background: 'white', color: '#111' } : { color: '#6b7280' }}>
+              {t === 'linear' ? 'Linéaire' : 'Radial'}
+            </button>
+          ))}
+        </div>
+        {newType === 'linear' && (
+          <div className="flex items-center gap-1.5">
+            <AngleDial angle={newAngle} onChange={setNewAngle} />
+            <input type="range" min={0} max={360} value={newAngle}
+              onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
+            <input type="number" min={0} max={360} value={newAngle}
+              onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
+              className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
+              style={{ borderColor: 'var(--border)' }} />
+            <span className="text-xs text-gray-400">°</span>
+          </div>
+        )}
+        {newStops.map((stop, idx) => (
+          <ColorStopRow key={idx} stop={stop}
+            onUpdate={p => updateNewStop(idx, p)}
+            onRemove={() => setNewStops(prev => prev.filter((_, i) => i !== idx))}
+            canRemove={newStops.length > 2} />
+        ))}
+        <div className="flex gap-2 pt-1">
+          <button onClick={addGradient} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
+            <Check size={11} /> Ajouter
+          </button>
+          <button onClick={() => setShowAdd(false)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
+            <X size={11} /> Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const Description = (
     <ModuleDescription
       moduleId={module.id}
@@ -483,6 +528,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
             </button>
           )}
         </div>
+        {AddForm && <div className="mt-6 max-w-xs">{AddForm}</div>}
       </div>
     );
   }
@@ -507,50 +553,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
         ))}
 
         {/* Add form */}
-        {isEditing && showAdd && (
-          <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            <div className="h-16" style={{ background: newCss }} />
-            <div className="p-3 bg-white space-y-2.5">
-              <input className="w-full border rounded-lg px-2 py-1.5 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
-                value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nom" />
-              <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
-                {(['linear', 'radial'] as const).map(t => (
-                  <button key={t} onClick={() => setNewType(t)}
-                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors"
-                    style={newType === t ? { background: 'white', color: '#111' } : { color: '#6b7280' }}>
-                    {t === 'linear' ? 'Linéaire' : 'Radial'}
-                  </button>
-                ))}
-              </div>
-              {newType === 'linear' && (
-                <div className="flex items-center gap-1.5">
-                  <AngleDial angle={newAngle} onChange={setNewAngle} />
-                  <input type="range" min={0} max={360} value={newAngle}
-                    onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
-                  <input type="number" min={0} max={360} value={newAngle}
-                    onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
-                    className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
-                    style={{ borderColor: 'var(--border)' }} />
-                  <span className="text-xs text-gray-400">°</span>
-                </div>
-              )}
-              {newStops.map((stop, idx) => (
-                <ColorStopRow key={idx} stop={stop}
-                  onUpdate={p => updateNewStop(idx, p)}
-                  onRemove={() => setNewStops(prev => prev.filter((_, i) => i !== idx))}
-                  canRemove={newStops.length > 2} />
-              ))}
-              <div className="flex gap-2 pt-1">
-                <button onClick={addGradient} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-                  <Check size={11} /> Ajouter
-                </button>
-                <button onClick={() => setShowAdd(false)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-                  <X size={11} /> Annuler
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {AddForm}
 
         {isEditing && !showAdd && (
           <button onClick={() => setShowAdd(true)}
