@@ -74,9 +74,12 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
             const size = 24;
             const canvas = document.createElement('canvas');
             canvas.width = size; canvas.height = size;
+            canvas.style.cssText = 'position:fixed;top:-100px;left:-100px;pointer-events:none';
             const ctx = canvas.getContext('2d');
             if (ctx) { ctx.fillStyle = stop.color; ctx.fillRect(0, 0, size, size); }
+            document.body.appendChild(canvas);
             e.dataTransfer.setDragImage(canvas, size / 2, size / 2);
+            requestAnimationFrame(() => document.body.removeChild(canvas));
             onDragStart?.(e);
           }}
           className="w-6 h-6 rounded border flex-shrink-0"
