@@ -338,7 +338,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
                   style={{ paddingLeft: 22 }}
                 >
                   <Hash size={10} className="flex-shrink-0 opacity-50" />
-                  <span className="truncate">{h.title || 'Sans titre'}</span>
+                  <span className="truncate">{h.content || h.title || 'Sans titre'}</span>
                 </button>
               ))}
             </div>
