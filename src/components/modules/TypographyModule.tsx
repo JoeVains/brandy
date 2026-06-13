@@ -136,8 +136,10 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
   const [showAddGoogle, setShowAddGoogle] = useState(false);
   const [googleFamily, setGoogleFamily] = useState('');
   const [addingVariantFor, setAddingVariantFor] = useState<string | null>(null);
+  const [previewText, setPreviewText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const items = module.fontItems ?? [];
+  const SAMPLE_DEFAULT = 'The quick brown fox jumps over the lazy dog';
 
   async function patch(fontItems: FontItem[]) {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -245,12 +247,27 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
               {fontFaceUpload && <style>{fontFaceUpload}</style>}
 
               {/* Size preview */}
-              <div className="px-5 py-4 border-b space-y-1" style={{ borderColor: 'var(--border)', fontFamily: `'${item.family ?? item.name}', sans-serif` }}>
-                {[12, 16, 24, 36, 48].map(size => (
-                  <p key={size} style={{ fontSize: size }} className="text-gray-800 leading-tight truncate">
-                    The quick brown fox jumps over the lazy dog
-                  </p>
-                ))}
+              <div className="border-b" style={{ borderColor: 'var(--border)' }}>
+                <div className="px-5 pt-3 pb-2 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+                  <input
+                    className="flex-1 text-sm text-gray-500 outline-none placeholder-gray-300 bg-transparent"
+                    placeholder={SAMPLE_DEFAULT}
+                    value={previewText}
+                    onChange={e => setPreviewText(e.target.value)}
+                  />
+                  {previewText && (
+                    <button onClick={() => setPreviewText('')} className="text-xs text-gray-300 hover:text-gray-500 transition-colors flex-shrink-0">
+                      Réinitialiser
+                    </button>
+                  )}
+                </div>
+                <div className="px-5 py-4 space-y-1" style={{ fontFamily: `'${item.family ?? item.name}', sans-serif` }}>
+                  {[12, 16, 24, 36, 48].map(size => (
+                    <p key={size} style={{ fontSize: size }} className="text-gray-800 leading-tight truncate">
+                      {previewText || SAMPLE_DEFAULT}
+                    </p>
+                  ))}
+                </div>
               </div>
 
               {/* Variant rows */}
