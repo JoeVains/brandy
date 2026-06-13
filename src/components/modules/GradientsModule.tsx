@@ -19,12 +19,13 @@ function gradientToCss(type: string, angle: number, stops: GradientStop[]): stri
     : `linear-gradient(${angle}deg, ${s})`;
 }
 
-function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
+function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
   item: GradientItem;
   brandColor: string;
   onSave: (updated: GradientItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -145,7 +146,8 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
 
   return (
     <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.02] hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-24 relative" style={{ background: savedCss }}>
+      <div className="h-24 relative" style={{ background: savedCss, cursor: isEditing ? 'grab' : 'default' }}
+        draggable={isEditing} onDragStart={onDragStart}>
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
             <button onClick={() => setEditing(true)}
@@ -283,16 +285,15 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
-            draggable={isEditing}
-            onDragStart={e => onDragStart(e, idx)}
             onDragOver={e => onDragOver(e, idx)}
             onDrop={() => onDrop(idx)}
             onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
             className="transition-opacity"
-            style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'default', outline: dragOverIdx === idx && dragIdx !== idx ? `2px solid ${brandColor}` : undefined, borderRadius: 12 }}
+            style={{ opacity: dragIdx === idx ? 0.4 : 1, outline: dragOverIdx === idx && dragIdx !== idx ? `2px solid ${brandColor}` : undefined, borderRadius: 12 }}
           >
             <GradientSwatch item={item} brandColor={brandColor}
-              onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing} />
+              onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+              onDragStart={e => onDragStart(e, idx)} />
           </div>
         ))}
 

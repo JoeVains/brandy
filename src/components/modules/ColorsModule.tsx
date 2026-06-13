@@ -14,12 +14,13 @@ interface Props {
   isEditing?: boolean;
 }
 
-function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
+function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
   item: ColorItem;
   brandColor: string;
   onSave: (updated: ColorItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -93,7 +94,8 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
 
   return (
     <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-24 relative" style={{ background: item.value }}>
+      <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
+        draggable={isEditing} onDragStart={onDragStart}>
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
             <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
@@ -125,12 +127,13 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
   );
 }
 
-function DropSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
+function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
   item: ColorItem;
   brandColor: string;
   onSave: (updated: ColorItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -198,7 +201,8 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing }: {
   return (
     <div className="flex flex-col items-center gap-3 text-center group">
       <div className="relative">
-        <div className="w-20 h-20 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value }} />
+        <div className="w-20 h-20 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
+          draggable={isEditing} onDragStart={onDragStart} />
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/20">
             <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
@@ -371,16 +375,15 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
         <div className="flex flex-wrap gap-8">
           {items.map((item, idx) => (
             <div key={item.id}
-              draggable={isEditing}
-              onDragStart={e => onDragStart(e, idx)}
               onDragOver={e => onDragOver(e, idx)}
               onDrop={() => onDrop(idx)}
               onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
               className="transition-opacity"
-              style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'default', outline: dragOverIdx === idx && dragIdx !== idx ? '2px solid var(--accent)' : undefined, borderRadius: 999 }}
+              style={{ opacity: dragIdx === idx ? 0.4 : 1, outline: dragOverIdx === idx && dragIdx !== idx ? '2px solid var(--accent)' : undefined, borderRadius: 999 }}
             >
               <DropSwatch item={item} brandColor={brandColor}
-                onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing} />
+                onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+                onDragStart={e => onDragStart(e, idx)} />
             </div>
           ))}
           {isEditing && showAdd ? (
@@ -440,16 +443,15 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
-            draggable={isEditing}
-            onDragStart={e => onDragStart(e, idx)}
             onDragOver={e => onDragOver(e, idx)}
             onDrop={() => onDrop(idx)}
             onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
             className="transition-opacity"
-            style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'default', outline: dragOverIdx === idx && dragIdx !== idx ? '2px solid var(--accent)' : undefined, borderRadius: 12 }}
+            style={{ opacity: dragIdx === idx ? 0.4 : 1, outline: dragOverIdx === idx && dragIdx !== idx ? '2px solid var(--accent)' : undefined, borderRadius: 12 }}
           >
             <ColorSwatch item={item} brandColor={brandColor}
-              onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing} />
+              onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+              onDragStart={e => onDragStart(e, idx)} />
           </div>
         ))}
 
