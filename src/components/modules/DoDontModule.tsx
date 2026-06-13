@@ -240,7 +240,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
           onDelete={id => deleteItem('do', id)}
         />
         <Column
-          label="À éviter" icon="✗" color={DONT_COLOR}
+          label="À ne pas faire" icon="✗" color={DONT_COLOR}
           items={dontItems} isEditing={isEditing} layout={layout}
           onAdd={f => uploadItem('dont', f)}
           onAddText={() => addTextItem('dont')}
