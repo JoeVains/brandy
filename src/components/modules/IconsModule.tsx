@@ -17,6 +17,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState('');
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [descDraft, setDescDraft] = useState(module.iconDescription ?? '');
   const [descFocused, setDescFocused] = useState(false);
@@ -50,6 +52,18 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
       updated = await res.json();
     }
     onUpdate(updated);
+  }
+
+  async function reorderItems(fromIdx: number, toIdx: number) {
+    const reordered = [...items];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ iconItems: reordered }),
+    });
+    onUpdate(await res.json());
   }
 
   async function deleteIcon(id: string) {
@@ -200,10 +214,23 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         {filtered.length === 0 && search && (
           <div className="col-span-full py-8 text-center text-sm text-gray-400">Aucune icône ne correspond à « {search} »</div>
         )}
-        {filtered.map(item => {
+        {filtered.map((item, idx) => {
           const isSelected = selected.has(item.id);
           return (
-            <div key={item.id} data-item-id={item.id} className="group flex flex-col items-center gap-2">
+            <div
+              key={item.id}
+              className="relative group flex flex-col items-center gap-2"
+              style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
+              draggable={isEditing}
+              onDragStart={isEditing ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
+              onDragOver={isEditing ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
+              onDragLeave={isEditing ? () => setDragOverIdx(null) : undefined}
+              onDrop={isEditing ? e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) reorderItems(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onDragEnd={isEditing ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
+            >
+              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+              )}
               {/* Card */}
               <div
                 onClick={() => toggleSelect(item.id)}

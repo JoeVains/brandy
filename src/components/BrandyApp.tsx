@@ -500,12 +500,6 @@ export default function BrandyApp() {
               onModuleDrop={handleModuleDrop}
             />
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Always-visible brand header */}
-              <BrandHeader
-                brand={activeBrand}
-                onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))}
-              />
-
               {/* Content below the header */}
               {activeSection && brandSections.filter(s => s.parentId === activeSection.id).length === 0 ? (
                 <PageView
@@ -515,9 +509,11 @@ export default function BrandyApp() {
                   sections={brandSections}
                   onModuleDragStart={setDraggingModule}
                   onModuleDragEnd={() => setDraggingModule(null)}
+                  brandHeader={<BrandHeader brand={activeBrand} onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))} />}
                 />
               ) : (
                 <div className="flex-1 overflow-y-auto">
+                  <BrandHeader brand={activeBrand} onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))} />
                   <div className="max-w-4xl mx-auto px-8 py-8">
                     <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
                       <h1 className="text-2xl font-bold text-gray-900">

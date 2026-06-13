@@ -24,6 +24,7 @@ interface Props {
   sections: Section[];
   onModuleDragStart?: (module: Module) => void;
   onModuleDragEnd?: () => void;
+  brandHeader?: React.ReactNode;
 }
 
 const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
@@ -294,7 +295,7 @@ function InsertSeparator({ color, onClick }: { color: string; onClick: () => voi
   );
 }
 
-export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd }: Props) {
+export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd, brandHeader }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
   const [newModuleId, setNewModuleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -487,6 +488,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      {brandHeader}
       <div className="max-w-6xl mx-auto px-8 py-8 space-y-6">
         {/* Page header */}
         <div className="pb-2 border-b" style={{ borderColor: 'var(--border)' }}>

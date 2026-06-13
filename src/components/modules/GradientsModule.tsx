@@ -541,9 +541,12 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
                 onDragOver={e => onDragOver(e, idx)}
                 onDrop={() => onDrop(idx)}
                 onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-                className="transition-opacity"
-                style={{ opacity: dragIdx === idx ? 0.4 : 1, outline: dragOverIdx === idx && dragIdx !== idx ? `2px solid ${brandColor}` : undefined, borderRadius: 999 }}
+                className="transition-opacity relative"
+                style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
               >
+                {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                  <div className="absolute -left-4 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
+                )}
                 <GradientSwatch item={item} brandColor={brandColor}
                   onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
                   onDragStart={e => onDragStart(e, idx)} drops />
@@ -574,9 +577,12 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
             onDragOver={e => onDragOver(e, idx)}
             onDrop={() => onDrop(idx)}
             onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-            className="transition-opacity"
-            style={{ opacity: dragIdx === idx ? 0.4 : 1, outline: dragOverIdx === idx && dragIdx !== idx ? `2px solid ${brandColor}` : undefined, borderRadius: 12 }}
+            className="transition-opacity relative"
+            style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
           >
+            {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+              <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
+            )}
             <GradientSwatch item={item} brandColor={brandColor}
               onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
               onDragStart={e => onDragStart(e, idx)} />

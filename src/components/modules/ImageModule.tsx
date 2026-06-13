@@ -130,6 +130,8 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const mode = module.imageMode ?? 'single';
   const fit = module.imageFit ?? 'contain';
   const imageItems = module.imageItems ?? [];
@@ -264,6 +266,18 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     a.click();
     URL.revokeObjectURL(a.href);
     setDownloading(false);
+  }
+
+  async function reorderItems(fromIdx: number, toIdx: number) {
+    const reordered = [...imageItems];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageItems: reordered }),
+    });
+    onUpdate(await res.json());
   }
 
   async function removeGalleryItem(id: string) {
@@ -432,33 +446,59 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       )}
 
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-        {imageItems.map(item => {
+        {imageItems.map((item, idx) => {
           const isSelected = selected.has(item.id);
           return (
-          <div key={item.id} data-item-id={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer"
-            style={{ borderColor: isSelected ? brandColor : 'var(--border)', outline: isSelected ? `2px solid ${brandColor}` : 'none' }}
-            onClick={() => selectMode ? toggleSelect(item.id) : setLightboxIndex(imageItems.indexOf(item))}>
-            <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-              {!selectMode && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
-            </div>
-            {/* Select checkbox — visible uniquement en mode sélection */}
-            {selectMode && (
-              <div className="absolute top-2 left-2">
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
-                  style={isSelected ? { background: brandColor } : {}}>
-                  {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
+          <div
+            key={item.id}
+            className="relative group"
+            style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
+            draggable={isEditing && !selectMode}
+            onDragStart={isEditing && !selectMode ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
+            onDragOver={isEditing && !selectMode ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
+            onDragLeave={isEditing && !selectMode ? () => setDragOverIdx(null) : undefined}
+            onDrop={isEditing && !selectMode ? e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) reorderItems(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); } : undefined}
+            onDragEnd={isEditing && !selectMode ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
+            onClick={() => selectMode ? toggleSelect(item.id) : (!isEditing ? setLightboxIndex(idx) : undefined)}
+          >
+            {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+              <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+            )}
+            <div
+              data-item-id={item.id}
+              className="rounded-xl overflow-hidden border bg-gray-50"
+              style={{
+                borderColor: isSelected ? brandColor : 'var(--border)',
+                outline: isSelected ? `2px solid ${brandColor}` : 'none',
+              }}
+            >
+              <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2">
+                {!selectMode && !isEditing && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
+                {!selectMode && isEditing && (
+                  <button onClick={e => { e.stopPropagation(); setLightboxIndex(idx); }}
+                    className="p-1.5 rounded-lg bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                    <ZoomIn size={14} />
+                  </button>
+                )}
               </div>
-            )}
-            {isEditing && (
-              <button
-                onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-              >
-                <Trash2 size={13} />
-              </button>
-            )}
+              {selectMode && (
+                <div className="absolute top-2 left-2">
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
+                    style={isSelected ? { background: brandColor } : {}}>
+                    {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                </div>
+              )}
+              {isEditing && (
+                <button
+                  onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
           </div>
           );
         })}
