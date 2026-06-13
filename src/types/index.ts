@@ -58,7 +58,7 @@ export interface AttachmentItem {
   size: number;
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'divider';
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'divider';
 
 export interface Module {
   id: string;
@@ -88,6 +88,9 @@ export interface Module {
   // icons
   iconDescription?: string;
   iconItems?: IconItem[];
+  // spacing
+  spacingBase?: number;
+  spacingSteps?: number[];
   createdAt: string;
 }
 
