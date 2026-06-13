@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, Copy, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight, Pencil, Check } from 'lucide-react';
 
 interface Props {
   brands: Brand[];
@@ -26,6 +26,9 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(BRAND_COLORS[0]);
   const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
@@ -65,6 +68,25 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     onBrandsChange([...brands, newBrand]);
     onSectionsChange(newSections);
     setDuplicating(null);
+  }
+
+  function startEdit(brand: Brand, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditingId(brand.id);
+    setEditName(brand.name);
+    setEditColor(brand.color);
+  }
+
+  async function saveBrand(id: string) {
+    if (!editName.trim()) return;
+    const res = await fetch(`/api/brands/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: editName.trim(), color: editColor }),
+    });
+    const updated = await res.json();
+    onBrandsChange(brands.map(b => b.id === id ? updated : b));
+    setEditingId(null);
   }
 
   async function deleteBrand(id: string) {
@@ -152,11 +174,18 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                   onClick={() => onOpenBrand(brand.id)}
                 >
                   {/* Color band with action buttons */}
-                  <div className="h-24 flex items-end p-4 relative" style={{ background: brand.color }}>
+                  <div className="h-24 flex items-end p-4 relative" style={{ background: editingId === brand.id ? editColor : brand.color }}>
                     <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
                       {initial}
                     </div>
                     <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={e => startEdit(brand, e)}
+                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                        title="Éditer"
+                      >
+                        <Pencil size={13} />
+                      </button>
                       <button
                         onClick={() => duplicateBrand(brand.id)}
                         disabled={duplicating === brand.id}
@@ -175,24 +204,53 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="p-4 flex-1 flex flex-col gap-1">
-                    <p className="font-semibold text-gray-900 text-base">{brand.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {sectionCount} rubrique{sectionCount !== 1 ? 's' : ''} · Créée le {formatDate(brand.createdAt)}
-                    </p>
-                  </div>
+                  {/* Content / Edit form */}
+                  {editingId === brand.id ? (
+                    <div className="p-4 flex-1 flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                      <input
+                        autoFocus
+                        className="w-full text-base font-medium outline-none border-b pb-1 placeholder-gray-300"
+                        style={{ borderColor: 'var(--border)' }}
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveBrand(brand.id); if (e.key === 'Escape') setEditingId(null); }}
+                      />
+                      <div className="flex gap-1.5 flex-wrap">
+                        {BRAND_COLORS.map(c => (
+                          <button key={c}
+                            className={`w-5 h-5 rounded-full transition-transform ${editColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-110'}`}
+                            style={{ background: c }}
+                            onClick={() => setEditColor(c)} />
+                        ))}
+                      </div>
+                      <div className="flex gap-2 mt-auto">
+                        <button onClick={() => setEditingId(null)} className="flex-1 py-1.5 rounded-lg border text-xs text-gray-500" style={{ borderColor: 'var(--border)' }}>Annuler</button>
+                        <button onClick={() => saveBrand(brand.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs text-white font-medium" style={{ background: editColor }}>
+                          <Check size={12} /> Enregistrer
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 flex-1 flex flex-col gap-1">
+                      <p className="font-semibold text-gray-900 text-base">{brand.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {sectionCount} rubrique{sectionCount !== 1 ? 's' : ''} · Créée le {formatDate(brand.createdAt)}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Open button */}
-                  <div className="px-4 pb-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={() => onOpenBrand(brand.id)}
-                      className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-opacity"
-                      style={{ background: brand.color }}
-                    >
-                      Ouvrir <ArrowRight size={12} />
-                    </button>
-                  </div>
+                  {editingId !== brand.id && (
+                    <div className="px-4 pb-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => onOpenBrand(brand.id)}
+                        className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                        style={{ background: brand.color }}
+                      >
+                        Ouvrir <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
