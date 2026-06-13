@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Module } from '@/types';
-import { Upload, Link, X, Check, Pencil, Music } from 'lucide-react';
+import { Upload, Link, X, Check, Pencil, Music, Download } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -183,6 +183,11 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
                 {module.audioTitle && <p className="text-sm font-medium text-gray-800 truncate">{module.audioTitle}</p>}
                 <audio controls className="w-full mt-1" src={`/uploads/${module.audioFilename}`} />
               </div>
+              <a href={`/uploads/${module.audioFilename}`} download
+                className="flex-shrink-0 p-2 rounded-lg border text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+                style={{ borderColor: 'var(--border)' }}>
+                <Download size={14} />
+              </a>
             </div>
           ) : null}
 
