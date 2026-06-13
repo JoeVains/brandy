@@ -65,7 +65,11 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove }: {
       <input type="range" min={0} max={100} value={stop.position}
         onChange={e => onUpdate({ position: Number(e.target.value) })}
         className="flex-1 h-1 accent-gray-600" />
-      <span className="text-xs text-gray-500 w-8 text-right">{stop.position}%</span>
+      <input type="number" min={0} max={100} value={stop.position}
+        onChange={e => { const v = Math.min(100, Math.max(0, Number(e.target.value))); onUpdate({ position: v }); }}
+        className="text-xs w-10 border rounded px-1 py-0.5 outline-none text-right"
+        style={{ borderColor: 'var(--border)' }} />
+      <span className="text-xs text-gray-400">%</span>
       <button onClick={onRemove} disabled={!canRemove}
         className="text-gray-300 hover:text-red-400 disabled:opacity-20 transition-colors">
         <X size={12} />
