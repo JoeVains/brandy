@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Module, GradientItem, GradientStop } from '@/types';
-import { Plus, Trash2, Check, X, Pencil, Copy, Download } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, Copy, Download, ArrowLeftRight } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 function HexInput({ color, onChange }: { color: string; onChange: (c: string) => void }) {
@@ -48,17 +48,26 @@ function AngleDial({ angle, onChange }: { angle: number; onChange: (a: number) =
   );
 }
 
-function ColorStopRow({ stop, onUpdate, onRemove, canRemove }: {
+function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragStart, onDragOver, onDrop, onDragEnd }: {
   stop: GradientStop;
   onUpdate: (p: Partial<GradientStop>) => void;
   onRemove: () => void;
   canRemove: boolean;
+  isDragging?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: () => void;
+  onDragEnd?: () => void;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 transition-opacity" style={{ opacity: isDragging ? 0.35 : 1 }}
+      onDragOver={e => { e.preventDefault(); onDragOver?.(e); }}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
-        <label className="relative w-6 h-6 rounded border cursor-pointer flex-shrink-0"
-          style={{ borderColor: 'var(--border)', background: stop.color }}>
+        <label draggable onDragStart={onDragStart}
+          className="relative w-6 h-6 rounded border flex-shrink-0"
+          style={{ borderColor: 'var(--border)', background: stop.color, cursor: 'grab' }}>
           <input type="color" value={stop.color} onChange={e => onUpdate({ color: e.target.value })}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
         </label>
@@ -110,6 +119,24 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
   const [angle, setAngle] = useState(item.angle ?? 135);
   const [stops, setStops] = useState<GradientStop[]>(item.stops);
   const [copied, setCopied] = useState(false);
+  const [dragStopIdx, setDragStopIdx] = useState<number | null>(null);
+
+  function reverseStops() {
+    setStops(prev => [...prev].reverse().map(s => ({ ...s, position: 100 - s.position })));
+  }
+
+  function handleStopDragStart(idx: number) {
+    setDragStopIdx(idx);
+  }
+
+  function handleStopDrop(toIdx: number) {
+    if (dragStopIdx === null || dragStopIdx === toIdx) { setDragStopIdx(null); return; }
+    const reordered = [...stops];
+    const [moved] = reordered.splice(dragStopIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    setStops(reordered);
+    setDragStopIdx(null);
+  }
 
   const css = gradientToCss(type, angle, stops);
   const savedCss = gradientToCss(item.type, item.angle ?? 135, item.stops);
@@ -163,15 +190,22 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
             placeholder="Nom du dégradé"
           />
 
-          {/* Type */}
-          <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
-            {(['linear', 'radial'] as const).map(t => (
-              <button key={t} onClick={() => setType(t)}
-                className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-                style={type === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
-                {t === 'linear' ? 'Linéaire' : 'Radial'}
-              </button>
-            ))}
+          {/* Type + reverse */}
+          <div className="flex items-center gap-2">
+            <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
+              {(['linear', 'radial'] as const).map(t => (
+                <button key={t} onClick={() => setType(t)}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                  style={type === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+                  {t === 'linear' ? 'Linéaire' : 'Radial'}
+                </button>
+              ))}
+            </div>
+            <button onClick={reverseStops} title="Inverser le dégradé"
+              className="p-1.5 rounded-lg border text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+              style={{ borderColor: 'var(--border)' }}>
+              <ArrowLeftRight size={12} />
+            </button>
           </div>
 
           {/* Angle */}
@@ -197,7 +231,12 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
               <ColorStopRow key={idx} stop={stop}
                 onUpdate={p => updateStop(idx, p)}
                 onRemove={() => removeStop(idx)}
-                canRemove={stops.length > 2} />
+                canRemove={stops.length > 2}
+                isDragging={dragStopIdx === idx}
+                onDragStart={() => handleStopDragStart(idx)}
+                onDragOver={e => e.preventDefault()}
+                onDrop={() => handleStopDrop(idx)}
+                onDragEnd={() => setDragStopIdx(null)} />
             ))}
             <button onClick={addStop}
               className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">
