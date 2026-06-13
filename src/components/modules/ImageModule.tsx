@@ -127,6 +127,8 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const inputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [downloading, setDownloading] = useState(false);
   const mode = module.imageMode ?? 'single';
   const fit = module.imageFit ?? 'contain';
   const imageItems = module.imageItems ?? [];
@@ -238,6 +240,29 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     fd.append('slot', 'image-item');
     const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
     onUpdate(await res.json());
+  }
+
+  function toggleSelect(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  async function downloadZip(ids?: string[]) {
+    setDownloading(true);
+    const url = ids?.length
+      ? `/api/modules/${module.id}/download?ids=${ids.join(',')}`
+      : `/api/modules/${module.id}/download`;
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${module.title || 'images'}.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setDownloading(false);
   }
 
   async function removeGalleryItem(id: string) {
@@ -355,19 +380,67 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     );
   }
 
+  const hasSelection = selected.size > 0;
+
   // ——— Gallery ———
   return (
     <div>
       {isEditing && <ModeToggle />}
       {isEditing && <FitToggle />}
       {descriptionBlock}
+
+      {/* Download bar */}
+      {imageItems.length > 0 && (
+        <div className="flex items-center gap-3 mb-4">
+          {hasSelection && (
+            <>
+              <span className="text-xs text-gray-500">{selected.size} sélectionnée{selected.size > 1 ? 's' : ''}</span>
+              <button
+                onClick={() => downloadZip([...selected])}
+                disabled={downloading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <Download size={12} /> Télécharger la sélection ({selected.size})
+              </button>
+              <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 hover:text-gray-600">
+                Tout désélectionner
+              </button>
+            </>
+          )}
+          <div className="ml-auto">
+            <button
+              onClick={() => downloadZip()}
+              disabled={downloading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <Download size={12} /> {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-        {imageItems.map(item => (
-          <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer" style={{ borderColor: 'var(--border)' }}
+        {imageItems.map(item => {
+          const isSelected = selected.has(item.id);
+          return (
+          <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-gray-50 cursor-pointer"
+            style={{ borderColor: isSelected ? brandColor : 'var(--border)', outline: isSelected ? `2px solid ${brandColor}` : 'none' }}
             onClick={() => setLightboxIndex(imageItems.indexOf(item))}>
             <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+            </div>
+            {/* Select checkbox */}
+            <div
+              className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
+            >
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
+                style={isSelected ? { background: brandColor } : {}}>
+                {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </div>
             </div>
             {isEditing && (
               <button
@@ -378,7 +451,8 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               </button>
             )}
           </div>
-        ))}
+          );
+        })}
 
         {isEditing && (
           <button
