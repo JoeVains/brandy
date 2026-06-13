@@ -302,6 +302,8 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
   const [insertAfterIdx, setInsertAfterIdx] = useState<number | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -309,6 +311,41 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       .then(r => r.json())
       .then(data => { setModules(data); setLoading(false); });
   }, [section.id]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ZONE = 80;   // px from edge that triggers scroll
+    const SPEED = 12;  // px per frame
+
+    function onDragOver(e: DragEvent) {
+      const { top, bottom } = el!.getBoundingClientRect();
+      const y = e.clientY;
+      if (scrollRafRef.current) { cancelAnimationFrame(scrollRafRef.current); scrollRafRef.current = null; }
+      if (y < top + ZONE) {
+        const ratio = 1 - (y - top) / ZONE;
+        const step = () => { el!.scrollTop -= SPEED * ratio; scrollRafRef.current = requestAnimationFrame(step); };
+        scrollRafRef.current = requestAnimationFrame(step);
+      } else if (y > bottom - ZONE) {
+        const ratio = 1 - (bottom - y) / ZONE;
+        const step = () => { el!.scrollTop += SPEED * ratio; scrollRafRef.current = requestAnimationFrame(step); };
+        scrollRafRef.current = requestAnimationFrame(step);
+      }
+    }
+    function onDragEnd() {
+      if (scrollRafRef.current) { cancelAnimationFrame(scrollRafRef.current); scrollRafRef.current = null; }
+    }
+
+    el.addEventListener('dragover', onDragOver);
+    el.addEventListener('dragend', onDragEnd);
+    el.addEventListener('drop', onDragEnd);
+    return () => {
+      el.removeEventListener('dragover', onDragOver);
+      el.removeEventListener('dragend', onDragEnd);
+      el.removeEventListener('drop', onDragEnd);
+      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    };
+  }, []);
 
   async function addModule(type: ModuleType) {
     const res = await fetch('/api/modules', {
@@ -359,7 +396,6 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       body: JSON.stringify({ ...rest, title: rest.title ? `${rest.title} (copie)` : '' }),
     });
     const created = await res.json();
-    // Patch the full content fields that POST doesn't set
     const patch = await fetch(`/api/modules/${created.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -371,7 +407,19 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       }),
     });
     const full = await patch.json();
-    setModules(prev => [...prev, full]);
+    // Insert right after the original
+    setModules(prev => {
+      const idx = prev.findIndex(m => m.id === module.id);
+      const next = [...prev];
+      next.splice(idx + 1, 0, full);
+      fetch('/api/modules/reorder', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sectionId: section.id, ids: next.map(m => m.id) }),
+      });
+      return next;
+    });
+    setNewModuleId(full.id);
   }
 
   async function moveModuleTo(module: Module, targetSectionId: string) {
@@ -438,7 +486,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-8 py-8 space-y-6">
         {/* Page header */}
         <div className="pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
