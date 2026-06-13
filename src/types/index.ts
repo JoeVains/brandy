@@ -58,7 +58,17 @@ export interface AttachmentItem {
   size: number;
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'divider';
+export interface DoDontItem {
+  id: string;
+  type: 'image' | 'text';
+  content?: string;
+  caption?: string;
+  filename?: string;
+  mimeType?: string;
+  fit?: 'cover' | 'contain';
+}
+
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'divider';
 
 export interface Module {
   id: string;
@@ -79,6 +89,7 @@ export interface Module {
   content?: string;
   // image
   imageMode?: 'single' | 'gallery';
+  imageFit?: 'cover' | 'contain';
   imageFilename?: string;
   imageMimeType?: string;
   imageSize?: number;
@@ -91,6 +102,9 @@ export interface Module {
   // spacing
   spacingBase?: number;
   spacingSteps?: number[];
+  // do & don't
+  doItems?: DoDontItem[];
+  dontItems?: DoDontItem[];
   createdAt: string;
 }
 

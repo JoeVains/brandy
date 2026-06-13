@@ -1,0 +1,214 @@
+'use client';
+
+import { useRef, useState } from 'react';
+import { Module, DoDontItem } from '@/types';
+import { Plus, Trash2, Check, X, Image as ImageIcon, Type } from 'lucide-react';
+import ModuleDescription from './ModuleDescription';
+
+interface Props {
+  module: Module;
+  brandColor: string;
+  onUpdate: (updated: Module) => void;
+  isEditing?: boolean;
+}
+
+const DO_COLOR = '#16a34a';
+const DONT_COLOR = '#dc2626';
+
+function Column({
+  label, icon, color, items, isEditing, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete,
+}: {
+  label: string;
+  icon: string;
+  color: string;
+  items: DoDontItem[];
+  isEditing?: boolean;
+  onAdd: (file: File) => void;
+  onAddText: () => void;
+  onUpdateCaption: (id: string, caption: string) => void;
+  onUpdateContent: (id: string, content: string) => void;
+  onUpdateFit: (id: string, fit: 'cover' | 'contain') => void;
+  onDelete: (id: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex-1 min-w-0">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl mb-3" style={{ background: `${color}15` }}>
+        <span className="text-lg font-bold" style={{ color }}>{icon}</span>
+        <span className="text-sm font-semibold" style={{ color }}>{label}</span>
+      </div>
+
+      {/* Items */}
+      <div className="space-y-3">
+        {items.map(item => (
+          <div key={item.id} className="group relative border-2 rounded-xl overflow-hidden" style={{ borderColor: color }}>
+            {/* Image item */}
+            {item.type === 'image' && item.filename && (
+              <>
+                <img src={`/uploads/${item.filename}`} alt="" className="w-full max-h-64 bg-gray-50" style={{ objectFit: item.fit ?? 'cover' }} />
+                {isEditing && (
+                  <div className="flex p-1 gap-1 bg-black/5 absolute top-2 left-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    {(['cover', 'contain'] as const).map(f => (
+                      <button key={f} onClick={() => onUpdateFit(item.id, f)}
+                        className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
+                        style={item.fit === f || (!item.fit && f === 'cover') ? { background: 'white', color: '#111' } : { color: 'white' }}>
+                        {f === 'cover' ? 'Remplir' : 'Ajuster'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Text item */}
+            {item.type === 'text' && (
+              <div className="p-4 min-h-[80px]" style={{ background: `${color}08` }}>
+                {isEditing ? (
+                  <textarea
+                    className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none"
+                    rows={3}
+                    placeholder="Décrivez ce cas…"
+                    value={item.content ?? ''}
+                    onChange={e => onUpdateContent(item.id, e.target.value)}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.content || <span className="text-gray-300 italic">Vide</span>}</p>
+                )}
+              </div>
+            )}
+
+            {/* Caption */}
+            <div className="px-3 py-2 bg-white border-t" style={{ borderColor: `${color}30` }}>
+              {isEditing ? (
+                <input
+                  className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
+                  placeholder="Légende…"
+                  value={item.caption ?? ''}
+                  onChange={e => onUpdateCaption(item.id, e.target.value)}
+                />
+              ) : (
+                <p className="text-xs text-gray-400">{item.caption || ''}</p>
+              )}
+            </div>
+
+            {/* Delete button */}
+            {isEditing && (
+              <button
+                onClick={() => onDelete(item.id)}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Add buttons */}
+        {isEditing && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border-2 border-dashed rounded-xl text-xs transition-colors"
+              style={{ borderColor: `${color}40`, color: `${color}80` }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color; (e.currentTarget as HTMLElement).style.color = color; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = `${color}40`; (e.currentTarget as HTMLElement).style.color = `${color}80`; }}
+            >
+              <ImageIcon size={13} /> Image
+            </button>
+            <button
+              onClick={onAddText}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border-2 border-dashed rounded-xl text-xs transition-colors"
+              style={{ borderColor: `${color}40`, color: `${color}80` }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color; (e.currentTarget as HTMLElement).style.color = color; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = `${color}40`; (e.currentTarget as HTMLElement).style.color = `${color}80`; }}
+            >
+              <Type size={13} /> Texte
+            </button>
+            <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && onAdd(e.target.files[0])} />
+          </div>
+        )}
+
+        {!isEditing && items.length === 0 && (
+          <div className="py-8 flex items-center justify-center border-2 border-dashed rounded-xl" style={{ borderColor: `${color}20` }}>
+            <span className="text-xs text-gray-300">Aucun exemple</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function DoDontModule({ module, brandColor, onUpdate, isEditing }: Props) {
+  const doItems = module.doItems ?? [];
+  const dontItems = module.dontItems ?? [];
+
+  async function patch(patch: Partial<Module>) {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    onUpdate(await res.json());
+  }
+
+  async function uploadItem(slot: 'do' | 'dont', file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('slot', slot);
+    const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+    onUpdate(await res.json());
+  }
+
+  function addTextItem(col: 'do' | 'dont') {
+    const item: DoDontItem = { id: crypto.randomUUID(), type: 'text', content: '', caption: '' };
+    if (col === 'do') patch({ doItems: [...doItems, item] });
+    else patch({ dontItems: [...dontItems, item] });
+  }
+
+  function updateItem(col: 'do' | 'dont', id: string, changes: Partial<DoDontItem>) {
+    const items = col === 'do' ? doItems : dontItems;
+    const updated = items.map(i => i.id === id ? { ...i, ...changes } : i);
+    patch(col === 'do' ? { doItems: updated } : { dontItems: updated });
+  }
+
+  function deleteItem(col: 'do' | 'dont', id: string) {
+    const items = col === 'do' ? doItems : dontItems;
+    const updated = items.filter(i => i.id !== id);
+    patch(col === 'do' ? { doItems: updated } : { dontItems: updated });
+  }
+
+  return (
+    <div>
+      <ModuleDescription
+        moduleId={module.id}
+        value={module.description}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, description: desc })}
+      />
+      <div className="flex gap-5">
+        <Column
+          label="À faire" icon="✓" color={DO_COLOR}
+          items={doItems} isEditing={isEditing}
+          onAdd={f => uploadItem('do', f)}
+          onAddText={() => addTextItem('do')}
+          onUpdateCaption={(id, caption) => updateItem('do', id, { caption })}
+          onUpdateContent={(id, content) => updateItem('do', id, { content })}
+          onUpdateFit={(id, fit) => updateItem('do', id, { fit })}
+          onDelete={id => deleteItem('do', id)}
+        />
+        <Column
+          label="À éviter" icon="✗" color={DONT_COLOR}
+          items={dontItems} isEditing={isEditing}
+          onAdd={f => uploadItem('dont', f)}
+          onAddText={() => addTextItem('dont')}
+          onUpdateCaption={(id, caption) => updateItem('dont', id, { caption })}
+          onUpdateContent={(id, content) => updateItem('dont', id, { content })}
+          onUpdateFit={(id, fit) => updateItem('dont', id, { fit })}
+          onDelete={id => deleteItem('dont', id)}
+        />
+      </div>
+    </div>
+  );
+}

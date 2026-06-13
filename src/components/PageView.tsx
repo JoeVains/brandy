@@ -12,6 +12,7 @@ import DividerModule from './modules/DividerModule';
 import HeadingModule from './modules/HeadingModule';
 import IconsModule from './modules/IconsModule';
 import SpacingModule from './modules/SpacingModule';
+import DoDontModule from './modules/DoDontModule';
 
 interface Props {
   brand: Brand;
@@ -30,6 +31,7 @@ const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; de
   { type: 'attachments', label: 'Fichiers', icon: <Paperclip size={18} />, description: 'ZIP, PDF et autres pièces jointes' },
   { type: 'icons', label: 'Icônes', icon: <span className="font-bold text-base leading-none">❖</span>, description: 'Bibliothèque d\'icônes SVG téléchargeables en ZIP' },
   { type: 'spacing', label: 'Espacements', icon: <span className="font-bold text-base leading-none">⇥</span>, description: 'Grille d\'espacements et unité de base' },
+  { type: 'dodont', label: 'Do & Don\'t', icon: <span className="font-bold text-base leading-none">✓✗</span>, description: 'Bonnes et mauvaises pratiques côte à côte' },
   { type: 'divider', label: 'Séparateur', icon: <Minus size={18} />, description: 'Ligne de séparation horizontale' },
 ];
 
@@ -215,6 +217,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
         {module.type === 'attachments' && <AttachmentsModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'icons' && <IconsModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'spacing' && <SpacingModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
+        {module.type === 'dodont' && <DoDontModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'divider' && (
           <div className="flex items-center gap-3">
             <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">

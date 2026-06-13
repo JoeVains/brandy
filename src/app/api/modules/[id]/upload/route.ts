@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { AttachmentItem, FontItem, IconItem, ImageItem } from '@/types';
+import { AttachmentItem, DoDontItem, FontItem, IconItem, ImageItem } from '@/types';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -62,6 +62,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       size: file.size,
     };
     module.iconItems = [...(module.iconItems ?? []), item];
+  } else if (slot === 'do' || slot === 'dont') {
+    const item: DoDontItem = { id: randomUUID(), type: 'image', filename, mimeType: file.type };
+    if (slot === 'do') module.doItems = [...(module.doItems ?? []), item];
+    else module.dontItems = [...(module.dontItems ?? []), item];
   } else if (slot === 'attachment') {
     const item: AttachmentItem = {
       id: randomUUID(),
