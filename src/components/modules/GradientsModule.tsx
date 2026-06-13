@@ -557,7 +557,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     <div>
       {Description}
       {Toolbar}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>
         {items.map((item, idx) => (
           <div key={item.id}
             data-item-id={item.id}
