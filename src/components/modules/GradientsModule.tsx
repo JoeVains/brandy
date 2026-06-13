@@ -71,15 +71,9 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
         <div draggable
           onClick={() => colorInputRef.current?.click()}
           onDragStart={e => {
-            const size = 24;
-            const canvas = document.createElement('canvas');
-            canvas.width = size; canvas.height = size;
-            canvas.style.cssText = 'position:fixed;top:-100px;left:-100px;pointer-events:none';
-            const ctx = canvas.getContext('2d');
-            if (ctx) { ctx.fillStyle = stop.color; ctx.fillRect(0, 0, size, size); }
-            document.body.appendChild(canvas);
-            e.dataTransfer.setDragImage(canvas, size / 2, size / 2);
-            requestAnimationFrame(() => document.body.removeChild(canvas));
+            const img = new Image();
+            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            e.dataTransfer.setDragImage(img, 0, 0);
             onDragStart?.(e);
           }}
           className="w-6 h-6 rounded border flex-shrink-0"
