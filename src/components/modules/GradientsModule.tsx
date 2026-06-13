@@ -60,7 +60,7 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
   onDrop?: () => void;
   onDragEnd?: () => void;
 }) {
-  const colorInputRef = useRef<HTMLInputElement>(null);
+  const inputId = useRef(`stop-color-${Math.random().toString(36).slice(2)}`);
 
   return (
     <div className="space-y-1 transition-opacity" style={{ opacity: isDragging ? 0.35 : 1 }}
@@ -68,7 +68,7 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
-        {/* Drag handle (separate from color swatch) */}
+        {/* Drag handle */}
         <div draggable
           onDragStart={e => {
             const img = new Image();
@@ -80,11 +80,11 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
           style={{ cursor: 'grab', fontSize: 10, letterSpacing: '-1px', lineHeight: 1 }}>
           ⠿
         </div>
-        {/* Clickable color swatch → opens native picker */}
-        <button onClick={() => colorInputRef.current?.click()}
-          className="w-6 h-6 rounded border flex-shrink-0 hover:scale-110 transition-transform"
+        {/* Label wrapping the hidden input — click on swatch = click on input, no JS chain needed */}
+        <label htmlFor={inputId.current}
+          className="w-6 h-6 rounded border flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
           style={{ background: stop.color, borderColor: 'var(--border)' }} />
-        <input ref={colorInputRef} type="color" value={stop.color}
+        <input id={inputId.current} type="color" value={stop.color}
           onChange={e => onUpdate({ color: e.target.value })}
           className="sr-only" />
         <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
