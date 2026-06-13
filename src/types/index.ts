@@ -140,6 +140,7 @@ export interface Module {
   doDontLayout?: 'stacked' | 'sidebyside';
   doItems?: DoDontItem[];
   dontItems?: DoDontItem[];
+  backgroundColor?: string;
   createdAt: string;
 }
 

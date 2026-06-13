@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, ModuleType, Section, Brand } from '@/types';
-import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight, Paintbrush } from 'lucide-react';
 import ColorsModule from './modules/ColorsModule';
 import TypographyModule from './modules/TypographyModule';
 import TextModule from './modules/TextModule';
@@ -64,6 +64,12 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
   const [subMenu, setSubMenu] = useState<'move' | 'copy' | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [showBgPalette, setShowBgPalette] = useState(false);
+  const bgPaletteRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isEditing) setShowBgPalette(false);
+  }, [isEditing]);
 
   useEffect(() => {
     if (defaultEditing && cardRef.current) {
@@ -100,8 +106,8 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
   }
 
   return (
-    <div ref={cardRef} className={`border rounded-2xl bg-white transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
-      style={{ borderColor: 'var(--border)', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
+    <div ref={cardRef} className={`border rounded-2xl transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
+      style={{ borderColor: 'var(--border)', background: module.backgroundColor ? `${module.backgroundColor}1a` : 'white', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
       {/* Module header */}
       {module.type !== 'divider' && (
         <div className="flex items-center gap-3 px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -137,6 +143,46 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             )}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {isEditing && (
+              <div className="relative" ref={bgPaletteRef}>
+                <button
+                  className="p-1.5 rounded-lg transition-colors"
+                  title="Couleur de fond"
+                  style={{ color: module.backgroundColor ? brandColor : '#9ca3af' }}
+                  onClick={() => setShowBgPalette(o => !o)}
+                >
+                  <Paintbrush size={14} />
+                </button>
+                {showBgPalette && (
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-white border rounded-xl shadow-lg px-2.5 py-2 z-50" style={{ borderColor: 'var(--border)' }}>
+                    {/* Reset */}
+                    <button
+                      onClick={async () => {
+                        const res = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ backgroundColor: null }) });
+                        onUpdate(await res.json());
+                      }}
+                      className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 hover:scale-110 transition-transform"
+                      style={{ borderColor: '#d1d5db' }}
+                      title="Aucune teinte"
+                    >
+                      <X size={9} className="text-gray-400" />
+                    </button>
+                    {['#ef4444','#f97316','#eab308','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#78716c','#6b7280'].map(color => (
+                      <button
+                        key={color}
+                        onClick={async () => {
+                          const res = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ backgroundColor: color }) });
+                          onUpdate(await res.json());
+                        }}
+                        className="w-5 h-5 rounded-full flex-shrink-0 hover:scale-110 transition-transform"
+                        style={{ background: color, outline: module.backgroundColor === color ? `2px solid ${color}` : 'none', outlineOffset: 2 }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <button
               onClick={() => setIsEditing(e => !e)}
               className="p-1.5 rounded-lg transition-colors"
@@ -480,6 +526,9 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ sectionId: section.id, ids: reordered.map(m => m.id) }),
     });
+    if (reordered.some(m => m.type === 'heading')) {
+      window.dispatchEvent(new Event('brandy:modules-changed'));
+    }
   }
 
   if (loading) {

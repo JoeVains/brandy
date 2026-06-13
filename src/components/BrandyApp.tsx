@@ -6,7 +6,7 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import SearchModal from './SearchModal';
 
@@ -445,6 +445,15 @@ export default function BrandyApp() {
             <span className="text-xs hidden sm:inline">Rechercher</span>
             <kbd className="text-[10px] font-mono hidden sm:inline">⌘K</kbd>
           </button>
+        )}
+
+        {/* Export PDF */}
+        {activeBrandId && (
+          <a href={`/api/brands/${activeBrandId}/pdf`} target="_blank" rel="noopener noreferrer"
+            className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            title="Exporter en PDF">
+            <FileDown size={15} />
+          </a>
         )}
 
         {/* History button */}
