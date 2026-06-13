@@ -365,7 +365,7 @@ export default function BrandyApp() {
                 el.style.outline = '2px solid transparent';
                 el.style.outlineOffset = '4px';
                 setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; el.style.borderRadius = ''; el.style.transition = ''; }, 700);
-              }, 800);
+              }, 1600);
             }, 150);
           }}
           onClose={() => setShowSearch(false)}
