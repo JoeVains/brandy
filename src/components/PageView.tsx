@@ -303,16 +303,19 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
     const m = await res.json();
     setModules(prev => [...prev, m]);
     setNewModuleId(m.id);
+    window.dispatchEvent(new Event('brandy:modules-changed'));
   }
 
   function updateModule(updated: Module) {
     setModules(prev => prev.map(m => m.id === updated.id ? updated : m));
+    if (updated.type === 'heading') window.dispatchEvent(new Event('brandy:modules-changed'));
   }
 
   async function deleteModule(id: string) {
     if (!confirm('Supprimer ce module ?')) return;
     await fetch(`/api/modules/${id}`, { method: 'DELETE' });
     setModules(prev => prev.filter(m => m.id !== id));
+    window.dispatchEvent(new Event('brandy:modules-changed'));
   }
 
   async function duplicateModule(module: Module) {

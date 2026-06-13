@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Brand, Section } from '@/types';
-import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Brand, Section, Module } from '@/types';
+import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical, Hash } from 'lucide-react';
 
 interface Props {
   brand: Brand;
@@ -215,6 +215,24 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
   const [newName, setNewName] = useState('');
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+  const [headings, setHeadings] = useState<Module[]>([]);
+
+  useEffect(() => {
+    if (!activeSectionId) { setHeadings([]); return; }
+    function refresh() {
+      fetch(`/api/modules?sectionId=${activeSectionId}`)
+        .then(r => r.json())
+        .then((modules: Module[]) => setHeadings(modules.filter(m => m.type === 'heading')));
+    }
+    refresh();
+    window.addEventListener('brandy:modules-changed', refresh);
+    return () => window.removeEventListener('brandy:modules-changed', refresh);
+  }, [activeSectionId]);
+
+  function scrollToHeading(moduleId: string) {
+    const el = document.querySelector(`[data-module-id="${moduleId}"]`) as HTMLElement | null;
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   const roots = sections.filter(s => s.parentId === null).sort((a, b) => a.order - b.order);
 
   async function addRoot() {
@@ -306,6 +324,26 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
             />
           ))}
         </div>
+
+        {/* Heading anchors for active section */}
+        {headings.length > 0 && (
+          <>
+            <div className="h-px my-2" style={{ background: 'var(--border)' }} />
+            <div className="space-y-0.5">
+              {headings.map(h => (
+                <button
+                  key={h.id}
+                  onClick={() => scrollToHeading(h.id)}
+                  className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-left"
+                  style={{ paddingLeft: 22 }}
+                >
+                  <Hash size={10} className="flex-shrink-0 opacity-50" />
+                  <span className="truncate">{h.title || 'Sans titre'}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {showAdd ? (
           <div className="flex items-center gap-1 px-2 py-1 mt-1 rounded-lg bg-gray-50 border" style={{ borderColor: 'var(--border)' }}>
