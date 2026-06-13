@@ -434,7 +434,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             </div>
             {/* Select checkbox */}
             <div
-              className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              className={`absolute top-2 left-2 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
               onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
             >
               <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
