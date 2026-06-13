@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid } from 'lucide-react';
+import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical } from 'lucide-react';
 
 interface Props {
   brand: Brand;
@@ -25,17 +25,30 @@ interface SectionNodeProps {
   depth: number;
   draggingModuleId?: string | null;
   onModuleDrop?: (targetSectionId: string) => void;
+  dragSectionId: string | null;
+  dragOverSectionId: string | null;
+  onSectionDragStart: (id: string) => void;
+  onSectionDragOver: (id: string) => void;
+  onSectionDragEnd: () => void;
+  onSectionDrop: (targetId: string) => void;
 }
 
-function SectionNode({ section, allSections, activeSectionId, onSelect, onSectionsChange, brandId, brandColor, depth, draggingModuleId, onModuleDrop }: SectionNodeProps) {
+function SectionNode({
+  section, allSections, activeSectionId, onSelect, onSectionsChange,
+  brandId, brandColor, depth, draggingModuleId, onModuleDrop,
+  dragSectionId, dragOverSectionId,
+  onSectionDragStart, onSectionDragOver, onSectionDragEnd, onSectionDrop,
+}: SectionNodeProps) {
   const children = allSections.filter(s => s.parentId === section.id).sort((a, b) => a.order - b.order);
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [isDropTarget, setIsDropTarget] = useState(false);
+  const [isModuleDropTarget, setIsModuleDropTarget] = useState(false);
   const [editName, setEditName] = useState(section.name);
   const [showAddChild, setShowAddChild] = useState(false);
   const [childName, setChildName] = useState('');
   const isActive = activeSectionId === section.id;
+  const isDragging = dragSectionId === section.id;
+  const isOver = dragOverSectionId === section.id && dragSectionId !== section.id;
 
   async function renameSection() {
     if (!editName.trim()) return;
@@ -75,30 +88,65 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
     setExpanded(true);
   }
 
+  const sharedProps = {
+    allSections, activeSectionId, onSelect, onSectionsChange, brandId, brandColor,
+    draggingModuleId, onModuleDrop,
+    dragSectionId, dragOverSectionId,
+    onSectionDragStart, onSectionDragOver, onSectionDragEnd, onSectionDrop,
+  };
+
   return (
-    <div>
+    <div style={{ opacity: isDragging ? 0.4 : 1, transition: 'opacity 0.15s' }}>
       <div
-        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isDropTarget ? '' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 hover:bg-gray-100'}`}
         style={{
           paddingLeft: `${8 + depth * 14}px`,
           ...(isActive ? { background: brandColor } : {}),
-          ...(isDropTarget ? { background: `${brandColor}20`, color: brandColor, outline: `2px solid ${brandColor}`, outlineOffset: '-2px' } : {}),
+          ...(isModuleDropTarget ? { background: `${brandColor}20`, color: brandColor, outline: `2px solid ${brandColor}`, outlineOffset: '-2px' } : {}),
+          ...(isOver && !isModuleDropTarget ? { outline: `2px solid ${brandColor}`, outlineOffset: '-2px', borderRadius: 8 } : {}),
         }}
         onClick={() => onSelect(section.id)}
-        onDragOver={e => {
-          if (!draggingModuleId) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          setIsDropTarget(true);
+        draggable
+        onDragStart={e => {
+          e.stopPropagation();
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('brandy/section', section.id);
+          onSectionDragStart(section.id);
         }}
-        onDragLeave={() => setIsDropTarget(false)}
+        onDragOver={e => {
+          if (e.dataTransfer.types.includes('brandy/section')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+            onSectionDragOver(section.id);
+          } else if (draggingModuleId) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            setIsModuleDropTarget(true);
+          }
+        }}
+        onDragLeave={e => {
+          setIsModuleDropTarget(false);
+        }}
         onDrop={e => {
           e.preventDefault();
-          setIsDropTarget(false);
-          const moduleId = e.dataTransfer.getData('brandy/module');
-          if (moduleId) onModuleDrop?.(section.id);
+          e.stopPropagation();
+          setIsModuleDropTarget(false);
+          const sectionId = e.dataTransfer.getData('brandy/section');
+          if (sectionId) {
+            onSectionDrop(section.id);
+          } else {
+            const moduleId = e.dataTransfer.getData('brandy/module');
+            if (moduleId) onModuleDrop?.(section.id);
+          }
         }}
+        onDragEnd={() => onSectionDragEnd()}
       >
+        {/* Grip handle */}
+        <span className={`flex-shrink-0 opacity-0 group-hover:opacity-30 cursor-grab -ml-1 ${isActive ? 'opacity-30' : ''}`}>
+          <GripVertical size={12} />
+        </span>
+
         {children.length > 0 ? (
           <button onClick={e => { e.stopPropagation(); setExpanded(!expanded); }} className="flex-shrink-0 opacity-50">
             {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -153,15 +201,8 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
         <SectionNode
           key={child.id}
           section={child}
-          allSections={allSections}
-          activeSectionId={activeSectionId}
-          onSelect={onSelect}
-          onSectionsChange={onSectionsChange}
-          brandId={brandId}
-          brandColor={brandColor}
           depth={depth + 1}
-          draggingModuleId={draggingModuleId}
-          onModuleDrop={onModuleDrop}
+          {...sharedProps}
         />
       ))}
     </div>
@@ -172,6 +213,8 @@ function SectionNode({ section, allSections, activeSectionId, onSelect, onSectio
 export default function Sidebar({ brand, sections, activeSectionId, onSelectSection, onSectionsChange, draggingModuleId, onModuleDrop }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
+  const [dragSectionId, setDragSectionId] = useState<string | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const roots = sections.filter(s => s.parentId === null).sort((a, b) => a.order - b.order);
 
   async function addRoot() {
@@ -186,6 +229,56 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
     setNewName('');
     setShowAdd(false);
   }
+
+  function handleSectionDrop(targetId: string) {
+    if (!dragSectionId || dragSectionId === targetId) return;
+
+    const dragged = sections.find(s => s.id === dragSectionId);
+    const target = sections.find(s => s.id === targetId);
+    if (!dragged || !target || dragged.parentId !== target.parentId) return;
+
+    // Reorder within the same parent group
+    const siblings = sections
+      .filter(s => s.parentId === dragged.parentId)
+      .sort((a, b) => a.order - b.order);
+
+    const fromIdx = siblings.findIndex(s => s.id === dragSectionId);
+    const toIdx = siblings.findIndex(s => s.id === targetId);
+    siblings.splice(toIdx, 0, siblings.splice(fromIdx, 1)[0]);
+
+    const updatedIds = siblings.map(s => s.id);
+    const updated = sections.map(s => {
+      const idx = updatedIds.indexOf(s.id);
+      return idx === -1 ? s : { ...s, order: idx };
+    });
+
+    onSectionsChange(updated);
+    fetch('/api/sections/reorder', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ids: updatedIds }),
+    });
+
+    setDragSectionId(null);
+    setDragOverSectionId(null);
+  }
+
+  const nodeProps = {
+    allSections: sections,
+    activeSectionId,
+    onSelect: onSelectSection,
+    onSectionsChange,
+    brandId: brand.id,
+    brandColor: brand.color,
+    draggingModuleId,
+    onModuleDrop,
+    dragSectionId,
+    dragOverSectionId,
+    onSectionDragStart: setDragSectionId,
+    onSectionDragOver: setDragOverSectionId,
+    onSectionDragEnd: () => { setDragSectionId(null); setDragOverSectionId(null); },
+    onSectionDrop: handleSectionDrop,
+  };
 
   return (
     <aside className="w-56 flex-shrink-0 flex flex-col border-r bg-white overflow-y-auto" style={{ borderColor: 'var(--border)' }}>
@@ -208,15 +301,8 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
             <SectionNode
               key={section.id}
               section={section}
-              allSections={sections}
-              activeSectionId={activeSectionId}
-              onSelect={onSelectSection}
-              onSectionsChange={onSectionsChange}
-              brandId={brand.id}
-              brandColor={brand.color}
               depth={0}
-              draggingModuleId={draggingModuleId}
-              onModuleDrop={onModuleDrop}
+              {...nodeProps}
             />
           ))}
         </div>
