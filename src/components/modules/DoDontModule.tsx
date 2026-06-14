@@ -49,56 +49,46 @@ function Column({
         {items.map(item => (
           <div key={item.id} className={`group relative border-2 rounded-xl overflow-hidden ${layout === 'sidebyside' ? 'flex h-40' : ''}`} style={{ borderColor: color }}>
 
-            {/* Image item */}
-            {item.type === 'image' && item.filename && (
-              <div className={`relative overflow-hidden ${layout === 'sidebyside' ? 'w-1/2 shrink-0' : 'h-48'}`}>
+            {/* Content area (image or text) */}
+            <div className={`relative overflow-hidden ${layout === 'sidebyside' ? 'w-1/2 shrink-0' : 'h-48'}`}
+              style={{ background: `${color}08` }}>
+              {item.type === 'image' && item.filename && (
                 <img src={`/uploads/${item.filename}`} alt=""
                   className="block w-full h-full bg-gray-50"
                   style={{ objectFit: item.fit ?? 'cover' }} />
-                {color === DONT_COLOR && (
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-                    <line x1="5%" y1="95%" x2="95%" y2="5%" stroke={DONT_COLOR} strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                )}
-                {isEditing && (
-                  <div className="flex p-1 gap-1 bg-black/5 absolute top-2 left-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                    {(['cover', 'contain'] as const).map(f => (
-                      <button key={f} onClick={() => onUpdateFit(item.id, f)}
-                        className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
-                        style={item.fit === f || (!item.fit && f === 'cover') ? { background: 'white', color: '#111' } : { color: 'white' }}>
-                        {f === 'cover' ? 'Remplir' : 'Ajuster'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Text item (stacked) */}
-            {item.type === 'text' && layout === 'stacked' && (
-              <div className="p-4 min-h-[80px]" style={{ background: `${color}08` }}>
-                {isEditing ? (
-                  <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none" rows={3}
-                    placeholder="Décrivez ce cas…" value={item.content ?? ''}
-                    onChange={e => onUpdateContent(item.id, e.target.value)} />
-                ) : (
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.content || <span className="text-gray-300 italic">Vide</span>}</p>
-                )}
-              </div>
-            )}
-
-            {/* Caption + text (side-by-side: right column) */}
-            {layout === 'sidebyside' ? (
-              <div className="flex-1 flex flex-col justify-center p-4 gap-2 min-w-0 border-l" style={{ background: item.type === 'text' ? `${color}08` : undefined, borderColor: `${color}30` }}>
-                {item.type === 'text' && (
-                  isEditing ? (
+              )}
+              {item.type === 'text' && (
+                <div className="w-full h-full flex items-center p-4">
+                  {isEditing ? (
                     <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none" rows={3}
                       placeholder="Décrivez ce cas…" value={item.content ?? ''}
                       onChange={e => onUpdateContent(item.id, e.target.value)} />
                   ) : (
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.content || <span className="text-gray-300 italic">Vide</span>}</p>
-                  )
-                )}
+                  )}
+                </div>
+              )}
+              {color === DONT_COLOR && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                  <line x1="5%" y1="95%" x2="95%" y2="5%" stroke={DONT_COLOR} strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              )}
+              {isEditing && item.type === 'image' && (
+                <div className="flex p-1 gap-1 bg-black/5 absolute top-2 left-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                  {(['cover', 'contain'] as const).map(f => (
+                    <button key={f} onClick={() => onUpdateFit(item.id, f)}
+                      className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
+                      style={item.fit === f || (!item.fit && f === 'cover') ? { background: 'white', color: '#111' } : { color: 'white' }}>
+                      {f === 'cover' ? 'Remplir' : 'Ajuster'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Caption */}
+            {layout === 'sidebyside' ? (
+              <div className="flex-1 flex flex-col justify-center p-4 gap-2 min-w-0 border-l" style={{ borderColor: `${color}30` }}>
                 {isEditing ? (
                   <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
                     placeholder="Légende…" value={item.caption ?? ''}
@@ -108,7 +98,6 @@ function Column({
                 )}
               </div>
             ) : (
-              /* Caption (stacked) */
               <div className="px-3 py-2 bg-white border-t" style={{ borderColor: `${color}30` }}>
                 {isEditing ? (
                   <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
