@@ -444,7 +444,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors"
               style={selectMode
                 ? { borderColor: brandColor, color: brandColor, background: `${brandColor}10` }
-                : { borderColor: 'var(--border)', color: '#374151' }}
+                : { borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
             >
               {selectMode ? 'Annuler' : 'Sélectionner'}
             </button>
