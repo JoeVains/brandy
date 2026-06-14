@@ -134,7 +134,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
             <button onClick={save} className="flex-1 py-1 rounded-lg text-white text-xs font-medium" style={{ background: editColor }}>
               Enregistrer
             </button>
-            <button onClick={() => setEditing(false)} className="px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:bg-gray-800 text-xs">
+            <button onClick={() => setEditing(false)} className="px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">
               Annuler
             </button>
             <button onClick={onDelete} className="p-1 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 text-xs">
@@ -150,7 +150,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
     <div className="flex flex-col rounded-xl overflow-hidden border bg-white dark:bg-gray-900 group/swatch" style={{ borderColor: 'var(--border)' }}>
       <div className="h-20 relative" style={{ background: hex }}>
         <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/swatch:opacity-100 transition-opacity">
-          <button onClick={openEdit} className="p-1 rounded-lg bg-white dark:bg-gray-900/80 text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100 shadow-sm" title="Modifier">
+          <button onClick={openEdit} className="p-1 rounded-lg bg-white dark:bg-gray-900/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 shadow-sm" title="Modifier">
             <Pencil size={11} />
           </button>
           <button onClick={onDelete} className="p-1 rounded-lg bg-white dark:bg-gray-900/80 text-red-400 hover:text-red-600 shadow-sm" title="Supprimer">
@@ -159,7 +159,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
         </div>
       </div>
       <div className="p-3 space-y-1.5">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{asset.name}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{asset.name}</p>
         {([
           { label: 'HEX', value: hex.toUpperCase() },
           { label: 'RVB', value: rgbStr },
@@ -167,12 +167,12 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
         ] as { label: string; value: string }[]).map(({ label, value }) => (
           <button
             key={label}
-            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 dark:bg-gray-800/50 transition-colors text-left"
+            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => copy(value, label)}
             title={`Copier ${label}`}
           >
             <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 w-7 flex-shrink-0">{label}</span>
-            <span className="text-xs font-mono text-gray-600 dark:text-gray-400 dark:text-gray-500 truncate flex-1">
+            <span className="text-xs font-mono text-gray-600 dark:text-gray-300 truncate flex-1">
               {copied === label ? '✓ Copied' : value}
             </span>
           </button>
@@ -206,7 +206,7 @@ function AssetCard({ asset, onDelete, onUpdate }: { asset: Asset; onDelete: () =
             <a
               href={`/uploads/${asset.filename}`}
               download={asset.name}
-              className="p-1.5 rounded-lg bg-white dark:bg-gray-900 shadow text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100"
+              className="p-1.5 rounded-lg bg-white dark:bg-gray-900 shadow text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100"
               onClick={e => e.stopPropagation()}
             >
               <Download size={13} />
@@ -221,7 +221,7 @@ function AssetCard({ asset, onDelete, onUpdate }: { asset: Asset; onDelete: () =
         </div>
       </div>
       <div className="p-3">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{asset.name}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{asset.name}</p>
         {asset.size > 0 && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatSize(asset.size)}</p>}
       </div>
     </div>
@@ -318,7 +318,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setShowColorForm(!showColorForm); if (!showColorForm) { setColorName(suggestColorName('#000000')); setColorNameTouched(false); } }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               style={{ borderColor: 'var(--border)' }}
             >
               <Palette size={14} /> Couleur
@@ -369,7 +369,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
             onKeyDown={e => { if (e.key === 'Enter') addColor(); if (e.key === 'Escape') setShowColorForm(false); }}
           />
           <button onClick={addColor} className="px-4 py-2 rounded-lg text-white text-sm font-medium flex-shrink-0" style={{ background: brand.color }}>Ajouter</button>
-          <button onClick={() => setShowColorForm(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">Annuler</button>
+          <button onClick={() => setShowColorForm(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 text-sm flex-shrink-0">Annuler</button>
         </div>
       )}
 

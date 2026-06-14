@@ -120,7 +120,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
               <div className="flex items-center gap-2">
                 <input
                   autoFocus
-                  className="flex-1 outline-none text-sm font-semibold text-gray-800 dark:text-gray-200 dark:text-gray-700 border-b"
+                  className="flex-1 outline-none text-sm font-semibold text-gray-800 dark:text-gray-200 border-b"
                   style={{ borderColor: brandColor }}
                   value={titleDraft}
                   onChange={e => setTitleDraft(e.target.value)}
@@ -133,9 +133,9 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 dark:text-gray-700">{module.title || meta.label}</span>
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{module.title || meta.label}</span>
                 {isEditing && (
-                  <button onClick={() => setEditingTitle(true)} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">
+                  <button onClick={() => setEditingTitle(true)} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
                     <Pencil size={11} />
                   </button>
                 )}
@@ -196,7 +196,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(o => !o)}
-                className="p-1 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 transition-colors"
+                className="p-1 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <MoreHorizontal size={16} />
               </button>
@@ -205,7 +205,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                   {/* Duplicate */}
                   <button
                     onClick={() => { onDuplicate(); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Copy size={14} className="text-gray-400 dark:text-gray-500" /> Dupliquer le module
                   </button>
@@ -213,7 +213,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                   {/* Move to */}
                   <button
                     onClick={() => setSubMenu(subMenu === 'move' ? null : 'move')}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <FolderSymlink size={14} className="text-gray-400 dark:text-gray-500" />
                     <span className="flex-1 text-left">Déplacer vers…</span>
@@ -225,7 +225,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                         <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 italic">Aucune autre rubrique</p>
                       ) : otherSections.map(s => (
                         <button key={s.id} onClick={() => { onMoveTo(s.id); setMenuOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-white dark:bg-gray-900 transition-colors truncate">
+                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-white dark:bg-gray-900 transition-colors truncate">
                           {s.name}
                         </button>
                       ))}
@@ -235,7 +235,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                   {/* Copy to */}
                   <button
                     onClick={() => setSubMenu(subMenu === 'copy' ? null : 'copy')}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Copy size={14} className="text-gray-400 dark:text-gray-500" />
                     <span className="flex-1 text-left">Copier vers…</span>
@@ -247,7 +247,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                         <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 italic">Aucune autre rubrique</p>
                       ) : otherSections.map(s => (
                         <button key={s.id} onClick={() => { onCopyTo(s.id); setMenuOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-white dark:bg-gray-900 transition-colors truncate">
+                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-white dark:bg-gray-900 transition-colors truncate">
                           {s.name}
                         </button>
                       ))}
@@ -304,17 +304,17 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.25)' }} onClick={onClose}>
       <div className="border rounded-2xl bg-white dark:bg-gray-900 shadow-xl overflow-hidden w-[480px] max-w-[90vw]" style={{ borderColor: 'var(--border)' }} onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-          <p className="font-semibold text-gray-800 dark:text-gray-200 dark:text-gray-700">Ajouter un module</p>
-          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600"><X size={16} /></button>
+          <p className="font-semibold text-gray-800 dark:text-gray-200">Ajouter un module</p>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300"><X size={16} /></button>
         </div>
         <div className="p-4 grid grid-cols-2 gap-3">
           {MODULE_TYPES.map(({ type, label, icon, description }) => (
             <button key={type} onClick={() => { onAdd(type); onClose(); }}
-              className="flex items-start gap-3 p-4 border rounded-xl text-left hover:bg-gray-50 dark:bg-gray-800/50 transition-colors group"
+              className="flex items-start gap-3 p-4 border rounded-xl text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
               style={{ borderColor: 'var(--border)' }}>
-              <span className="mt-0.5 text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors flex-shrink-0">{icon}</span>
+              <span className="mt-0.5 text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:text-gray-300 transition-colors flex-shrink-0">{icon}</span>
               <div>
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700">{label}</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{label}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-tight">{description}</p>
               </div>
             </button>
@@ -598,7 +598,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
         {/* Add module */}
         <button
           onClick={() => { setInsertAfterIdx(null); setShowPicker(true); }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
           style={{ borderColor: 'var(--border)' }}
         >
           <Plus size={16} /> Ajouter un module

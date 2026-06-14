@@ -365,17 +365,17 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => setLightboxIndex(0)}
-                className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
+                className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: 'var(--border)' }}>
                 <ZoomIn size={14} />
               </button>
               <a href={`/uploads/${module.imageFilename}`} download={module.imageFilename}
-                className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:bg-gray-800/50 flex items-center" style={{ borderColor: 'var(--border)' }}>
+                className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center" style={{ borderColor: 'var(--border)' }}>
                 <Download size={14} />
               </a>
               {isEditing && (
                 <>
                   <button onClick={() => inputRef.current?.click()}
-                    className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
+                    className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: 'var(--border)' }}>
                     <Upload size={14} />
                   </button>
                   <button onClick={removeSingle} className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
@@ -395,7 +395,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         {isEditing && <ModeToggle />}
         {descriptionBlock}
         {isEditing ? (
-          <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-12 cursor-pointer hover:bg-gray-50 dark:bg-gray-800/50 transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500" style={{ borderColor: 'var(--border)' }}>
+          <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-12 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300" style={{ borderColor: 'var(--border)' }}>
             <ImageIcon size={32} />
             <span className="text-sm">Cliquez pour uploader une image</span>
             <input type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleSingleInput(e.target.files)} />
@@ -428,12 +428,12 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               <button
                 onClick={() => downloadZip([...selected])}
                 disabled={downloading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <Download size={12} /> Télécharger la sélection ({selected.size})
               </button>
-              <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500">
+              <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300">
                 Tout désélectionner
               </button>
             </>
@@ -451,7 +451,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             <button
               onClick={() => downloadZip()}
               disabled={downloading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
               style={{ borderColor: 'var(--border)' }}
             >
               <Download size={12} /> {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
@@ -534,7 +534,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         {isEditing && (
           <button
             onClick={() => galleryInputRef.current?.click()}
-            className="h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+            className="h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}
           >
             <Plus size={20} />

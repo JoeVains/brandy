@@ -85,11 +85,11 @@ function Column({
               {item.type === 'text' && (
                 <div className="w-full h-full flex items-center p-4">
                   {isEditing ? (
-                    <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 resize-none" rows={3}
+                    <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 resize-none" rows={3}
                       placeholder="Décrivez ce cas…" value={item.content ?? ''}
                       onChange={e => onUpdateContent(item.id, e.target.value)} />
                   ) : (
-                    <p className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 whitespace-pre-wrap">{item.content || <span className="text-gray-300 dark:text-gray-600 italic">Vide</span>}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{item.content || <span className="text-gray-300 dark:text-gray-600 italic">Vide</span>}</p>
                   )}
                 </div>
               )}
@@ -140,7 +140,7 @@ function Column({
                 {item.type === 'image' && (
                   <>
                     <button onClick={() => replaceRefs.current[item.id]?.click()}
-                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 shadow-sm">
+                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 shadow-sm">
                       <Pencil size={12} />
                     </button>
                     <input type="file" accept="image/*" className="hidden"
@@ -149,7 +149,7 @@ function Column({
                   </>
                 )}
                 <button onClick={() => onDuplicate(item.id)}
-                  className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 shadow-sm">
+                  className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 shadow-sm">
                   <Copy size={12} />
                 </button>
                 <button onClick={() => onDelete(item.id)}

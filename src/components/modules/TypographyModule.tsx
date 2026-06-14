@@ -27,11 +27,11 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
     <div className="rounded-lg overflow-hidden border text-xs" style={{ borderColor: 'var(--border)' }}>
       <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border-b" style={{ borderColor: 'var(--border)' }}>
         <span className="text-gray-400 dark:text-gray-500 font-medium">{lang}</span>
-        <button onClick={copy} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors">
+        <button onClick={copy} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors">
           {copied ? 'Copié !' : 'Copier'}
         </button>
       </div>
-      <pre className="px-3 py-2.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600 overflow-x-auto leading-relaxed font-mono">{code}</pre>
+      <pre className="px-3 py-2.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 overflow-x-auto leading-relaxed font-mono">{code}</pre>
     </div>
   );
 }
@@ -77,14 +77,14 @@ function FontVariantRow({ family, variant, fontFace, onDelete, isEditing }: {
       {/* Alphabet preview */}
       <div className="flex-1 min-w-0 space-y-0.5 border-l pl-6" style={{ borderColor: 'var(--border)' }}>
         {fontFace && <style>{fontFace}</style>}
-        <p className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 truncate" style={style}>{SAMPLE_UPPER}</p>
-        <p className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 truncate" style={style}>{SAMPLE_LOWER}</p>
-        <p className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 truncate" style={style}>{SAMPLE_NUMS}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 truncate" style={style}>{SAMPLE_UPPER}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 truncate" style={style}>{SAMPLE_LOWER}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 truncate" style={style}>{SAMPLE_NUMS}</p>
       </div>
 
       {/* Info + delete */}
       <div className="flex-shrink-0 w-32 text-right">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700">{family}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{family}</p>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Weight: {variant.weight}</p>
         <p className="text-xs text-gray-400 dark:text-gray-500">Style: {variant.style}</p>
         {isEditing && (
@@ -225,21 +225,21 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
               {/* Font header */}
               <div className="flex items-center justify-between px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-b" style={{ borderColor: 'var(--border)' }}>
                 <div>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200 dark:text-gray-700">{item.name}</p>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">{item.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{item.source === 'google' ? 'Google Fonts' : 'Police uploadée'}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {item.source === 'google' && item.family && (
                     <a href={`https://fonts.google.com/specimen/${encodeURIComponent(item.family.replace(/ /g, '+'))}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 dark:text-gray-700 transition-colors border rounded-lg px-3 py-1.5"
+                      className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 transition-colors border rounded-lg px-3 py-1.5"
                       style={{ borderColor: 'var(--border)' }}>
                       Voir sur Google Fonts ↗
                     </a>
                   )}
                   {item.source === 'upload' && item.filename && (
                     <a href={`/uploads/${item.filename}`} download={item.filename}
-                      className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 dark:text-gray-700 transition-colors border rounded-lg px-3 py-1.5"
+                      className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 transition-colors border rounded-lg px-3 py-1.5"
                       style={{ borderColor: 'var(--border)' }}>
                       Télécharger ↓
                     </a>
@@ -274,7 +274,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                 </div>
                 <div className="px-5 py-4 space-y-1" style={{ fontFamily: `'${item.family ?? item.name}', sans-serif` }}>
                   {[12, 16, 24, 36, 48].map(size => (
-                    <p key={size} style={{ fontSize: size }} className="text-gray-800 dark:text-gray-200 dark:text-gray-700 leading-tight truncate">
+                    <p key={size} style={{ fontSize: size }} className="text-gray-800 dark:text-gray-200 leading-tight truncate">
                       {previewText || SAMPLE_DEFAULT}
                     </p>
                   ))}
@@ -310,7 +310,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                   ) : (
                     <button
                       onClick={() => setAddingVariantFor(item.id)}
-                      className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors mt-2">
+                      className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors mt-2">
                       <Plus size={12} /> Ajouter une variante
                     </button>
                   )}
@@ -370,7 +370,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                     {suggestions.map(name => (
                       <button
                         key={name}
-                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors border-b last:border-b-0"
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b last:border-b-0"
                         style={{ borderColor: 'var(--border)' }}
                         onMouseDown={e => { e.preventDefault(); setGoogleFamily(name); setSuggestions([]); }}
                       >
@@ -383,12 +383,12 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
             ) : (
               <>
                 <button onClick={() => setShowAddGoogle(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
                   style={{ borderColor: 'var(--border)' }}>
                   <Plus size={14} /> Google Fonts
                 </button>
                 <button onClick={() => inputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
                   style={{ borderColor: 'var(--border)' }}>
                   <Upload size={14} /> Uploader une police
                 </button>

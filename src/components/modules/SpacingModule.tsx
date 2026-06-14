@@ -100,7 +100,7 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
             <span className="px-2 text-gray-400 dark:text-gray-500 text-xs bg-gray-50 dark:bg-gray-800/50 border-l py-1" style={{ borderColor: 'var(--border)' }}>px</span>
           </div>
         ) : (
-          <span className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-200 dark:text-gray-700">{base}px</span>
+          <span className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-200">{base}px</span>
         )}
       </div>
 
@@ -125,7 +125,7 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
 
               {/* Values */}
               <div className="flex items-center gap-3 flex-shrink-0 w-36">
-                <span className="text-xs font-mono text-gray-700 dark:text-gray-300 dark:text-gray-600 w-14 text-right">{px % 1 === 0 ? px : parseFloat(px.toFixed(1))}px</span>
+                <span className="text-xs font-mono text-gray-700 dark:text-gray-300 w-14 text-right">{px % 1 === 0 ? px : parseFloat(px.toFixed(1))}px</span>
                 <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{pxToRem(px)}</span>
               </div>
 
@@ -161,12 +161,12 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
               />
               <span className="text-xs text-gray-400 dark:text-gray-500">→ {parseFloat(newStep) > 0 ? `${previewBase * parseFloat(newStep)}px` : '—'}</span>
               <button onClick={addStep} className="text-xs px-3 py-1 rounded-lg text-white" style={{ background: brandColor }}>Ajouter</button>
-              <button onClick={() => setShowAdd(false)} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">Annuler</button>
+              <button onClick={() => setShowAdd(false)} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">Annuler</button>
             </div>
           ) : (
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors mt-3"
+              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors mt-3"
             >
               <Plus size={12} /> Ajouter un pas
             </button>

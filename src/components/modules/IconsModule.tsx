@@ -163,7 +163,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             onChange={e => setSearch(e.target.value)}
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
               <X size={13} />
             </button>
           )}
@@ -178,7 +178,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               <>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
                 <button onClick={() => setSelected(new Set())}
-                  className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">
+                  className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
                   <X size={12} /> Désélectionner
                 </button>
               </>
@@ -199,7 +199,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             <button
               onClick={() => downloadZip()}
               disabled={downloading}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
               style={{ borderColor: 'var(--border)' }}
             >
               <Download size={12} />
@@ -254,14 +254,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
                 <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={e => { e.stopPropagation(); downloadSingle(item.filename, item.name); }}
-                    className="p-1 rounded-lg bg-white dark:bg-gray-900/90 hover:bg-white dark:bg-gray-900 shadow-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100"
+                    className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100"
                   >
                     <Download size={11} />
                   </button>
                   {isEditing && (
                     <button
                       onClick={e => { e.stopPropagation(); deleteIcon(item.id); }}
-                      className="p-1 rounded-lg bg-white dark:bg-gray-900/90 hover:bg-white dark:bg-gray-900 shadow-sm text-red-400 hover:text-red-600"
+                      className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-red-400 hover:text-red-600"
                     >
                       <Trash2 size={11} />
                     </button>
@@ -297,7 +297,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         {isEditing && (
           <button
             onClick={() => inputRef.current?.click()}
-            className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+            className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}
           >
             <Plus size={20} />

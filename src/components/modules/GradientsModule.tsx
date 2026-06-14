@@ -224,7 +224,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
               ))}
             </div>
             <button onClick={reverseStops} title="Inverser le dégradé"
-              className="p-1.5 rounded-lg border text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
+              className="p-1.5 rounded-lg border text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               style={{ borderColor: 'var(--border)' }}>
               <ArrowLeftRight size={12} />
             </button>
@@ -261,7 +261,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
                 onDragEnd={() => setDragStopIdx(null)} />
             ))}
             <button onClick={addStop}
-              className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors">
+              className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors">
               <Plus size={11} /> Ajouter une couleur
             </button>
           </div>
@@ -289,10 +289,10 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
           {isEditing && (
             <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-full">
               <button onClick={() => setEditing(true)}
-                className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600">
+                className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                 <Pencil size={12} />
               </button>
-              <button onClick={onDuplicate} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600">
+              <button onClick={onDuplicate} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                 <Copy size={12} />
               </button>
               <button onClick={onDelete} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500">
@@ -301,9 +301,9 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
             </div>
           )}
         </div>
-        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 text-center">{item.name}</p>
+        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 text-center">{item.name}</p>
         <button onClick={copy}
-          className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors">
+          className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors">
           <span className="font-mono">{copied ? '✓ copié' : `${item.type === 'linear' ? `${item.angle ?? 135}°` : 'Radial'}`}</span>
           <Copy size={8} className="opacity-0 group-hover:opacity-50" />
         </button>
@@ -318,10 +318,10 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
             <button onClick={() => setEditing(true)}
-              className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600">
+              className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
               <Pencil size={12} />
             </button>
-            <button onClick={onDuplicate} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600">
+            <button onClick={onDuplicate} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
               <Copy size={12} />
             </button>
             <button onClick={onDelete} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500">
@@ -331,9 +331,9 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
         )}
       </div>
       <div className="p-3 bg-white dark:bg-gray-900 space-y-1.5">
-        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{item.name}</p>
+        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
         <button onClick={copy}
-          className="w-full flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 group/row transition-colors">
+          className="w-full flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 group/row transition-colors">
           <span className="font-mono text-left flex-1 truncate text-[10px]">{copied ? '✓ copié' : savedCss}</span>
           <Copy size={9} className="flex-shrink-0 opacity-0 group-hover/row:opacity-50" />
         </button>
@@ -512,7 +512,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
           </div>
           <button onClick={() => setNewStops(prev => { const next = [...prev].reverse().map(s => ({ ...s, position: 100 - s.position })); if (!newNameTouched) setNewName(suggestGradientName(next)); return next; })}
             title="Inverser le dégradé"
-            className="p-1.5 rounded-lg border text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
+            className="p-1.5 rounded-lg border text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <ArrowLeftRight size={12} />
           </button>
@@ -550,7 +550,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
             const mid = Math.round((newStops[newStops.length - 1].position + newStops[0].position) / 2);
             setNewStops(prev => { const next = [...prev, { color: '#888888', position: mid }]; if (!newNameTouched) setNewName(suggestGradientName(next)); return next; });
             setNewStopIds(prev => [...prev, Math.random().toString(36).slice(2)]);
-          }} className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors">
+          }} className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors">
             <Plus size={11} /> Ajouter une couleur
           </button>
         </div>
@@ -579,7 +579,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     <div className="flex items-center justify-between mb-4">
       {isEditing ? <ModeToggle /> : <div />}
       <button onClick={downloadCss}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 hover:text-gray-800 dark:text-gray-200 dark:text-gray-700 transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:text-gray-200 transition-colors"
         style={{ borderColor: 'var(--border)' }}>
         <Download size={10} /> .css
       </button>
@@ -616,7 +616,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
           })}
           {isEditing && !showAdd && (
             <button onClick={() => setShowAdd(true)}
-              className="w-28 h-28 border-2 border-dashed rounded-full flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+              className="w-28 h-28 border-2 border-dashed rounded-full flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
               style={{ borderColor: 'var(--border)' }}>
               <Plus size={18} />
             </button>
@@ -655,7 +655,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
 
         {isEditing && !showAdd && (
           <button onClick={() => setShowAdd(true)}
-            className="h-full min-h-[160px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+            className="h-full min-h-[160px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <Plus size={20} />
             <span className="text-xs">Ajouter un dégradé</span>

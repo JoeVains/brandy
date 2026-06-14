@@ -276,7 +276,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             {!showNew && (
               <button
                 onClick={() => setShowNew(true)}
-                className="border-2 border-dashed rounded-2xl h-48 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+                className="border-2 border-dashed rounded-2xl h-48 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <Plus size={22} />

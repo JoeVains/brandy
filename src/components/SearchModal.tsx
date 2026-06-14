@@ -170,7 +170,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
           <Search size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
             placeholder="Rechercher couleurs, icônes, polices…"
-            className="flex-1 text-sm outline-none text-gray-800 dark:text-gray-200 dark:text-gray-700 placeholder-gray-400" />
+            className="flex-1 text-sm outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400" />
           {query && (
             <button onClick={() => setQuery('')} className="text-gray-300 dark:text-gray-600 hover:text-gray-500">
               <X size={14} />
@@ -204,7 +204,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
               {/* Text */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{highlight(r.match)}</span>
+                  <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{highlight(r.match)}</span>
                   <span className="text-[10px] text-gray-300 dark:text-gray-600 flex-shrink-0">{r.matchLabel}</span>
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">

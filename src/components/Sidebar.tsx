@@ -102,7 +102,7 @@ function SectionNode({
   return (
     <div style={{ opacity: isDragging ? 0.4 : 1, transition: 'opacity 0.15s' }}>
       <div
-        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:bg-gray-800'}`}
+        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
         style={{
           paddingLeft: `${8 + depth * 14}px`,
           ...(isActive ? { background: brandColor } : {}),
@@ -173,14 +173,14 @@ function SectionNode({
         <div className={`flex items-center gap-0.5 ${editing ? 'flex' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} onClick={e => e.stopPropagation()}>
           {editing ? (
             <>
-              <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Check size={11} /></button>
-              <button onClick={() => setEditing(false)} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><X size={11} /></button>
+              <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Check size={11} /></button>
+              <button onClick={() => setEditing(false)} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><X size={11} /></button>
             </>
           ) : (
             <>
-              <button onClick={() => setShowAddChild(!showAddChild)} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Plus size={11} /></button>
-              <button onClick={() => { setEditing(true); setEditName(section.name); }} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Pencil size={11} /></button>
-              <button onClick={deleteSection} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Trash2 size={11} /></button>
+              <button onClick={() => setShowAddChild(!showAddChild)} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Plus size={11} /></button>
+              <button onClick={() => { setEditing(true); setEditName(section.name); }} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Pencil size={11} /></button>
+              <button onClick={deleteSection} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Trash2 size={11} /></button>
             </>
           )}
         </div>
@@ -191,13 +191,13 @@ function SectionNode({
           <input
             autoFocus
             placeholder="Nom..."
-            className="flex-1 bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600"
+            className="flex-1 bg-transparent outline-none text-sm text-gray-700 dark:text-gray-200"
             value={childName}
             onChange={e => setChildName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addChild(); if (e.key === 'Escape') setShowAddChild(false); }}
           />
           <button onClick={addChild} className="text-indigo-600"><Check size={12} /></button>
-          <button onClick={() => setShowAddChild(false)} className="text-gray-400 dark:text-gray-500"><X size={12} /></button>
+          <button onClick={() => setShowAddChild(false)} className="text-gray-400 dark:text-gray-400"><X size={12} /></button>
         </div>
       )}
 
@@ -213,7 +213,7 @@ function SectionNode({
         <button
           key={h.id}
           onClick={() => onScrollToHeading(h.id)}
-          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 transition-colors text-left"
+          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors text-left"
           style={{ paddingLeft: `${8 + (depth + 1) * 14 + 8}px` }}
         >
           <Hash size={10} className="flex-shrink-0 opacity-50" />
@@ -320,7 +320,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
       <div className="p-3 flex-1">
         {/* All assets */}
         <button
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${!activeSectionId ? 'text-white' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:bg-gray-800'}`}
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${!activeSectionId ? 'text-white' : 'text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
           style={!activeSectionId ? { background: brand.color } : {}}
           onClick={() => onSelectSection(null)}
         >
@@ -348,18 +348,18 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
             <input
               autoFocus
               placeholder="Nouvelle rubrique..."
-              className="flex-1 bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600"
+              className="flex-1 bg-transparent outline-none text-sm text-gray-700 dark:text-gray-200"
               value={newName}
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') addRoot(); if (e.key === 'Escape') setShowAdd(false); }}
             />
             <button onClick={addRoot} className="text-indigo-600"><Check size={12} /></button>
-            <button onClick={() => setShowAdd(false)} className="text-gray-400 dark:text-gray-500"><X size={12} /></button>
+            <button onClick={() => setShowAdd(false)} className="text-gray-400 dark:text-gray-400"><X size={12} /></button>
           </div>
         ) : (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 w-full px-2 py-1.5 mt-1 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 w-full px-2 py-1.5 mt-1 text-sm text-gray-400 dark:text-gray-300 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-colors"
           >
             <Plus size={13} /> Ajouter une rubrique
           </button>
@@ -367,11 +367,11 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
       </div>
 
       <div className="px-4 py-3 border-t text-center" style={{ borderColor: 'var(--border)' }}>
-        <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">
+        <p className="text-[10px] text-gray-500 dark:text-gray-500 leading-relaxed">
           Made with 🩷 in Paris<br />
           by{' '}
           <a href="https://joevains.com" target="_blank" rel="noopener noreferrer"
-            className="hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 transition-colors underline underline-offset-2">
+            className="hover:text-gray-300 dark:text-gray-500 transition-colors underline underline-offset-2">
             Sylvain &ldquo;Joe Vains&rdquo; Guizard
           </a>
           {' '}© {new Date().getFullYear()}

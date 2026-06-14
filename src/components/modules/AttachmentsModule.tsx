@@ -64,7 +64,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
         <div key={item.id} data-item-id={item.id} className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50 dark:bg-gray-800/50 group" style={{ borderColor: 'var(--border)' }}>
           <span className="text-xl">{getIcon(item.mimeType)}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{item.name}</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
             <p className="text-xs text-gray-400 dark:text-gray-500">{formatSize(item.size)}</p>
           </div>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -84,7 +84,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
       {isEditing && (
         <>
           <button onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
+            className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <Plus size={16} /> Ajouter un fichier
           </button>
