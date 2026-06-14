@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, ModuleType, Section, Brand } from '@/types';
 import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight, Paintbrush } from 'lucide-react';
@@ -554,13 +554,11 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
           </div>
         )}
 
-        {modules.map((module, idx) => (
-          <div key={module.id}>
-            {/* Insert-before separator (shown above first module too) */}
-            {idx === 0 && (
-              <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }} />
-            )}
+        <div className="flex flex-col gap-3">
+        <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }} />
 
+        {modules.map((module, idx) => (
+          <React.Fragment key={module.id}>
             <div
               data-module-id={module.id}
               onDragOver={e => onDragOver(e, module.id)}
@@ -590,10 +588,10 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
               />
             </div>
 
-            {/* Insert-after separator */}
             <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(idx); setShowPicker(true); }} />
-          </div>
+          </React.Fragment>
         ))}
+        </div>
 
         {/* Add module */}
         <button
