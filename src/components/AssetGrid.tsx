@@ -310,7 +310,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-base font-semibold text-gray-900">
-            {sectionId ? sections.find(s => s.id === sectionId)?.name ?? 'Section' : `Tous les assets — ${brand.name}`}
+            {sectionId ? sections.find(s => s.id === sectionId)?.name ?? 'Section' : 'Rubriques'}
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">{assets.length} asset{assets.length !== 1 ? 's' : ''}</p>
         </div>

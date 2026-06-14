@@ -534,7 +534,7 @@ export default function BrandyApp() {
                   <div className="max-w-4xl mx-auto px-8 py-8">
                     <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
                       <h1 className="text-2xl font-bold text-gray-900">
-                        {activeSection ? activeSection.name : activeBrand.name}
+                        {activeSection ? activeSection.name : 'Rubriques'}
                       </h1>
                     </div>
                     {(() => {
