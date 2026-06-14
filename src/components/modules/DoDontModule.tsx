@@ -115,7 +115,7 @@ function Column({
             {layout === 'sidebyside' ? (
               <div className="flex-1 flex flex-col justify-center p-4 gap-2 min-w-0 border-l" style={{ borderColor: `${color}30` }}>
                 {isEditing ? (
-                  <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
+                  <input className="w-full outline-none text-xs text-gray-500 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600"
                     placeholder="Légende…" value={item.caption ?? ''}
                     onChange={e => onUpdateCaption(item.id, e.target.value)} />
                 ) : (
@@ -125,7 +125,7 @@ function Column({
             ) : (
               <div className="px-3 py-2 bg-white dark:bg-gray-900 border-t" style={{ borderColor: `${color}30` }}>
                 {isEditing ? (
-                  <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
+                  <input className="w-full outline-none text-xs text-gray-500 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600"
                     placeholder="Légende…" value={item.caption ?? ''}
                     onChange={e => onUpdateCaption(item.id, e.target.value)} />
                 ) : (

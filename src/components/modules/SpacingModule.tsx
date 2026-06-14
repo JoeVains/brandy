@@ -89,7 +89,7 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
 
       {/* Base unit setting */}
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-xs text-gray-500">Unité de base :</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">Unité de base :</span>
         {isEditing ? (
           <div className="flex items-center gap-1 border rounded-lg overflow-hidden text-sm" style={{ borderColor: 'var(--border)' }}>
             <input

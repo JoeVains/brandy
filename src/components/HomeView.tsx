@@ -147,7 +147,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                 ))}
               </div>
               <div className="ml-auto flex gap-2">
-                <button onClick={() => setShowNew(false)} className="px-4 py-1.5 rounded-lg border text-sm text-gray-500" style={{ borderColor: 'var(--border)' }}>Annuler</button>
+                <button onClick={() => setShowNew(false)} className="px-4 py-1.5 rounded-lg border text-sm text-gray-500 dark:text-gray-400" style={{ borderColor: 'var(--border)' }}>Annuler</button>
                 <button onClick={createBrand} className="px-4 py-1.5 rounded-lg text-sm text-white font-medium" style={{ background: newColor }}>Créer</button>
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                         ))}
                       </div>
                       <div className="flex gap-2 mt-auto">
-                        <button onClick={() => setEditingId(null)} className="flex-1 py-1.5 rounded-lg border text-xs text-gray-500" style={{ borderColor: 'var(--border)' }}>Annuler</button>
+                        <button onClick={() => setEditingId(null)} className="flex-1 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400" style={{ borderColor: 'var(--border)' }}>Annuler</button>
                         <button onClick={() => saveBrand(brand.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs text-white font-medium" style={{ background: editColor }}>
                           <Check size={12} /> Enregistrer
                         </button>

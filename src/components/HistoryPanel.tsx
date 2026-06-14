@@ -82,7 +82,7 @@ export default function HistoryPanel({ onClose }: Props) {
                     <div className="flex-1 min-w-0 pb-1">
                       <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{meta.label}</p>
                       {entry.entityName && (
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {entry.entityName}
                           {entry.entityType && <span className="text-gray-300 dark:text-gray-600 ml-1">· {entry.entityType}</span>}
                         </p>

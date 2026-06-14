@@ -261,7 +261,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
               <div className="border-b" style={{ borderColor: 'var(--border)' }}>
                 <div className="px-5 pt-3 pb-2 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
                   <input
-                    className="flex-1 text-sm text-gray-500 outline-none placeholder-gray-300 bg-transparent"
+                    className="flex-1 text-sm text-gray-500 dark:text-gray-300 outline-none placeholder-gray-300 dark:placeholder-gray-600 bg-transparent"
                     placeholder={SAMPLE_DEFAULT}
                     value={previewText}
                     onChange={e => setPreviewText(e.target.value)}
@@ -320,7 +320,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
               {/* Usage */}
               <div className="border-t" style={{ borderColor: 'var(--border)' }}>
                 <div className="px-5 py-4 space-y-3">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Usage</p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Usage</p>
 
                   {item.source === 'google' && item.family ? (
                     <>

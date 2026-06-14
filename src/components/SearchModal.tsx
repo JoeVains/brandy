@@ -197,7 +197,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
               onMouseEnter={() => setActiveIdx(i)}
               onClick={() => go(r)}>
               {/* Type icon */}
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-gray-500"
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-gray-400"
                 style={{ background: '#f3f4f6' }}>
                 {TYPE_ICONS[r.moduleType] ?? <FolderOpen size={12} />}
               </div>
