@@ -34,7 +34,7 @@ function downloadAsPng(src: string, filename: string) {
   img.src = src;
 }
 
-interface LightboxItem { src: string; filename: string; mimeType?: string; }
+interface LightboxItem { src: string; filename: string; mimeType?: string; caption?: string; }
 
 function Lightbox({ items, index, onNavigate, onClose }: {
   items: LightboxItem[];
@@ -42,7 +42,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
   onNavigate: (i: number) => void;
   onClose: () => void;
 }) {
-  const { src, filename, mimeType } = items[index];
+  const { src, filename, mimeType, caption } = items[index];
   const isSvg = mimeType === 'image/svg+xml' || filename.toLowerCase().endsWith('.svg');
   const total = items.length;
   const prevIndex = (index - 1 + total) % total;
@@ -112,12 +112,17 @@ function Lightbox({ items, index, onNavigate, onClose }: {
         </button>
       )}
 
-      {/* Counter */}
-      {items.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 text-white text-xs">
-          {index + 1} / {items.length}
-        </div>
-      )}
+      {/* Caption + counter */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5" onClick={e => e.stopPropagation()}>
+        {caption && (
+          <p className="px-4 py-1.5 rounded-xl bg-black/50 text-white text-sm text-center max-w-lg">{caption}</p>
+        )}
+        {items.length > 1 && (
+          <div className="px-3 py-1 rounded-full bg-white/10 text-white text-xs">
+            {index + 1} / {items.length}
+          </div>
+        )}
+      </div>
     </div>,
     document.body
   );
@@ -137,7 +142,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const imageItems = module.imageItems ?? [];
 
   const lightboxItems: LightboxItem[] = mode === 'gallery'
-    ? imageItems.map(i => ({ src: `/uploads/${i.filename}`, filename: i.filename, mimeType: i.mimeType }))
+    ? imageItems.map(i => ({ src: `/uploads/${i.filename}`, filename: i.filename, mimeType: i.mimeType, caption: i.caption }))
     : module.imageFilename
       ? [{ src: `/uploads/${module.imageFilename}`, filename: module.imageFilename, mimeType: module.imageMimeType }]
       : [];
@@ -276,6 +281,16 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ imageItems: reordered }),
+    });
+    onUpdate(await res.json());
+  }
+
+  async function updateCaption(id: string, caption: string) {
+    const newItems = imageItems.map(i => i.id === id ? { ...i, caption: caption || undefined } : i);
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageItems: newItems }),
     });
     onUpdate(await res.json());
   }
@@ -449,56 +464,69 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         {imageItems.map((item, idx) => {
           const isSelected = selected.has(item.id);
           return (
-          <div
-            key={item.id}
-            className="relative group"
-            style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
-            draggable={isEditing && !selectMode}
-            onDragStart={isEditing && !selectMode ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
-            onDragOver={isEditing && !selectMode ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
-            onDragLeave={isEditing && !selectMode ? () => setDragOverIdx(null) : undefined}
-            onDrop={isEditing && !selectMode ? e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) reorderItems(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); } : undefined}
-            onDragEnd={isEditing && !selectMode ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
-            onClick={() => selectMode ? toggleSelect(item.id) : (!isEditing ? setLightboxIndex(idx) : undefined)}
-          >
-            {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
-              <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
-            )}
+          <div key={item.id} className="flex flex-col gap-1">
+            {/* Draggable card wrapper */}
             <div
-              data-item-id={item.id}
-              className="rounded-xl overflow-hidden border bg-gray-50"
-              style={{
-                borderColor: isSelected ? brandColor : 'var(--border)',
-                outline: isSelected ? `2px solid ${brandColor}` : 'none',
-              }}
+              className="relative group"
+              style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
+              draggable={isEditing && !selectMode}
+              onDragStart={isEditing && !selectMode ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
+              onDragOver={isEditing && !selectMode ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
+              onDragLeave={isEditing && !selectMode ? () => setDragOverIdx(null) : undefined}
+              onDrop={isEditing && !selectMode ? e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) reorderItems(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onDragEnd={isEditing && !selectMode ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onClick={() => selectMode ? toggleSelect(item.id) : (!isEditing ? setLightboxIndex(idx) : undefined)}
             >
-              <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2">
-                {!selectMode && !isEditing && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
-                {!selectMode && isEditing && (
-                  <button onClick={e => { e.stopPropagation(); setLightboxIndex(idx); }}
-                    className="p-1.5 rounded-lg bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                    <ZoomIn size={14} />
+              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+              )}
+              <div
+                data-item-id={item.id}
+                className="rounded-xl overflow-hidden border bg-gray-50"
+                style={{
+                  borderColor: isSelected ? brandColor : 'var(--border)',
+                  outline: isSelected ? `2px solid ${brandColor}` : 'none',
+                }}
+              >
+                <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2">
+                  {!selectMode && !isEditing && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
+                  {!selectMode && isEditing && (
+                    <button onClick={e => { e.stopPropagation(); setLightboxIndex(idx); }}
+                      className="p-1.5 rounded-lg bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                      <ZoomIn size={14} />
+                    </button>
+                  )}
+                </div>
+                {selectMode && (
+                  <div className="absolute top-2 left-2">
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
+                      style={isSelected ? { background: brandColor } : {}}>
+                      {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                  </div>
+                )}
+                {isEditing && (
+                  <button
+                    onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                  >
+                    <Trash2 size={13} />
                   </button>
                 )}
               </div>
-              {selectMode && (
-                <div className="absolute top-2 left-2">
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
-                    style={isSelected ? { background: brandColor } : {}}>
-                    {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                  </div>
-                </div>
-              )}
-              {isEditing && (
-                <button
-                  onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                >
-                  <Trash2 size={13} />
-                </button>
-              )}
             </div>
+            {/* Caption — outside the draggable div */}
+            {isEditing && (
+              <input
+                type="text"
+                placeholder="Ajouter une légende…"
+                defaultValue={item.caption ?? ''}
+                onBlur={e => { if (e.target.value !== (item.caption ?? '')) updateCaption(item.id, e.target.value); }}
+                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                className="w-full text-xs text-gray-500 placeholder-gray-300 bg-transparent outline-none border-b border-transparent focus:border-gray-300 transition-colors py-1 text-center"
+              />
+            )}
           </div>
           );
         })}
