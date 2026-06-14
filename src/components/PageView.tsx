@@ -328,8 +328,8 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
 
 function InsertSeparator({ color, onClick }: { color: string; onClick: () => void }) {
   return (
-    <div className="group relative flex items-center justify-center h-4 -my-1 z-10">
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-transparent group-hover:bg-gray-200 dark:bg-gray-700 transition-colors" />
+    <div className="group relative flex items-center justify-center h-6 z-10">
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-transparent group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors" />
       <button
         onClick={onClick}
         className="relative opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md hover:scale-110 active:scale-95"
