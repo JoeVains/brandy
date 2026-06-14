@@ -118,7 +118,7 @@ export default function VideoModule({ module, brandColor, onUpdate, isEditing }:
               style={{ borderColor: 'var(--border)' }}>
               <Upload size={20} />
               <span className="text-xs">{uploading ? 'Envoi en cours…' : 'Choisir une vidéo'}</span>
-              {module.videoFilename && <span className="text-[10px] text-gray-300 dark:text-gray-600">{module.videoFilename}</span>}
+              {module.videoFilename && <span className="text-[10px] text-gray-300 dark:text-gray-500">{module.videoFilename}</span>}
             </button>
           </div>
         )}
@@ -157,10 +157,10 @@ export default function VideoModule({ module, brandColor, onUpdate, isEditing }:
             style={{ borderColor: 'var(--border)' }}>
             <Upload size={24} />
             <span className="text-sm">Ajouter une vidéo</span>
-            <span className="text-xs text-gray-300 dark:text-gray-600">Embed YouTube / Vimeo ou upload</span>
+            <span className="text-xs text-gray-300 dark:text-gray-500">Embed YouTube / Vimeo ou upload</span>
           </button>
         ) : (
-          <div className="aspect-video rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-300 dark:text-gray-600 text-sm">
+          <div className="aspect-video rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-300 dark:text-gray-500 text-sm">
             Aucune vidéo
           </div>
         )

@@ -131,10 +131,10 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
 
               {/* Multiplier + delete */}
               <div className="flex items-center gap-2 flex-shrink-0 w-20">
-                <span className="text-[10px] text-gray-300 dark:text-gray-600">×{step}</span>
+                <span className="text-[10px] text-gray-300 dark:text-gray-500">×{step}</span>
                 {isEditing && (
                   <button onClick={() => removeStep(step)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-gray-300 dark:text-gray-600 hover:text-red-400">
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-gray-300 dark:text-gray-500 hover:text-red-400">
                     <Trash2 size={11} />
                   </button>
                 )}

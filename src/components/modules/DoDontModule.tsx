@@ -89,7 +89,7 @@ function Column({
                       placeholder="Décrivez ce cas…" value={item.content ?? ''}
                       onChange={e => onUpdateContent(item.id, e.target.value)} />
                   ) : (
-                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{item.content || <span className="text-gray-300 dark:text-gray-600 italic">Vide</span>}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{item.content || <span className="text-gray-300 dark:text-gray-500 italic">Vide</span>}</p>
                   )}
                 </div>
               )}
@@ -189,7 +189,7 @@ function Column({
 
         {!isEditing && items.length === 0 && (
           <div className="py-8 flex items-center justify-center border-2 border-dashed rounded-xl" style={{ borderColor: `${color}20` }}>
-            <span className="text-xs text-gray-300 dark:text-gray-600">Aucun exemple</span>
+            <span className="text-xs text-gray-300 dark:text-gray-500">Aucun exemple</span>
           </div>
         )}
       </div>

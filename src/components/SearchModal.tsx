@@ -167,7 +167,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
         style={{ maxHeight: '65vh' }}>
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-          <Search size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+          <Search size={16} className="text-gray-400 dark:text-gray-400 flex-shrink-0" />
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
             placeholder="Rechercher couleurs, icônes, polices…"
             className="flex-1 text-sm outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400" />

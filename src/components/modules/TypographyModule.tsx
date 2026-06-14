@@ -267,7 +267,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                     onChange={e => setPreviewText(e.target.value)}
                   />
                   {previewText && (
-                    <button onClick={() => setPreviewText('')} className="text-xs text-gray-300 dark:text-gray-600 hover:text-gray-500 transition-colors flex-shrink-0">
+                    <button onClick={() => setPreviewText('')} className="text-xs text-gray-300 dark:text-gray-500 hover:text-gray-500 transition-colors flex-shrink-0">
                       Réinitialiser
                     </button>
                   )}

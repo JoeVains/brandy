@@ -363,7 +363,7 @@ export default function BrandyApp() {
             <span className="font-semibold text-lg tracking-tight">Brandy</span>
           </button>
         </div>
-        <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors mr-2">
+        <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors mr-2">
           <ChevronLeft size={14} /> Accueil
         </button>
 
@@ -448,7 +448,7 @@ export default function BrandyApp() {
         {/* Search button */}
         {activeBrandId && (
           <button onClick={() => setShowSearch(v => !v)}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm border"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm border"
             style={{ borderColor: 'var(--border)' }}
             title="Rechercher (⌘K)">
             <Search size={13} />
@@ -460,7 +460,7 @@ export default function BrandyApp() {
         {/* Export PDF */}
         {activeBrandId && (
           <a href={`/api/brands/${activeBrandId}/pdf`} target="_blank" rel="noopener noreferrer"
-            className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Exporter en PDF">
             <FileDown size={15} />
           </a>
@@ -475,7 +475,7 @@ export default function BrandyApp() {
 
         {/* History button */}
         <button onClick={() => setShowHistory(v => !v)}
-          className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           title="Historique">
           <Clock size={15} />
         </button>

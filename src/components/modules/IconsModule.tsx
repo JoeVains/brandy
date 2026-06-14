@@ -122,7 +122,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
 
   if (items.length === 0 && !isEditing) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-600">
+      <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-500">
         <span className="text-2xl">❖</span>
         <span className="text-sm">Aucune icône</span>
       </div>

@@ -122,8 +122,8 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
               style={{ borderColor: 'var(--border)' }}>
               <Music size={20} />
               <span className="text-xs">{uploading ? 'Envoi en cours…' : 'Choisir un fichier audio'}</span>
-              <span className="text-[10px] text-gray-300 dark:text-gray-600">MP3, WAV, OGG, AAC…</span>
-              {module.audioFilename && <span className="text-[10px] text-gray-300 dark:text-gray-600">{module.audioFilename}</span>}
+              <span className="text-[10px] text-gray-300 dark:text-gray-500">MP3, WAV, OGG, AAC…</span>
+              {module.audioFilename && <span className="text-[10px] text-gray-300 dark:text-gray-500">{module.audioFilename}</span>}
             </button>
           </div>
         )}
@@ -161,10 +161,10 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
             style={{ borderColor: 'var(--border)' }}>
             <Music size={22} />
             <span className="text-sm">Ajouter un audio</span>
-            <span className="text-xs text-gray-300 dark:text-gray-600">Embed SoundCloud / Spotify ou upload</span>
+            <span className="text-xs text-gray-300 dark:text-gray-500">Embed SoundCloud / Spotify ou upload</span>
           </button>
         ) : (
-          <div className="rounded-xl bg-gray-100 dark:bg-gray-800 py-8 flex items-center justify-center text-gray-300 dark:text-gray-600 text-sm gap-2">
+          <div className="rounded-xl bg-gray-100 dark:bg-gray-800 py-8 flex items-center justify-center text-gray-300 dark:text-gray-500 text-sm gap-2">
             <Music size={16} /> Aucun audio
           </div>
         )

@@ -75,7 +75,7 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
             e.dataTransfer.setDragImage(img, 0, 0);
             onDragStart?.(e);
           }}
-          className="flex-shrink-0 text-gray-300 dark:text-gray-600 hover:text-gray-500 transition-colors select-none"
+          className="flex-shrink-0 text-gray-300 dark:text-gray-500 hover:text-gray-500 transition-colors select-none"
           style={{ cursor: 'grab', fontSize: 10, letterSpacing: '-1px', lineHeight: 1 }}>
           ⠿
         </div>
@@ -90,7 +90,7 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
         </div>
         <HexInput color={stop.color} onChange={color => onUpdate({ color })} />
         <button onClick={onRemove} disabled={!canRemove}
-          className="ml-auto text-gray-300 dark:text-gray-600 hover:text-red-400 disabled:opacity-20 transition-colors">
+          className="ml-auto text-gray-300 dark:text-gray-500 hover:text-red-400 disabled:opacity-20 transition-colors">
           <X size={12} />
         </button>
       </div>
@@ -303,7 +303,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
         </div>
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 text-center">{item.name}</p>
         <button onClick={copy}
-          className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors">
+          className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors">
           <span className="font-mono">{copied ? '✓ copié' : `${item.type === 'linear' ? `${item.angle ?? 135}°` : 'Radial'}`}</span>
           <Copy size={8} className="opacity-0 group-hover:opacity-50" />
         </button>
@@ -337,7 +337,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
           <span className="font-mono text-left flex-1 truncate text-[10px]">{copied ? '✓ copié' : savedCss}</span>
           <Copy size={9} className="flex-shrink-0 opacity-0 group-hover/row:opacity-50" />
         </button>
-        <p className="text-[10px] text-gray-300 dark:text-gray-600 capitalize">
+        <p className="text-[10px] text-gray-300 dark:text-gray-500 capitalize">
           {item.type === 'linear' ? `Linéaire · ${item.angle ?? 135}°` : 'Radial'} · {item.stops.length} couleurs
         </p>
       </div>

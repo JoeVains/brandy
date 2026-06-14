@@ -38,7 +38,7 @@ export default function HeadingModule({ module, onUpdate, isEditing }: Props) {
       ) : module.content ? (
         <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">{module.content}</h2>
       ) : (
-        <p className="text-sm text-gray-300 dark:text-gray-600 italic mb-3">Aucun titre</p>
+        <p className="text-sm text-gray-300 dark:text-gray-500 italic mb-3">Aucun titre</p>
       )}
       <ModuleDescription
         moduleId={module.id}

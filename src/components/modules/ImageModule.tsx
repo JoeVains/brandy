@@ -401,7 +401,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             <input type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleSingleInput(e.target.files)} />
           </label>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-600">
+          <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-500">
             <ImageIcon size={28} />
             <span className="text-sm">Aucune image</span>
           </div>
@@ -543,7 +543,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         )}
 
         {!isEditing && imageItems.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-600">
+          <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-500">
             <ImageIcon size={28} />
             <span className="text-sm">Aucune image</span>
           </div>
