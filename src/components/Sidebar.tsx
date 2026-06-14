@@ -317,6 +317,24 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
 
   return (
     <aside className="w-56 flex-shrink-0 flex flex-col border-r bg-sidebar overflow-y-auto" style={{ borderColor: 'var(--border)' }}>
+      {/* Brand thumbnail */}
+      <div className="flex-shrink-0">
+        <div className="h-16 flex items-center justify-center" style={{ background: brand.color }}>
+          <div
+            className="w-10 h-10 rounded-full border-2 border-white/40 overflow-hidden flex items-center justify-center"
+            style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.25)' }}
+          >
+            {brand.logoImage
+              ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain" />
+              : <span className="text-white text-lg font-bold leading-none">{brand.name.charAt(0).toUpperCase()}</span>
+            }
+          </div>
+        </div>
+        <div className="px-4 py-2 border-b text-center" style={{ borderColor: 'var(--border)' }}>
+          <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{brand.name}</p>
+        </div>
+      </div>
+
       <div className="p-3 flex-1">
         {/* All assets */}
         <button
