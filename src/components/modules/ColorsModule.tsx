@@ -356,7 +356,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
       <div>
         {isEditing ? (
           <textarea
-            className="w-full text-sm text-gray-500 dark:text-gray-300 resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
+            className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
             style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
             rows={2}
             placeholder="Ajouter une description…"
@@ -368,7 +368,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
             onMouseDown={e => e.stopPropagation()}
           />
         ) : module.colorDescription ? (
-          <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">{module.colorDescription}</p>
+          <p className="text-sm text-muted mb-4">{module.colorDescription}</p>
         ) : null}
         <ExportButtons />
         {isEditing && <ModeToggle />}
@@ -429,7 +429,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
       <ExportButtons />
       {isEditing ? (
         <textarea
-          className="w-full text-sm text-gray-500 dark:text-gray-300 resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
+          className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
           style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
           rows={2}
           placeholder="Ajouter une description…"
@@ -441,7 +441,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
           onMouseDown={e => e.stopPropagation()}
         />
       ) : module.colorDescription ? (
-        <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">{module.colorDescription}</p>
+        <p className="text-sm text-muted mb-4">{module.colorDescription}</p>
       ) : null}
       {isEditing && <ModeToggle />}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>

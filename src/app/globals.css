@@ -34,7 +34,7 @@
 
   --text-primary:   #f1f5f9;
   --text-secondary: #cbd5e1;
-  --text-muted:     #94a3b8;
+  --text-muted:     #8490A4;
   --text-subtle:    #64748b;
 
   --foreground: #f9fafb;
@@ -51,6 +51,7 @@ body {
 .bg-surface { background-color: var(--surface);    }
 .bg-app     { background-color: var(--background); }
 .bg-sidebar { background-color: var(--sidebar-bg); }
+.text-muted { color: var(--text-muted); }
 
 /* ─── Dark mode: override any remaining hardcoded white backgrounds ─── */
 .dark .bg-white {

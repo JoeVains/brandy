@@ -31,7 +31,7 @@ export default function ModuleDescription({ moduleId, value, isEditing, onUpdate
   if (isEditing) {
     return (
       <textarea
-        className="w-full text-sm text-gray-500 dark:text-gray-300 resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
+        className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
         style={focused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
         rows={2}
         placeholder="Ajouter une description…"
@@ -45,5 +45,5 @@ export default function ModuleDescription({ moduleId, value, isEditing, onUpdate
     );
   }
 
-  return value ? <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">{value}</p> : null;
+  return value ? <p className="text-sm text-muted mb-4">{value}</p> : null;
 }
