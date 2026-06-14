@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, Copy, Trash2, ArrowRight, Pencil, Check } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   brands: Brand[];
@@ -23,6 +24,7 @@ function formatDate(iso: string) {
 
 export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange, onSectionsChange }: Props) {
   const [showNew, setShowNew] = useState(false);
+  const { dark, toggle } = useTheme();
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(BRAND_COLORS[0]);
   const [duplicating, setDuplicating] = useState<string | null>(null);
@@ -104,13 +106,20 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ background: 'var(--accent)' }}>B</div>
           <span className="font-semibold text-xl tracking-tight">Brandy</span>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-opacity"
-          style={{ background: 'var(--accent)' }}
-        >
-          <Plus size={15} /> Nouvelle marque
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={toggle}
+            className="p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title={dark ? 'Mode clair' : 'Mode sombre'}>
+            {dark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+          <button
+            onClick={() => setShowNew(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-opacity"
+            style={{ background: 'var(--accent)' }}
+          >
+            <Plus size={15} /> Nouvelle marque
+          </button>
+        </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-8 py-10">

@@ -6,9 +6,10 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import SearchModal from './SearchModal';
+import { useTheme } from '@/hooks/useTheme';
 
 const BRAND_COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
@@ -254,6 +255,7 @@ export default function BrandyApp() {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
   const [pageViewKey, setPageViewKey] = useState(0);
+  const { dark, toggle } = useTheme();
 
   const fetchAll = useCallback(async () => {
     const [b, s] = await Promise.all([
@@ -463,6 +465,13 @@ export default function BrandyApp() {
             <FileDown size={15} />
           </a>
         )}
+
+        {/* Dark mode toggle */}
+        <button onClick={toggle}
+          className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          title={dark ? 'Mode clair' : 'Mode sombre'}>
+          {dark ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
 
         {/* History button */}
         <button onClick={() => setShowHistory(v => !v)}

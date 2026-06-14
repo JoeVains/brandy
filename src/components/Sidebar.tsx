@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Brand, Section, Module } from '@/types';
-import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical, Hash, Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
+import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical, Hash } from 'lucide-react';
 
 interface Props {
   brand: Brand;
@@ -228,7 +227,6 @@ function SectionNode({
 
 export default function Sidebar({ brand, sections, activeSectionId, onSelectSection, onSectionsChange, draggingModuleId, onModuleDrop }: Props) {
   const [showAdd, setShowAdd] = useState(false);
-  const { dark, toggle } = useTheme();
   const [newName, setNewName] = useState('');
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
@@ -366,17 +364,6 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
             <Plus size={13} /> Ajouter une rubrique
           </button>
         )}
-      </div>
-
-      <div className="flex items-center justify-center px-4 py-2 border-t" style={{ borderColor: 'var(--border)' }}>
-        <button
-          onClick={toggle}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          title={dark ? 'Mode clair' : 'Mode sombre'}
-        >
-          {dark ? <Sun size={13} /> : <Moon size={13} />}
-          {dark ? 'Mode clair' : 'Mode sombre'}
-        </button>
       </div>
 
       <div className="px-4 py-3 border-t text-center" style={{ borderColor: 'var(--border)' }}>
