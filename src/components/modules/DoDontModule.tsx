@@ -16,11 +16,12 @@ const DO_COLOR = '#16a34a';
 const DONT_COLOR = '#dc2626';
 
 function Column({
-  label, icon, color, items, isEditing, layout, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete, onDuplicate, onReplaceImage,
+  label, icon, color, brandColor, items, isEditing, layout, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete, onDuplicate, onReplaceImage, onReorder,
 }: {
   label: string;
   icon: string;
   color: string;
+  brandColor: string;
   items: DoDontItem[];
   isEditing?: boolean;
   layout: 'stacked' | 'sidebyside';
@@ -32,9 +33,22 @@ function Column({
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onReplaceImage: (id: string, file: File) => void;
+  onReorder: (items: DoDontItem[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const replaceRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  function handleDrop(toIdx: number) {
+    if (dragIdx === null || dragIdx === toIdx) { setDragIdx(null); setDragOverIdx(null); return; }
+    const reordered = [...items];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(dragIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
+    onReorder(reordered);
+    setDragIdx(null);
+    setDragOverIdx(null);
+  }
 
   return (
     <div className="flex-1 min-w-0">
@@ -46,8 +60,19 @@ function Column({
 
       {/* Items */}
       <div className="space-y-3">
-        {items.map(item => (
-          <div key={item.id} className={`group relative border-2 rounded-xl overflow-hidden ${layout === 'sidebyside' ? 'flex h-40' : ''}`} style={{ borderColor: color }}>
+        {items.map((item, idx) => (
+          <div key={item.id} className="relative">
+            {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+              <div className="absolute -top-2 left-0 right-0 h-0.5 rounded-full z-10" style={{ background: brandColor }} />
+            )}
+          <div
+            draggable={isEditing}
+            onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); }}
+            onDragOver={e => { e.preventDefault(); setDragOverIdx(idx); }}
+            onDrop={() => handleDrop(idx)}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+            className={`group relative border-2 rounded-xl overflow-hidden transition-opacity ${layout === 'sidebyside' ? 'flex h-40' : ''} ${dragIdx === idx ? 'opacity-40' : ''}`}
+            style={{ borderColor: color, cursor: isEditing ? 'grab' : 'default' }}>
 
             {/* Content area (image or text) */}
             <div className={`relative overflow-hidden ${layout === 'sidebyside' ? 'w-1/2 shrink-0' : 'h-48'}`}
@@ -133,6 +158,7 @@ function Column({
                 </button>
               </div>
             )}
+          </div>
           </div>
         ))}
 
@@ -263,7 +289,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
       />
       <div className="flex gap-5">
         <Column
-          label="À faire" icon="✓" color={DO_COLOR}
+          label="À faire" icon="✓" color={DO_COLOR} brandColor={brandColor}
           items={doItems} isEditing={isEditing} layout={layout}
           onAdd={f => uploadItem('do', f)}
           onAddText={() => addTextItem('do')}
@@ -273,9 +299,10 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
           onDelete={id => deleteItem('do', id)}
           onDuplicate={id => duplicateItem('do', id)}
           onReplaceImage={(id, f) => replaceImage('do', id, f)}
+          onReorder={reordered => patch({ doItems: reordered })}
         />
         <Column
-          label="À ne pas faire" icon="✗" color={DONT_COLOR}
+          label="À ne pas faire" icon="✗" color={DONT_COLOR} brandColor={brandColor}
           items={dontItems} isEditing={isEditing} layout={layout}
           onAdd={f => uploadItem('dont', f)}
           onAddText={() => addTextItem('dont')}
@@ -285,6 +312,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
           onDelete={id => deleteItem('dont', id)}
           onDuplicate={id => duplicateItem('dont', id)}
           onReplaceImage={(id, f) => replaceImage('dont', id, f)}
+          onReorder={reordered => patch({ dontItems: reordered })}
         />
       </div>
     </div>
