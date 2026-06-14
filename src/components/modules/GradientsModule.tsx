@@ -379,6 +379,8 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
   const [newType, setNewType] = useState<'linear' | 'radial'>('linear');
   const [newAngle, setNewAngle] = useState(135);
   const [newStops, setNewStops] = useState<GradientStop[]>(DEFAULT_STOPS);
+  const [newDragStopIdx, setNewDragStopIdx] = useState<number | null>(null);
+  const [newStopIds, setNewStopIds] = useState<string[]>(() => DEFAULT_STOPS.map(() => Math.random().toString(36).slice(2)));
 
   const newCss = gradientToCss(newType, newAngle, newStops);
 
@@ -444,6 +446,24 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     });
   }
 
+  function handleNewStopDrop(toIdx: number) {
+    if (newDragStopIdx === null || newDragStopIdx === toIdx) { setNewDragStopIdx(null); return; }
+    setNewStops(prev => {
+      const reordered = [...prev];
+      const [moved] = reordered.splice(newDragStopIdx, 1);
+      reordered.splice(toIdx, 0, moved);
+      if (!newNameTouched) setNewName(suggestGradientName(reordered));
+      return reordered;
+    });
+    setNewStopIds(prev => {
+      const reordered = [...prev];
+      const [moved] = reordered.splice(newDragStopIdx, 1);
+      reordered.splice(toIdx, 0, moved);
+      return reordered;
+    });
+    setNewDragStopIdx(null);
+  }
+
   function downloadCss() {
     const lines = items.map(i =>
       `--gradient-${i.name.toLowerCase().replace(/\s+/g, '-')}: ${gradientToCss(i.type, i.angle ?? 135, i.stops)};`
@@ -458,17 +478,17 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
   }
 
   const AddForm = isEditing && showAdd ? (
-    <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-16" style={{ background: newCss }} />
-      <div className="p-3 bg-white space-y-2.5">
+    <div className="border rounded-xl overflow-hidden" style={{ borderColor: brandColor, outline: `2px solid ${brandColor}` }}>
+      <div className="h-20" style={{ background: newCss }} />
+      <div className="p-3 bg-white space-y-3">
         <input className="w-full border rounded-lg px-2 py-1.5 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
           value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
         <div className="flex items-center gap-2">
           <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
             {(['linear', 'radial'] as const).map(t => (
               <button key={t} onClick={() => setNewType(t)}
-                className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors"
-                style={newType === t ? { background: 'white', color: '#111' } : { color: '#6b7280' }}>
+                className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                style={newType === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
                 {t === 'linear' ? 'Linéaire' : 'Radial'}
               </button>
             ))}
@@ -481,23 +501,42 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
           </button>
         </div>
         {newType === 'linear' && (
-          <div className="flex items-center gap-1.5">
-            <AngleDial angle={newAngle} onChange={setNewAngle} />
-            <input type="range" min={0} max={360} value={newAngle}
-              onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
-            <input type="number" min={0} max={360} value={newAngle}
-              onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
-              className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
-              style={{ borderColor: 'var(--border)' }} />
-            <span className="text-xs text-gray-400">°</span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <AngleDial angle={newAngle} onChange={setNewAngle} />
+              <input type="range" min={0} max={360} value={newAngle}
+                onChange={e => setNewAngle(Number(e.target.value))} className="flex-1 h-1 accent-gray-600" />
+              <input type="number" min={0} max={360} value={newAngle}
+                onChange={e => { const v = Number(e.target.value); if (v >= 0 && v <= 360) setNewAngle(v); }}
+                className="text-xs w-12 border rounded px-1.5 py-0.5 outline-none text-right"
+                style={{ borderColor: 'var(--border)' }} />
+              <span className="text-xs text-gray-400">°</span>
+            </div>
           </div>
         )}
+        <div className="space-y-2">
         {newStops.map((stop, idx) => (
-          <ColorStopRow key={idx} stop={stop}
+          <ColorStopRow key={newStopIds[idx]} stop={stop}
             onUpdate={p => updateNewStop(idx, p)}
-            onRemove={() => setNewStops(prev => { const next = prev.filter((_, i) => i !== idx); if (!newNameTouched) setNewName(suggestGradientName(next)); return next; })}
-            canRemove={newStops.length > 2} />
+            onRemove={() => {
+              setNewStops(prev => { const next = prev.filter((_, i) => i !== idx); if (!newNameTouched) setNewName(suggestGradientName(next)); return next; });
+              setNewStopIds(prev => prev.filter((_, i) => i !== idx));
+            }}
+            canRemove={newStops.length > 2}
+            isDragging={newDragStopIdx === idx}
+            onDragStart={() => setNewDragStopIdx(idx)}
+            onDragOver={e => e.preventDefault()}
+            onDrop={() => handleNewStopDrop(idx)}
+            onDragEnd={() => setNewDragStopIdx(null)} />
         ))}
+          <button onClick={() => {
+            const mid = Math.round((newStops[newStops.length - 1].position + newStops[0].position) / 2);
+            setNewStops(prev => { const next = [...prev, { color: '#888888', position: mid }]; if (!newNameTouched) setNewName(suggestGradientName(next)); return next; });
+            setNewStopIds(prev => [...prev, Math.random().toString(36).slice(2)]);
+          }} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+            <Plus size={11} /> Ajouter une couleur
+          </button>
+        </div>
         <div className="flex gap-2 pt-1">
           <button onClick={addGradient} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
             <Check size={11} /> Ajouter
