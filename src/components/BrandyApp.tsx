@@ -184,6 +184,14 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
             )}
           </div>
         )}
+        {/* Brand name centered */}
+        {!hovering && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-white text-3xl font-bold tracking-tight" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.35)' }}>
+              {brand.name}
+            </span>
+          </div>
+        )}
         {uploading && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
