@@ -52,6 +52,11 @@ function Column({
                 <img src={`/uploads/${item.filename}`} alt=""
                   className={`bg-gray-50 ${layout === 'sidebyside' ? 'w-full h-full object-cover' : 'w-full max-h-64'}`}
                   style={{ objectFit: item.fit ?? 'cover' }} />
+                {color === DONT_COLOR && (
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                    <line x1="5%" y1="95%" x2="95%" y2="5%" stroke={DONT_COLOR} strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                )}
                 {isEditing && (
                   <div className="flex p-1 gap-1 bg-black/5 absolute top-2 left-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                     {(['cover', 'contain'] as const).map(f => (
