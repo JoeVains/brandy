@@ -62,13 +62,14 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
 }) {
   return (
     <div className="space-y-1 transition-opacity" style={{ opacity: isDragging ? 0.35 : 1 }}
-      onDragOver={e => { e.preventDefault(); onDragOver?.(e); }}
-      onDrop={onDrop}
+      onDragOver={e => { e.preventDefault(); e.stopPropagation(); onDragOver?.(e); }}
+      onDrop={e => { e.preventDefault(); e.stopPropagation(); onDrop?.(); }}
       onDragEnd={onDragEnd}>
       <div className="flex items-center gap-2">
         {/* Drag handle */}
         <div draggable
           onDragStart={e => {
+            e.dataTransfer.setData('text/plain', '');
             const img = new Image();
             img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             e.dataTransfer.setDragImage(img, 0, 0);
@@ -83,6 +84,7 @@ function ColorStopRow({ stop, onUpdate, onRemove, canRemove, isDragging, onDragS
           style={{ background: stop.color, borderColor: 'var(--border)' }}>
           <input type="color" value={stop.color}
             onChange={e => onUpdate({ color: e.target.value })}
+            onDrop={e => { e.preventDefault(); e.stopPropagation(); }}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             style={{ padding: 0, border: 'none' }} />
         </div>
@@ -133,7 +135,10 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
   const [name, setName] = useState(item.name);
   const [type, setType] = useState<'linear' | 'radial'>(item.type);
   const [angle, setAngle] = useState(item.angle ?? 135);
-  const [stops, setStops] = useState<GradientStop[]>(item.stops);
+  type StopWithId = GradientStop & { _id: string };
+  function withId(s: GradientStop): StopWithId { return { ...s, _id: Math.random().toString(36).slice(2) }; }
+
+  const [stops, setStops] = useState<StopWithId[]>(() => item.stops.map(withId));
   const [copied, setCopied] = useState(false);
   const [dragStopIdx, setDragStopIdx] = useState<number | null>(null);
 
@@ -149,7 +154,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
     if (dragStopIdx === null || dragStopIdx === toIdx) { setDragStopIdx(null); return; }
     const reordered = [...stops];
     const [moved] = reordered.splice(dragStopIdx, 1);
-    reordered.splice(dragStopIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
+    reordered.splice(toIdx, 0, moved);
     setStops(reordered);
     setDragStopIdx(null);
   }
@@ -169,7 +174,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
 
   function addStop() {
     const mid = Math.round((stops[stops.length - 1].position + stops[0].position) / 2);
-    setStops(prev => [...prev, { color: '#888888', position: mid }]);
+    setStops(prev => [...prev, withId({ color: '#888888', position: mid })]);
   }
 
   function removeStop(idx: number) {
@@ -178,7 +183,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
   }
 
   function save() {
-    onSave({ ...item, name, type, angle, stops });
+    onSave({ ...item, name, type, angle, stops: stops.map(({ _id, ...s }) => s) });
     setEditing(false);
   }
 
@@ -186,7 +191,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
     setName(item.name);
     setType(item.type);
     setAngle(item.angle ?? 135);
-    setStops(item.stops);
+    setStops(item.stops.map(withId));
     setEditing(false);
   }
 
@@ -244,7 +249,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
           {/* Stops */}
           <div className="space-y-2">
             {stops.map((stop, idx) => (
-              <ColorStopRow key={idx} stop={stop}
+              <ColorStopRow key={stop._id} stop={stop}
                 onUpdate={p => updateStop(idx, p)}
                 onRemove={() => removeStop(idx)}
                 canRemove={stops.length > 2}
