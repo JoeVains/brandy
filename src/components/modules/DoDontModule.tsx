@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Module, DoDontItem } from '@/types';
-import { Plus, Trash2, Check, X, Image as ImageIcon, Type } from 'lucide-react';
+import { Plus, Trash2, Copy, Pencil, Image as ImageIcon, Type } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -16,7 +16,7 @@ const DO_COLOR = '#16a34a';
 const DONT_COLOR = '#dc2626';
 
 function Column({
-  label, icon, color, items, isEditing, layout, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete,
+  label, icon, color, items, isEditing, layout, onAdd, onAddText, onUpdateCaption, onUpdateContent, onUpdateFit, onDelete, onDuplicate, onReplaceImage,
 }: {
   label: string;
   icon: string;
@@ -30,8 +30,11 @@ function Column({
   onUpdateContent: (id: string, content: string) => void;
   onUpdateFit: (id: string, fit: 'cover' | 'contain') => void;
   onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onReplaceImage: (id: string, file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const replaceRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   return (
     <div className="flex-1 min-w-0">
@@ -44,13 +47,13 @@ function Column({
       {/* Items */}
       <div className="space-y-3">
         {items.map(item => (
-          <div key={item.id} className={`group relative border-2 rounded-xl overflow-hidden ${layout === 'sidebyside' ? 'flex' : ''}`} style={{ borderColor: color }}>
+          <div key={item.id} className={`group relative border-2 rounded-xl overflow-hidden ${layout === 'sidebyside' ? 'flex h-40' : ''}`} style={{ borderColor: color }}>
 
             {/* Image item */}
             {item.type === 'image' && item.filename && (
-              <div className={`relative ${layout === 'sidebyside' ? 'w-1/2 shrink-0' : ''}`}>
+              <div className={`relative overflow-hidden ${layout === 'sidebyside' ? 'w-1/2 shrink-0' : 'h-48'}`}>
                 <img src={`/uploads/${item.filename}`} alt=""
-                  className={`bg-gray-50 ${layout === 'sidebyside' ? 'w-full h-full object-cover' : 'w-full max-h-64'}`}
+                  className="block w-full h-full bg-gray-50"
                   style={{ objectFit: item.fit ?? 'cover' }} />
                 {color === DONT_COLOR && (
                   <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
@@ -117,12 +120,29 @@ function Column({
               </div>
             )}
 
-            {/* Delete button */}
+            {/* Actions */}
             {isEditing && (
-              <button onClick={() => onDelete(item.id)}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                <Trash2 size={12} />
-              </button>
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {item.type === 'image' && (
+                  <>
+                    <button onClick={() => replaceRefs.current[item.id]?.click()}
+                      className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-gray-700 shadow-sm">
+                      <Pencil size={12} />
+                    </button>
+                    <input type="file" accept="image/*" className="hidden"
+                      ref={el => { replaceRefs.current[item.id] = el; }}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) onReplaceImage(item.id, f); e.target.value = ''; }} />
+                  </>
+                )}
+                <button onClick={() => onDuplicate(item.id)}
+                  className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-gray-700 shadow-sm">
+                  <Copy size={12} />
+                </button>
+                <button onClick={() => onDelete(item.id)}
+                  className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 shadow-sm">
+                  <Trash2 size={12} />
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -193,6 +213,15 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
     onUpdate(await res.json());
   }
 
+  async function replaceImage(col: 'do' | 'dont', id: string, file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('slot', col);
+    fd.append('replaceId', id);
+    const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+    onUpdate(await res.json());
+  }
+
   function addTextItem(col: 'do' | 'dont') {
     const item: DoDontItem = { id: crypto.randomUUID(), type: 'text', content: '', caption: '' };
     if (col === 'do') patch({ doItems: [...doItems, item] });
@@ -208,6 +237,16 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
   function deleteItem(col: 'do' | 'dont', id: string) {
     const items = col === 'do' ? doItems : dontItems;
     const updated = items.filter(i => i.id !== id);
+    patch(col === 'do' ? { doItems: updated } : { dontItems: updated });
+  }
+
+  function duplicateItem(col: 'do' | 'dont', id: string) {
+    const items = col === 'do' ? doItems : dontItems;
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) return;
+    const copy = { ...items[idx], id: crypto.randomUUID() };
+    const updated = [...items];
+    updated.splice(idx + 1, 0, copy);
     patch(col === 'do' ? { doItems: updated } : { dontItems: updated });
   }
 
@@ -243,6 +282,8 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
           onUpdateContent={(id, content) => updateItem('do', id, { content })}
           onUpdateFit={(id, fit) => updateItem('do', id, { fit })}
           onDelete={id => deleteItem('do', id)}
+          onDuplicate={id => duplicateItem('do', id)}
+          onReplaceImage={(id, f) => replaceImage('do', id, f)}
         />
         <Column
           label="À ne pas faire" icon="✗" color={DONT_COLOR}
@@ -253,6 +294,8 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
           onUpdateContent={(id, content) => updateItem('dont', id, { content })}
           onUpdateFit={(id, fit) => updateItem('dont', id, { fit })}
           onDelete={id => deleteItem('dont', id)}
+          onDuplicate={id => duplicateItem('dont', id)}
+          onReplaceImage={(id, f) => replaceImage('dont', id, f)}
         />
       </div>
     </div>

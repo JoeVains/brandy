@@ -63,9 +63,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     };
     module.iconItems = [...(module.iconItems ?? []), item];
   } else if (slot === 'do' || slot === 'dont') {
-    const item: DoDontItem = { id: randomUUID(), type: 'image', filename, mimeType: file.type };
-    if (slot === 'do') module.doItems = [...(module.doItems ?? []), item];
-    else module.dontItems = [...(module.dontItems ?? []), item];
+    const replaceId = formData.get('replaceId') as string | null;
+    const col = slot === 'do' ? 'doItems' : 'dontItems';
+    if (replaceId) {
+      module[col] = (module[col] ?? []).map(i => {
+        if (i.id !== replaceId) return i;
+        if (i.filename) { const old = path.join(uploadsDir, i.filename); if (fs.existsSync(old)) fs.unlinkSync(old); }
+        return { ...i, filename, mimeType: file.type };
+      });
+    } else {
+      const item: DoDontItem = { id: randomUUID(), type: 'image', filename, mimeType: file.type };
+      module[col] = [...(module[col] ?? []), item];
+    }
   } else if (slot === 'audio') {
     if (module.audioFilename) {
       const old = path.join(uploadsDir, module.audioFilename);
