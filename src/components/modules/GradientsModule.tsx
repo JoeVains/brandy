@@ -122,11 +122,12 @@ function gradientToCss(type: string, angle: number, stops: GradientStop[]): stri
     : `linear-gradient(${angle}deg, ${s})`;
 }
 
-function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart, drops }: {
+function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEditing, onDragStart, drops }: {
   item: GradientItem;
   brandColor: string;
   onSave: (updated: GradientItem) => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   isEditing?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   drops?: boolean;
@@ -291,6 +292,9 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
                 className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
                 <Pencil size={12} />
               </button>
+              <button onClick={onDuplicate} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
+                <Copy size={12} />
+              </button>
               <button onClick={onDelete} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-red-500">
                 <Trash2 size={12} />
               </button>
@@ -316,6 +320,9 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragS
             <button onClick={() => setEditing(true)}
               className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
               <Pencil size={12} />
+            </button>
+            <button onClick={onDuplicate} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-700">
+              <Copy size={12} />
             </button>
             <button onClick={onDelete} className="p-1.5 rounded-full bg-white/80 hover:bg-white text-red-500">
               <Trash2 size={12} />
@@ -416,6 +423,16 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
 
   async function deleteItem(id: string) {
     await patch(items.filter(i => i.id !== id));
+  }
+
+  async function duplicateItem(id: string) {
+    const src = items.find(i => i.id === id);
+    if (!src) return;
+    const copy = { ...src, id: crypto.randomUUID(), name: `${src.name} (copie)` };
+    const idx = items.findIndex(i => i.id === id);
+    const next = [...items];
+    next.splice(idx + 1, 0, copy);
+    await patch(next);
   }
 
   function onDragStart(e: React.DragEvent, idx: number) {
@@ -592,7 +609,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
                   <div className="absolute -left-4 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
                 )}
                 <GradientSwatch item={item} brandColor={brandColor}
-                  onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+                  onSave={updateItem} onDelete={() => deleteItem(item.id)} onDuplicate={() => duplicateItem(item.id)} isEditing={isEditing}
                   onDragStart={e => onDragStart(e, idx)} drops />
               </div>
             );
@@ -628,7 +645,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
               <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
             )}
             <GradientSwatch item={item} brandColor={brandColor}
-              onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+              onSave={updateItem} onDelete={() => deleteItem(item.id)} onDuplicate={() => duplicateItem(item.id)} isEditing={isEditing}
               onDragStart={e => onDragStart(e, idx)} />
           </div>
         ))}
