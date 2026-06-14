@@ -27,7 +27,7 @@ export default function HeadingModule({ module, onUpdate, isEditing }: Props) {
     <div>
       {isEditing ? (
         <input
-          className="w-full text-3xl font-bold text-gray-900 outline-none bg-transparent border-b-2 pb-1 focus:border-gray-400 border-transparent transition-colors mb-3"
+          className="w-full text-3xl font-bold text-gray-900 dark:text-gray-100 outline-none bg-transparent border-b-2 pb-1 focus:border-gray-400 dark:border-gray-600 border-transparent transition-colors mb-3"
           placeholder="Titre…"
           value={draft}
           onChange={e => setDraft(e.target.value)}
@@ -36,9 +36,9 @@ export default function HeadingModule({ module, onUpdate, isEditing }: Props) {
           onMouseDown={e => e.stopPropagation()}
         />
       ) : module.content ? (
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">{module.content}</h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">{module.content}</h2>
       ) : (
-        <p className="text-sm text-gray-300 italic mb-3">Aucun titre</p>
+        <p className="text-sm text-gray-300 dark:text-gray-600 italic mb-3">Aucun titre</p>
       )}
       <ModuleDescription
         moduleId={module.id}

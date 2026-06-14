@@ -43,6 +43,7 @@ export interface ImageItem {
   filename: string;
   mimeType: string;
   size: number;
+  caption?: string;
 }
 
 export interface IconItem {

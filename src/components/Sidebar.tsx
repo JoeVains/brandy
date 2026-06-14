@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Brand, Section, Module } from '@/types';
-import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical, Hash } from 'lucide-react';
+import { Plus, ChevronRight, ChevronDown, Trash2, Pencil, Check, X, LayoutGrid, GripVertical, Hash, Moon, Sun } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   brand: Brand;
@@ -102,7 +103,7 @@ function SectionNode({
   return (
     <div style={{ opacity: isDragging ? 0.4 : 1, transition: 'opacity 0.15s' }}>
       <div
-        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:bg-gray-800'}`}
         style={{
           paddingLeft: `${8 + depth * 14}px`,
           ...(isActive ? { background: brandColor } : {}),
@@ -173,31 +174,31 @@ function SectionNode({
         <div className={`flex items-center gap-0.5 ${editing ? 'flex' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} onClick={e => e.stopPropagation()}>
           {editing ? (
             <>
-              <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 hover:text-gray-700'}><Check size={11} /></button>
-              <button onClick={() => setEditing(false)} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 hover:text-gray-700'}><X size={11} /></button>
+              <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Check size={11} /></button>
+              <button onClick={() => setEditing(false)} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><X size={11} /></button>
             </>
           ) : (
             <>
-              <button onClick={() => setShowAddChild(!showAddChild)} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-700'}><Plus size={11} /></button>
-              <button onClick={() => { setEditing(true); setEditName(section.name); }} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-700'}><Pencil size={11} /></button>
-              <button onClick={deleteSection} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-700'}><Trash2 size={11} /></button>
+              <button onClick={() => setShowAddChild(!showAddChild)} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Plus size={11} /></button>
+              <button onClick={() => { setEditing(true); setEditName(section.name); }} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Pencil size={11} /></button>
+              <button onClick={deleteSection} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600'}><Trash2 size={11} /></button>
             </>
           )}
         </div>
       </div>
 
       {showAddChild && (
-        <div className="flex items-center gap-1 px-2 py-1 mx-2 rounded-lg bg-gray-50 border" style={{ marginLeft: `${8 + (depth + 1) * 14}px`, borderColor: 'var(--border)' }}>
+        <div className="flex items-center gap-1 px-2 py-1 mx-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border" style={{ marginLeft: `${8 + (depth + 1) * 14}px`, borderColor: 'var(--border)' }}>
           <input
             autoFocus
             placeholder="Nom..."
-            className="flex-1 bg-transparent outline-none text-sm text-gray-700"
+            className="flex-1 bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600"
             value={childName}
             onChange={e => setChildName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addChild(); if (e.key === 'Escape') setShowAddChild(false); }}
           />
           <button onClick={addChild} className="text-indigo-600"><Check size={12} /></button>
-          <button onClick={() => setShowAddChild(false)} className="text-gray-400"><X size={12} /></button>
+          <button onClick={() => setShowAddChild(false)} className="text-gray-400 dark:text-gray-500"><X size={12} /></button>
         </div>
       )}
 
@@ -213,7 +214,7 @@ function SectionNode({
         <button
           key={h.id}
           onClick={() => onScrollToHeading(h.id)}
-          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-left"
+          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 transition-colors text-left"
           style={{ paddingLeft: `${8 + (depth + 1) * 14 + 8}px` }}
         >
           <Hash size={10} className="flex-shrink-0 opacity-50" />
@@ -227,6 +228,7 @@ function SectionNode({
 
 export default function Sidebar({ brand, sections, activeSectionId, onSelectSection, onSectionsChange, draggingModuleId, onModuleDrop }: Props) {
   const [showAdd, setShowAdd] = useState(false);
+  const { dark, toggle } = useTheme();
   const [newName, setNewName] = useState('');
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
@@ -316,11 +318,11 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
   };
 
   return (
-    <aside className="w-56 flex-shrink-0 flex flex-col border-r bg-white overflow-y-auto" style={{ borderColor: 'var(--border)' }}>
+    <aside className="w-56 flex-shrink-0 flex flex-col border-r bg-white dark:bg-gray-900 overflow-y-auto" style={{ borderColor: 'var(--border)' }}>
       <div className="p-3 flex-1">
         {/* All assets */}
         <button
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${!activeSectionId ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${!activeSectionId ? 'text-white' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:bg-gray-800'}`}
           style={!activeSectionId ? { background: brand.color } : {}}
           onClick={() => onSelectSection(null)}
         >
@@ -344,34 +346,45 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
 
 
         {showAdd ? (
-          <div className="flex items-center gap-1 px-2 py-1 mt-1 rounded-lg bg-gray-50 border" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex items-center gap-1 px-2 py-1 mt-1 rounded-lg bg-gray-50 dark:bg-gray-800/50 border" style={{ borderColor: 'var(--border)' }}>
             <input
               autoFocus
               placeholder="Nouvelle rubrique..."
-              className="flex-1 bg-transparent outline-none text-sm text-gray-700"
+              className="flex-1 bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600"
               value={newName}
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') addRoot(); if (e.key === 'Escape') setShowAdd(false); }}
             />
             <button onClick={addRoot} className="text-indigo-600"><Check size={12} /></button>
-            <button onClick={() => setShowAdd(false)} className="text-gray-400"><X size={12} /></button>
+            <button onClick={() => setShowAdd(false)} className="text-gray-400 dark:text-gray-500"><X size={12} /></button>
           </div>
         ) : (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 w-full px-2 py-1.5 mt-1 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 w-full px-2 py-1.5 mt-1 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 rounded-lg transition-colors"
           >
             <Plus size={13} /> Ajouter une rubrique
           </button>
         )}
       </div>
 
-      <div className="px-4 py-4 border-t text-center" style={{ borderColor: 'var(--border)' }}>
-        <p className="text-[10px] text-gray-400 leading-relaxed">
+      <div className="flex items-center justify-center px-4 py-2 border-t" style={{ borderColor: 'var(--border)' }}>
+        <button
+          onClick={toggle}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          title={dark ? 'Mode clair' : 'Mode sombre'}
+        >
+          {dark ? <Sun size={13} /> : <Moon size={13} />}
+          {dark ? 'Mode clair' : 'Mode sombre'}
+        </button>
+      </div>
+
+      <div className="px-4 py-3 border-t text-center" style={{ borderColor: 'var(--border)' }}>
+        <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">
           Made with 🩷 in Paris<br />
           by{' '}
           <a href="https://joevains.com" target="_blank" rel="noopener noreferrer"
-            className="hover:text-gray-600 transition-colors underline underline-offset-2">
+            className="hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 transition-colors underline underline-offset-2">
             Sylvain &ldquo;Joe Vains&rdquo; Guizard
           </a>
           {' '}© {new Date().getFullYear()}

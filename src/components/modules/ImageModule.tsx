@@ -68,22 +68,22 @@ function Lightbox({ items, index, onNavigate, onClose }: {
         {isSvg ? (
           <>
             <a href={src} download={filename} onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white text-sm transition-colors">
               <Download size={14} /> SVG
             </a>
             <button onClick={e => { e.stopPropagation(); downloadAsPng(src, filename); }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white text-sm transition-colors">
               <Download size={14} /> PNG
             </button>
           </>
         ) : (
           <a href={src} download={filename} onClick={e => e.stopPropagation()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white text-sm transition-colors">
             <Download size={14} /> Télécharger
           </a>
         )}
         <button onClick={onClose}
-          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors">
+          className="p-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white transition-colors">
           <X size={16} />
         </button>
       </div>
@@ -92,7 +92,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
       {total > 1 && (
         <button
           onClick={e => { e.stopPropagation(); onNavigate(prevIndex); }}
-          className="absolute left-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+          className="absolute left-4 p-3 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white transition-colors"
         >
           <ChevronLeft size={24} />
         </button>
@@ -106,7 +106,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
       {total > 1 && (
         <button
           onClick={e => { e.stopPropagation(); onNavigate(nextIndex); }}
-          className="absolute right-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+          className="absolute right-4 p-3 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white transition-colors"
         >
           <ChevronRight size={24} />
         </button>
@@ -118,7 +118,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
           <p className="px-4 py-1.5 rounded-xl bg-black/50 text-white text-sm text-center max-w-lg">{caption}</p>
         )}
         {items.length > 1 && (
-          <div className="px-3 py-1 rounded-full bg-white/10 text-white text-xs">
+          <div className="px-3 py-1 rounded-full bg-white dark:bg-gray-900/10 text-white text-xs">
             {index + 1} / {items.length}
           </div>
         )}
@@ -306,7 +306,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   }
 
   const ModeToggle = () => (
-    <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 rounded-lg w-fit">
+    <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
       <button
         onClick={() => setMode('single')}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
@@ -325,7 +325,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   );
 
   const FitToggle = () => (
-    <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 rounded-lg w-fit">
+    <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
       <button
         onClick={() => setFit('contain')}
         className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
@@ -361,24 +361,24 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
           {isEditing && <FitToggle />}
           {descriptionBlock}
           <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
-            <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full max-h-[500px] bg-gray-50" style={{ objectFit: fit }} />
+            <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full max-h-[500px] bg-gray-50 dark:bg-gray-800/50" style={{ objectFit: fit }} />
             <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => setLightboxIndex(0)}
-                className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+                className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
                 <ZoomIn size={14} />
               </button>
               <a href={`/uploads/${module.imageFilename}`} download={module.imageFilename}
-                className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50 flex items-center" style={{ borderColor: 'var(--border)' }}>
+                className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:bg-gray-800/50 flex items-center" style={{ borderColor: 'var(--border)' }}>
                 <Download size={14} />
               </a>
               {isEditing && (
                 <>
                   <button onClick={() => inputRef.current?.click()}
-                    className="p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50" style={{ borderColor: 'var(--border)' }}>
+                    className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
                     <Upload size={14} />
                   </button>
-                  <button onClick={removeSingle} className="p-2 rounded-lg bg-white border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
+                  <button onClick={removeSingle} className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-red-50 text-red-500" style={{ borderColor: 'var(--border)' }}>
                     <Trash2 size={14} />
                   </button>
                 </>
@@ -395,13 +395,13 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         {isEditing && <ModeToggle />}
         {descriptionBlock}
         {isEditing ? (
-          <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-12 cursor-pointer hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-600" style={{ borderColor: 'var(--border)' }}>
+          <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-12 cursor-pointer hover:bg-gray-50 dark:bg-gray-800/50 transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500" style={{ borderColor: 'var(--border)' }}>
             <ImageIcon size={32} />
             <span className="text-sm">Cliquez pour uploader une image</span>
             <input type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleSingleInput(e.target.files)} />
           </label>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300">
+          <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-600">
             <ImageIcon size={28} />
             <span className="text-sm">Aucune image</span>
           </div>
@@ -428,12 +428,12 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               <button
                 onClick={() => downloadZip([...selected])}
                 disabled={downloading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 disabled:opacity-50 transition-colors"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <Download size={12} /> Télécharger la sélection ({selected.size})
               </button>
-              <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500">
                 Tout désélectionner
               </button>
             </>
@@ -451,7 +451,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             <button
               onClick={() => downloadZip()}
               disabled={downloading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 disabled:opacity-50 transition-colors"
               style={{ borderColor: 'var(--border)' }}
             >
               <Download size={12} /> {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
@@ -482,7 +482,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               )}
               <div
                 data-item-id={item.id}
-                className="rounded-xl overflow-hidden border bg-gray-50"
+                className="rounded-xl overflow-hidden border bg-gray-50 dark:bg-gray-800/50"
                 style={{
                   borderColor: isSelected ? brandColor : 'var(--border)',
                   outline: isSelected ? `2px solid ${brandColor}` : 'none',
@@ -493,7 +493,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
                   {!selectMode && !isEditing && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
                   {!selectMode && isEditing && (
                     <button onClick={e => { e.stopPropagation(); setLightboxIndex(idx); }}
-                      className="p-1.5 rounded-lg bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                       <ZoomIn size={14} />
                     </button>
                   )}
@@ -509,7 +509,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
                 {isEditing && (
                   <button
                     onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -524,7 +524,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
                 defaultValue={item.caption ?? ''}
                 onBlur={e => { if (e.target.value !== (item.caption ?? '')) updateCaption(item.id, e.target.value); }}
                 onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                className="w-full text-xs text-gray-500 placeholder-gray-300 bg-transparent outline-none border-b border-transparent focus:border-gray-300 transition-colors py-1 text-center"
+                className="w-full text-xs text-gray-500 placeholder-gray-300 bg-transparent outline-none border-b border-transparent focus:border-gray-300 dark:border-gray-700 transition-colors py-1 text-center"
               />
             )}
           </div>
@@ -534,7 +534,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         {isEditing && (
           <button
             onClick={() => galleryInputRef.current?.click()}
-            className="h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+            className="h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}
           >
             <Plus size={20} />
@@ -543,7 +543,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         )}
 
         {!isEditing && imageItems.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-gray-300">
+          <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-600">
             <ImageIcon size={28} />
             <span className="text-sm">Aucune image</span>
           </div>

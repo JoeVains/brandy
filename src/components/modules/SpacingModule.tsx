@@ -97,10 +97,10 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
               value={baseInput}
               onChange={e => setBaseInput(e.target.value)}
             />
-            <span className="px-2 text-gray-400 text-xs bg-gray-50 border-l py-1" style={{ borderColor: 'var(--border)' }}>px</span>
+            <span className="px-2 text-gray-400 dark:text-gray-500 text-xs bg-gray-50 dark:bg-gray-800/50 border-l py-1" style={{ borderColor: 'var(--border)' }}>px</span>
           </div>
         ) : (
-          <span className="text-sm font-mono font-semibold text-gray-800">{base}px</span>
+          <span className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-200 dark:text-gray-700">{base}px</span>
         )}
       </div>
 
@@ -113,7 +113,7 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
           return (
             <div key={step} className="flex items-center gap-4 group">
               {/* Token name */}
-              <span className="text-xs font-mono text-gray-400 w-24 flex-shrink-0 text-right">{label}</span>
+              <span className="text-xs font-mono text-gray-400 dark:text-gray-500 w-24 flex-shrink-0 text-right">{label}</span>
 
               {/* Bar */}
               <div className="flex-1 flex items-center gap-3">
@@ -125,16 +125,16 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
 
               {/* Values */}
               <div className="flex items-center gap-3 flex-shrink-0 w-36">
-                <span className="text-xs font-mono text-gray-700 w-14 text-right">{px % 1 === 0 ? px : parseFloat(px.toFixed(1))}px</span>
-                <span className="text-xs font-mono text-gray-400">{pxToRem(px)}</span>
+                <span className="text-xs font-mono text-gray-700 dark:text-gray-300 dark:text-gray-600 w-14 text-right">{px % 1 === 0 ? px : parseFloat(px.toFixed(1))}px</span>
+                <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{pxToRem(px)}</span>
               </div>
 
               {/* Multiplier + delete */}
               <div className="flex items-center gap-2 flex-shrink-0 w-20">
-                <span className="text-[10px] text-gray-300">×{step}</span>
+                <span className="text-[10px] text-gray-300 dark:text-gray-600">×{step}</span>
                 {isEditing && (
                   <button onClick={() => removeStep(step)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-400">
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-gray-300 dark:text-gray-600 hover:text-red-400">
                     <Trash2 size={11} />
                   </button>
                 )}
@@ -149,7 +149,7 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
         <div className="mt-4">
           {showAdd ? (
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-gray-400">Multiplicateur :</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Multiplicateur :</span>
               <input
                 autoFocus
                 className="w-20 border rounded-lg px-2 py-1 text-sm font-mono outline-none"
@@ -159,14 +159,14 @@ export default function SpacingModule({ module, brandColor, onUpdate, isEditing 
                 onChange={e => setNewStep(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') addStep(); if (e.key === 'Escape') setShowAdd(false); }}
               />
-              <span className="text-xs text-gray-400">→ {parseFloat(newStep) > 0 ? `${previewBase * parseFloat(newStep)}px` : '—'}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">→ {parseFloat(newStep) > 0 ? `${previewBase * parseFloat(newStep)}px` : '—'}</span>
               <button onClick={addStep} className="text-xs px-3 py-1 rounded-lg text-white" style={{ background: brandColor }}>Ajouter</button>
-              <button onClick={() => setShowAdd(false)} className="text-xs text-gray-400 hover:text-gray-700">Annuler</button>
+              <button onClick={() => setShowAdd(false)} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">Annuler</button>
             </div>
           ) : (
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors mt-3"
+              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors mt-3"
             >
               <Plus size={12} /> Ajouter un pas
             </button>

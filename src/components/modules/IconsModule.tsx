@@ -122,7 +122,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
 
   if (items.length === 0 && !isEditing) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300">
+      <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-600">
         <span className="text-2xl">❖</span>
         <span className="text-sm">Aucune icône</span>
       </div>
@@ -154,16 +154,16 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
       {/* Search */}
       {items.length > 0 && (
         <div className="relative mb-4">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
           <input
-            className="w-full pl-8 pr-3 py-2 text-sm rounded-xl border outline-none bg-white transition-colors focus:border-gray-400"
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-xl border outline-none bg-white dark:bg-gray-900 transition-colors focus:border-gray-400 dark:border-gray-600"
             style={{ borderColor: 'var(--border)' }}
             placeholder="Rechercher une icône…"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">
               <X size={13} />
             </button>
           )}
@@ -178,7 +178,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               <>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
                 <button onClick={() => setSelected(new Set())}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700">
+                  className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600">
                   <X size={12} /> Désélectionner
                 </button>
               </>
@@ -199,7 +199,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             <button
               onClick={() => downloadZip()}
               disabled={downloading}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors disabled:opacity-50"
               style={{ borderColor: 'var(--border)' }}
             >
               <Download size={12} />
@@ -212,7 +212,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
       {/* Grid */}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
         {filtered.length === 0 && search && (
-          <div className="col-span-full py-8 text-center text-sm text-gray-400">Aucune icône ne correspond à « {search} »</div>
+          <div className="col-span-full py-8 text-center text-sm text-gray-400 dark:text-gray-500">Aucune icône ne correspond à « {search} »</div>
         )}
         {filtered.map((item, idx) => {
           const isSelected = selected.has(item.id);
@@ -234,7 +234,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               {/* Card */}
               <div
                 onClick={() => toggleSelect(item.id)}
-                className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 cursor-pointer transition-all"
+                className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer transition-all"
                 style={{
                   borderColor: isSelected ? brandColor : 'var(--border)',
                   background: isSelected ? `${brandColor}10` : '#f9fafb',
@@ -254,14 +254,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
                 <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={e => { e.stopPropagation(); downloadSingle(item.filename, item.name); }}
-                    className="p-1 rounded-lg bg-white/90 hover:bg-white shadow-sm text-gray-600 hover:text-gray-900"
+                    className="p-1 rounded-lg bg-white dark:bg-gray-900/90 hover:bg-white dark:bg-gray-900 shadow-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100"
                   >
                     <Download size={11} />
                   </button>
                   {isEditing && (
                     <button
                       onClick={e => { e.stopPropagation(); deleteIcon(item.id); }}
-                      className="p-1 rounded-lg bg-white/90 hover:bg-white shadow-sm text-red-400 hover:text-red-600"
+                      className="p-1 rounded-lg bg-white dark:bg-gray-900/90 hover:bg-white dark:bg-gray-900 shadow-sm text-red-400 hover:text-red-600"
                     >
                       <Trash2 size={11} />
                     </button>
@@ -297,7 +297,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         {isEditing && (
           <button
             onClick={() => inputRef.current?.click()}
-            className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+            className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}
           >
             <Plus size={20} />

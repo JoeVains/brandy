@@ -99,7 +99,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   return (
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Header */}
-      <header className="bg-white border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+      <header className="bg-white dark:bg-gray-900 border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ background: 'var(--accent)' }}>B</div>
           <span className="font-semibold text-xl tracking-tight">Brandy</span>
@@ -114,12 +114,12 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
       </header>
 
       <main className="max-w-6xl mx-auto px-8 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Mes marques</h1>
-        <p className="text-sm text-gray-400 mb-8">{brands.length} marque{brands.length !== 1 ? 's' : ''}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Mes marques</h1>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">{brands.length} marque{brands.length !== 1 ? 's' : ''}</p>
 
         {/* New brand inline form */}
         {showNew && (
-          <div className="mb-6 p-5 border-2 border-dashed rounded-2xl bg-white flex flex-col gap-3" style={{ borderColor: 'var(--border)' }}>
+          <div className="mb-6 p-5 border-2 border-dashed rounded-2xl bg-white dark:bg-gray-900 flex flex-col gap-3" style={{ borderColor: 'var(--border)' }}>
             <input
               autoFocus
               className="w-full text-lg font-medium outline-none placeholder-gray-300"
@@ -132,7 +132,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               <div className="flex gap-1.5">
                 {BRAND_COLORS.map(c => (
                   <button key={c}
-                    className={`w-6 h-6 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-110'}`}
+                    className={`w-6 h-6 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : 'hover:scale-110'}`}
                     style={{ background: c }}
                     onClick={() => setNewColor(c)} />
                 ))}
@@ -147,7 +147,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
 
         {/* Brand grid */}
         {brands.length === 0 && !showNew ? (
-          <div className="flex flex-col items-center justify-center py-32 gap-4 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-32 gap-4 text-gray-400 dark:text-gray-500">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-bold" style={{ background: 'var(--border)', color: 'white' }}>B</div>
             <p className="text-sm">Aucune marque pour l'instant.</p>
             <button onClick={() => setShowNew(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium" style={{ background: 'var(--accent)' }}>
@@ -163,7 +163,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               const isOver = dragOverId === brand.id;
               return (
                 <div key={brand.id}
-                  className="group bg-white border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg"
+                  className="group bg-white dark:bg-gray-900 border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg"
                   style={{ borderColor: isOver && !isDragging ? brand.color : 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
                   draggable
                   onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
@@ -189,7 +189,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={e => startEdit(brand, e)}
-                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/40 text-white transition-colors"
                         title="Éditer"
                       >
                         <Pencil size={13} />
@@ -197,14 +197,14 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       <button
                         onClick={() => duplicateBrand(brand.id)}
                         disabled={duplicating === brand.id}
-                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors disabled:opacity-40"
+                        className="p-1.5 rounded-lg bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/40 text-white transition-colors disabled:opacity-40"
                         title="Dupliquer"
                       >
                         <Copy size={13} />
                       </button>
                       <button
                         onClick={() => deleteBrand(brand.id)}
-                        className="p-1.5 rounded-lg bg-white/20 hover:bg-red-500/80 text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-white dark:bg-gray-900/20 hover:bg-red-500/80 text-white transition-colors"
                         title="Supprimer"
                       >
                         <Trash2 size={13} />
@@ -226,7 +226,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       <div className="flex gap-1.5 flex-wrap">
                         {BRAND_COLORS.map(c => (
                           <button key={c}
-                            className={`w-5 h-5 rounded-full transition-transform ${editColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-110'}`}
+                            className={`w-5 h-5 rounded-full transition-transform ${editColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : 'hover:scale-110'}`}
                             style={{ background: c }}
                             onClick={() => setEditColor(c)} />
                         ))}
@@ -240,8 +240,8 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     </div>
                   ) : (
                     <div className="p-4 flex-1 flex flex-col gap-1">
-                      <p className="font-semibold text-gray-900 text-base">{brand.name}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-base">{brand.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         {sectionCount} rubrique{sectionCount !== 1 ? 's' : ''} · Créée le {formatDate(brand.createdAt)}
                       </p>
                     </div>
@@ -267,7 +267,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             {!showNew && (
               <button
                 onClick={() => setShowNew(true)}
-                className="border-2 border-dashed rounded-2xl h-48 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                className="border-2 border-dashed rounded-2xl h-48 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <Plus size={22} />

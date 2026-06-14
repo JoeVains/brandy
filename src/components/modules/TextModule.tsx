@@ -50,12 +50,12 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
 
   return (
     <div className="relative">
-      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-        {module.content || <span className="text-gray-400 italic">Aucun texte</span>}
+      <p className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 leading-relaxed whitespace-pre-wrap">
+        {module.content || <span className="text-gray-400 dark:text-gray-500 italic">Aucun texte</span>}
       </p>
       {isEditMode && (
         <button onClick={() => setEditing(true)}
-          className="mt-2 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+          className="mt-2 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors">
           <Pencil size={11} /> Modifier le texte
         </button>
       )}

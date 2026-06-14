@@ -88,7 +88,7 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
   if (editing) {
     return (
       <div className="border rounded-xl p-4 space-y-4" style={{ borderColor: brandColor, outline: `2px solid ${brandColor}` }}>
-        <div className="flex p-0.5 bg-gray-100 rounded-lg w-fit">
+        <div className="flex p-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
           {(['embed', 'upload'] as const).map(m => (
             <button key={m} onClick={() => setMode(m)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
@@ -118,12 +118,12 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
           <div>
             <input ref={fileRef} type="file" accept="audio/*" className="hidden" onChange={handleFileChange} />
             <button onClick={() => fileRef.current?.click()} disabled={uploading}
-              className="w-full border-2 border-dashed rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+              className="w-full border-2 border-dashed rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
               style={{ borderColor: 'var(--border)' }}>
               <Music size={20} />
               <span className="text-xs">{uploading ? 'Envoi en cours…' : 'Choisir un fichier audio'}</span>
-              <span className="text-[10px] text-gray-300">MP3, WAV, OGG, AAC…</span>
-              {module.audioFilename && <span className="text-[10px] text-gray-300">{module.audioFilename}</span>}
+              <span className="text-[10px] text-gray-300 dark:text-gray-600">MP3, WAV, OGG, AAC…</span>
+              {module.audioFilename && <span className="text-[10px] text-gray-300 dark:text-gray-600">{module.audioFilename}</span>}
             </button>
           </div>
         )}
@@ -157,14 +157,14 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
       {!hasContent ? (
         isEditing ? (
           <button onClick={() => setEditing(true)}
-            className="w-full border-2 border-dashed rounded-xl py-10 flex flex-col items-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+            className="w-full border-2 border-dashed rounded-xl py-10 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <Music size={22} />
             <span className="text-sm">Ajouter un audio</span>
-            <span className="text-xs text-gray-300">Embed SoundCloud / Spotify ou upload</span>
+            <span className="text-xs text-gray-300 dark:text-gray-600">Embed SoundCloud / Spotify ou upload</span>
           </button>
         ) : (
-          <div className="rounded-xl bg-gray-100 py-8 flex items-center justify-center text-gray-300 text-sm gap-2">
+          <div className="rounded-xl bg-gray-100 dark:bg-gray-800 py-8 flex items-center justify-center text-gray-300 dark:text-gray-600 text-sm gap-2">
             <Music size={16} /> Aucun audio
           </div>
         )
@@ -180,11 +180,11 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
                 <Music size={16} style={{ color: brandColor }} />
               </div>
               <div className="flex-1 min-w-0">
-                {module.audioTitle && <p className="text-sm font-medium text-gray-800 truncate">{module.audioTitle}</p>}
+                {module.audioTitle && <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{module.audioTitle}</p>}
                 <audio controls className="w-full mt-1" src={`/uploads/${module.audioFilename}`} />
               </div>
               <a href={`/uploads/${module.audioFilename}`} download
-                className="flex-shrink-0 p-2 rounded-lg border text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-shrink-0 p-2 rounded-lg border text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
                 style={{ borderColor: 'var(--border)' }}>
                 <Download size={14} />
               </a>
@@ -193,15 +193,15 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
 
           {isEditing && (
             <button onClick={() => setEditing(true)}
-              className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow opacity-0 group-hover:opacity-100 transition-opacity">
+              className="absolute top-3 right-3 p-2 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600 shadow opacity-0 group-hover:opacity-100 transition-opacity">
               <Pencil size={13} />
             </button>
           )}
 
           {module.audioMode !== 'upload' && (module.audioTitle || module.audioCaption) && (
             <div className="mt-3 space-y-0.5">
-              {module.audioTitle && <p className="text-sm font-medium text-gray-800">{module.audioTitle}</p>}
-              {module.audioCaption && <p className="text-xs text-gray-400">{module.audioCaption}</p>}
+              {module.audioTitle && <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700">{module.audioTitle}</p>}
+              {module.audioCaption && <p className="text-xs text-gray-400 dark:text-gray-500">{module.audioCaption}</p>}
             </div>
           )}
         </div>

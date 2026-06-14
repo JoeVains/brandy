@@ -79,17 +79,17 @@ function Column({
               style={{ background: `${color}08` }}>
               {item.type === 'image' && item.filename && (
                 <img src={`/uploads/${item.filename}`} alt=""
-                  className="block w-full h-full bg-gray-50"
+                  className="block w-full h-full bg-gray-50 dark:bg-gray-800/50"
                   style={{ objectFit: item.fit ?? 'cover' }} />
               )}
               {item.type === 'text' && (
                 <div className="w-full h-full flex items-center p-4">
                   {isEditing ? (
-                    <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 resize-none" rows={3}
+                    <textarea className="w-full bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 resize-none" rows={3}
                       placeholder="Décrivez ce cas…" value={item.content ?? ''}
                       onChange={e => onUpdateContent(item.id, e.target.value)} />
                   ) : (
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.content || <span className="text-gray-300 italic">Vide</span>}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-600 whitespace-pre-wrap">{item.content || <span className="text-gray-300 dark:text-gray-600 italic">Vide</span>}</p>
                   )}
                 </div>
               )}
@@ -119,17 +119,17 @@ function Column({
                     placeholder="Légende…" value={item.caption ?? ''}
                     onChange={e => onUpdateCaption(item.id, e.target.value)} />
                 ) : (
-                  item.caption ? <p className="text-xs text-gray-400">{item.caption}</p> : null
+                  item.caption ? <p className="text-xs text-gray-400 dark:text-gray-500">{item.caption}</p> : null
                 )}
               </div>
             ) : (
-              <div className="px-3 py-2 bg-white border-t" style={{ borderColor: `${color}30` }}>
+              <div className="px-3 py-2 bg-white dark:bg-gray-900 border-t" style={{ borderColor: `${color}30` }}>
                 {isEditing ? (
                   <input className="w-full outline-none text-xs text-gray-500 placeholder-gray-300"
                     placeholder="Légende…" value={item.caption ?? ''}
                     onChange={e => onUpdateCaption(item.id, e.target.value)} />
                 ) : (
-                  <p className="text-xs text-gray-400">{item.caption || ''}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{item.caption || ''}</p>
                 )}
               </div>
             )}
@@ -140,7 +140,7 @@ function Column({
                 {item.type === 'image' && (
                   <>
                     <button onClick={() => replaceRefs.current[item.id]?.click()}
-                      className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-gray-700 shadow-sm">
+                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 shadow-sm">
                       <Pencil size={12} />
                     </button>
                     <input type="file" accept="image/*" className="hidden"
@@ -149,11 +149,11 @@ function Column({
                   </>
                 )}
                 <button onClick={() => onDuplicate(item.id)}
-                  className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-gray-700 shadow-sm">
+                  className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 shadow-sm">
                   <Copy size={12} />
                 </button>
                 <button onClick={() => onDelete(item.id)}
-                  className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 shadow-sm">
+                  className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-red-500 shadow-sm">
                   <Trash2 size={12} />
                 </button>
               </div>
@@ -189,7 +189,7 @@ function Column({
 
         {!isEditing && items.length === 0 && (
           <div className="py-8 flex items-center justify-center border-2 border-dashed rounded-xl" style={{ borderColor: `${color}20` }}>
-            <span className="text-xs text-gray-300">Aucun exemple</span>
+            <span className="text-xs text-gray-300 dark:text-gray-600">Aucun exemple</span>
           </div>
         )}
       </div>
@@ -268,7 +268,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
   return (
     <div>
       {isEditing && (
-        <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 rounded-lg w-fit">
+        <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
           <button onClick={() => setLayout('stacked')}
             className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
             style={layout === 'stacked' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>

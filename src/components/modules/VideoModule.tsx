@@ -81,7 +81,7 @@ export default function VideoModule({ module, brandColor, onUpdate, isEditing }:
       <div className="border rounded-xl p-4 space-y-4" style={{ borderColor: brandColor, outline: `2px solid ${brandColor}` }}>
         {/* Mode toggle */}
         <div className="flex items-center gap-3">
-          <div className="flex p-0.5 bg-gray-100 rounded-lg">
+          <div className="flex p-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
             {(['embed', 'upload'] as const).map(m => (
               <button key={m} onClick={() => setMode(m)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
@@ -114,11 +114,11 @@ export default function VideoModule({ module, brandColor, onUpdate, isEditing }:
           <div>
             <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={handleFileChange} />
             <button onClick={() => fileRef.current?.click()} disabled={uploading}
-              className="w-full border-2 border-dashed rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+              className="w-full border-2 border-dashed rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
               style={{ borderColor: 'var(--border)' }}>
               <Upload size={20} />
               <span className="text-xs">{uploading ? 'Envoi en cours…' : 'Choisir une vidéo'}</span>
-              {module.videoFilename && <span className="text-[10px] text-gray-300">{module.videoFilename}</span>}
+              {module.videoFilename && <span className="text-[10px] text-gray-300 dark:text-gray-600">{module.videoFilename}</span>}
             </button>
           </div>
         )}
@@ -153,14 +153,14 @@ export default function VideoModule({ module, brandColor, onUpdate, isEditing }:
       {!hasContent ? (
         isEditing ? (
           <button onClick={() => setEditing(true)}
-            className="w-full border-2 border-dashed rounded-xl py-12 flex flex-col items-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+            className="w-full border-2 border-dashed rounded-xl py-12 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <Upload size={24} />
             <span className="text-sm">Ajouter une vidéo</span>
-            <span className="text-xs text-gray-300">Embed YouTube / Vimeo ou upload</span>
+            <span className="text-xs text-gray-300 dark:text-gray-600">Embed YouTube / Vimeo ou upload</span>
           </button>
         ) : (
-          <div className="aspect-video rounded-xl bg-gray-100 flex items-center justify-center text-gray-300 text-sm">
+          <div className="aspect-video rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-300 dark:text-gray-600 text-sm">
             Aucune vidéo
           </div>
         )
@@ -181,15 +181,15 @@ export default function VideoModule({ module, brandColor, onUpdate, isEditing }:
 
           {isEditing && (
             <button onClick={() => setEditing(true)}
-              className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow opacity-0 group-hover:opacity-100 transition-opacity">
+              className="absolute top-3 right-3 p-2 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 dark:text-gray-600 shadow opacity-0 group-hover:opacity-100 transition-opacity">
               <Pencil size={13} />
             </button>
           )}
 
           {(module.videoTitle || module.videoCaption) && (
             <div className="mt-3 space-y-0.5">
-              {module.videoTitle && <p className="text-sm font-medium text-gray-800">{module.videoTitle}</p>}
-              {module.videoCaption && <p className="text-xs text-gray-400">{module.videoCaption}</p>}
+              {module.videoTitle && <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700">{module.videoTitle}</p>}
+              {module.videoCaption && <p className="text-xs text-gray-400 dark:text-gray-500">{module.videoCaption}</p>}
             </div>
           )}
         </div>

@@ -49,7 +49,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
     <div
       ref={ref}
       style={style}
-      className="bg-white rounded-xl shadow-xl border p-3"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border p-3"
       onClick={e => e.stopPropagation()}
     >
       <input
@@ -66,7 +66,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
         {BRAND_COLORS.map(c => (
           <button
             key={c}
-            className={`w-6 h-6 rounded-full transition-transform ${color === c ? 'scale-110 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-110'}`}
+            className={`w-6 h-6 rounded-full transition-transform ${color === c ? 'scale-110 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : 'hover:scale-110'}`}
             style={{ background: c }}
             onClick={() => { setColor(c); setHexInput(c.replace('#', '')); }}
           />
@@ -82,7 +82,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
           title="Couleur personnalisée"
         />
         <div className="flex items-center flex-1 rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-          <span className="px-2 text-xs text-gray-400 font-mono select-none">#</span>
+          <span className="px-2 text-xs text-gray-400 dark:text-gray-500 font-mono select-none">#</span>
           <input
             className="flex-1 py-1.5 pr-2 text-xs font-mono outline-none bg-transparent"
             value={hexInput}
@@ -172,13 +172,13 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
         {hovering && !uploading && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3">
             <button onClick={() => headerInputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-gray-800 text-sm font-medium shadow">
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-gray-900/90 hover:bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 dark:text-gray-700 text-sm font-medium shadow">
               <Upload size={14} />
               {brand.headerImage ? 'Remplacer' : 'Ajouter une image'}
             </button>
             {brand.headerImage && (
               <button onClick={removeHeader}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-red-500 text-sm font-medium shadow">
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-gray-900/90 hover:bg-white dark:bg-gray-900 text-red-500 text-sm font-medium shadow">
                 <Trash size={14} /> Supprimer
               </button>
             )}
@@ -225,7 +225,7 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
         {brand.logoImage && (
           <button
             onClick={e => { e.stopPropagation(); removeLogo(); }}
-            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-red-400 hover:text-red-600 opacity-0 group-hover/logo:opacity-100 transition-opacity"
+            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-gray-900 shadow flex items-center justify-center text-red-400 hover:text-red-600 opacity-0 group-hover/logo:opacity-100 transition-opacity"
           >
             <X size={10} />
           </button>
@@ -354,14 +354,14 @@ export default function BrandyApp() {
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
       {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-3 bg-white border-b" style={{ borderColor: 'var(--border)' }}>
+      <header className="flex items-center gap-4 px-6 py-3 bg-white dark:bg-gray-900 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2 mr-4">
           <button onClick={() => setView('home')} className="flex items-center gap-2 hover:opacity-70 transition-opacity">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>B</div>
             <span className="font-semibold text-lg tracking-tight">Brandy</span>
           </button>
         </div>
-        <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 transition-colors mr-2">
+        <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 transition-colors mr-2">
           <ChevronLeft size={14} /> Accueil
         </button>
 
@@ -388,7 +388,7 @@ export default function BrandyApp() {
                   <div className="absolute left-0 top-1 bottom-1 w-0.5 -translate-x-1 rounded-full" style={{ background: 'var(--accent)' }} />
                 )}
                 <div
-                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-grab active:cursor-grabbing text-sm font-medium transition-all select-none ${isActive ? 'text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-grab active:cursor-grabbing text-sm font-medium transition-all select-none ${isActive ? 'text-white' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:bg-gray-800'}`}
                   style={isActive ? { background: brand.color } : {}}
                   onClick={() => { setActiveBrandId(brand.id); setEditingBrandId(null); }}
                 >
@@ -416,10 +416,10 @@ export default function BrandyApp() {
           })}
 
           {showNewBrand ? (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-100">
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">
               <div className="flex gap-1">
                 {BRAND_COLORS.map(c => (
-                  <button key={c} className={`w-3.5 h-3.5 rounded-full transition-transform ${newBrandColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : ''}`} style={{ background: c }} onClick={() => setNewBrandColor(c)} />
+                  <button key={c} className={`w-3.5 h-3.5 rounded-full transition-transform ${newBrandColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : ''}`} style={{ background: c }} onClick={() => setNewBrandColor(c)} />
                 ))}
               </div>
               <input
@@ -431,12 +431,12 @@ export default function BrandyApp() {
                 onKeyDown={e => { if (e.key === 'Enter') createBrand(); if (e.key === 'Escape') setShowNewBrand(false); }}
               />
               <button onClick={createBrand} className="text-indigo-600 hover:text-indigo-800"><Check size={14} /></button>
-              <button onClick={() => setShowNewBrand(false)} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+              <button onClick={() => setShowNewBrand(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500"><X size={14} /></button>
             </div>
           ) : (
             <button
               onClick={() => setShowNewBrand(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors"
             >
               <Plus size={14} /> Marque
             </button>
@@ -446,7 +446,7 @@ export default function BrandyApp() {
         {/* Search button */}
         {activeBrandId && (
           <button onClick={() => setShowSearch(v => !v)}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm border"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 transition-colors text-sm border"
             style={{ borderColor: 'var(--border)' }}
             title="Rechercher (⌘K)">
             <Search size={13} />
@@ -458,7 +458,7 @@ export default function BrandyApp() {
         {/* Export PDF */}
         {activeBrandId && (
           <a href={`/api/brands/${activeBrandId}/pdf`} target="_blank" rel="noopener noreferrer"
-            className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 transition-colors"
             title="Exporter en PDF">
             <FileDown size={15} />
           </a>
@@ -466,7 +466,7 @@ export default function BrandyApp() {
 
         {/* History button */}
         <button onClick={() => setShowHistory(v => !v)}
-          className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:bg-gray-800 transition-colors"
           title="Historique">
           <Clock size={15} />
         </button>
@@ -533,7 +533,7 @@ export default function BrandyApp() {
                   <BrandHeader brand={activeBrand} onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))} />
                   <div className="max-w-4xl mx-auto px-8 py-8">
                     <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
-                      <h1 className="text-2xl font-bold text-gray-900">
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {activeSection ? activeSection.name : 'Rubriques'}
                       </h1>
                     </div>
@@ -544,7 +544,7 @@ export default function BrandyApp() {
                       const sorted = children.sort((a, b) => a.order - b.order);
                       if (sorted.length === 0) {
                         return (
-                          <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
+                          <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400 dark:text-gray-500">
                             <FolderOpen size={36} />
                             <p className="text-sm">Aucune rubrique. Créez-en une dans la sidebar.</p>
                           </div>
@@ -558,7 +558,7 @@ export default function BrandyApp() {
                               <button
                                 key={section.id}
                                 onClick={() => setActiveSectionId(section.id)}
-                                className="flex items-center gap-3 p-4 border rounded-xl bg-white text-left hover:shadow-md transition-all"
+                                className="flex items-center gap-3 p-4 border rounded-xl bg-white dark:bg-gray-900 text-left hover:shadow-md transition-all"
                                 style={{ borderColor: 'var(--border)' }}
                               >
                                 <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
@@ -566,9 +566,9 @@ export default function BrandyApp() {
                                   {section.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-gray-800 truncate">{section.name}</p>
+                                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{section.name}</p>
                                   {childCount > 0 && (
-                                    <p className="text-xs text-gray-400 mt-0.5">
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                                       {childCount} sous-rubrique{childCount > 1 ? 's' : ''}
                                     </p>
                                   )}
@@ -585,7 +585,7 @@ export default function BrandyApp() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400 dark:text-gray-500">
             <p className="text-sm">Aucune marque sélectionnée.</p>
             <button onClick={() => setView('home')} className="text-sm text-indigo-500 hover:text-indigo-700 transition-colors">
               ← Retour à l'accueil

@@ -93,7 +93,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
 
   if (editing) {
     return (
-      <div className="flex flex-col rounded-xl overflow-hidden border bg-white" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex flex-col rounded-xl overflow-hidden border bg-white dark:bg-gray-900" style={{ borderColor: 'var(--border)' }}>
         <div className="h-20 relative" style={{ background: editColor }}>
           <input
             type="color"
@@ -108,7 +108,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
         </div>
         <div className="p-3 space-y-2">
           <div className="flex items-center gap-1.5 rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            <span className="pl-2 text-xs text-gray-400 font-mono">#</span>
+            <span className="pl-2 text-xs text-gray-400 dark:text-gray-500 font-mono">#</span>
             <input
               className="flex-1 py-1 text-xs font-mono outline-none bg-transparent"
               value={editHex}
@@ -134,7 +134,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
             <button onClick={save} className="flex-1 py-1 rounded-lg text-white text-xs font-medium" style={{ background: editColor }}>
               Enregistrer
             </button>
-            <button onClick={() => setEditing(false)} className="px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-100 text-xs">
+            <button onClick={() => setEditing(false)} className="px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:bg-gray-800 text-xs">
               Annuler
             </button>
             <button onClick={onDelete} className="p-1 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 text-xs">
@@ -147,19 +147,19 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
   }
 
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden border bg-white group/swatch" style={{ borderColor: 'var(--border)' }}>
+    <div className="flex flex-col rounded-xl overflow-hidden border bg-white dark:bg-gray-900 group/swatch" style={{ borderColor: 'var(--border)' }}>
       <div className="h-20 relative" style={{ background: hex }}>
         <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/swatch:opacity-100 transition-opacity">
-          <button onClick={openEdit} className="p-1 rounded-lg bg-white/80 text-gray-600 hover:text-gray-900 shadow-sm" title="Modifier">
+          <button onClick={openEdit} className="p-1 rounded-lg bg-white dark:bg-gray-900/80 text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100 shadow-sm" title="Modifier">
             <Pencil size={11} />
           </button>
-          <button onClick={onDelete} className="p-1 rounded-lg bg-white/80 text-red-400 hover:text-red-600 shadow-sm" title="Supprimer">
+          <button onClick={onDelete} className="p-1 rounded-lg bg-white dark:bg-gray-900/80 text-red-400 hover:text-red-600 shadow-sm" title="Supprimer">
             <Trash2 size={11} />
           </button>
         </div>
       </div>
       <div className="p-3 space-y-1.5">
-        <p className="text-sm font-medium text-gray-800 truncate">{asset.name}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{asset.name}</p>
         {([
           { label: 'HEX', value: hex.toUpperCase() },
           { label: 'RVB', value: rgbStr },
@@ -167,12 +167,12 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
         ] as { label: string; value: string }[]).map(({ label, value }) => (
           <button
             key={label}
-            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            className="w-full flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 dark:bg-gray-800/50 transition-colors text-left"
             onClick={() => copy(value, label)}
             title={`Copier ${label}`}
           >
-            <span className="text-[10px] font-semibold text-gray-400 w-7 flex-shrink-0">{label}</span>
-            <span className="text-xs font-mono text-gray-600 truncate flex-1">
+            <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 w-7 flex-shrink-0">{label}</span>
+            <span className="text-xs font-mono text-gray-600 dark:text-gray-400 dark:text-gray-500 truncate flex-1">
               {copied === label ? '✓ Copied' : value}
             </span>
           </button>
@@ -191,12 +191,12 @@ function AssetCard({ asset, onDelete, onUpdate }: { asset: Asset; onDelete: () =
   }
 
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden border bg-white group relative" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-32 flex items-center justify-center bg-gray-50 relative overflow-hidden">
+    <div className="flex flex-col rounded-xl overflow-hidden border bg-white dark:bg-gray-900 group relative" style={{ borderColor: 'var(--border)' }}>
+      <div className="h-32 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 relative overflow-hidden">
         {isImage ? (
           <img src={`/uploads/${asset.filename}`} alt={asset.name} className="w-full h-full object-contain p-2" />
         ) : (
-          <div className="flex flex-col items-center gap-2 text-gray-300">
+          <div className="flex flex-col items-center gap-2 text-gray-300 dark:text-gray-600">
             <AssetIcon type={asset.type} />
           </div>
         )}
@@ -206,7 +206,7 @@ function AssetCard({ asset, onDelete, onUpdate }: { asset: Asset; onDelete: () =
             <a
               href={`/uploads/${asset.filename}`}
               download={asset.name}
-              className="p-1.5 rounded-lg bg-white shadow text-gray-600 hover:text-gray-900"
+              className="p-1.5 rounded-lg bg-white dark:bg-gray-900 shadow text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100"
               onClick={e => e.stopPropagation()}
             >
               <Download size={13} />
@@ -214,15 +214,15 @@ function AssetCard({ asset, onDelete, onUpdate }: { asset: Asset; onDelete: () =
           )}
           <button
             onClick={onDelete}
-            className="p-1.5 rounded-lg bg-white shadow text-red-400 hover:text-red-600"
+            className="p-1.5 rounded-lg bg-white dark:bg-gray-900 shadow text-red-400 hover:text-red-600"
           >
             <Trash2 size={13} />
           </button>
         </div>
       </div>
       <div className="p-3">
-        <p className="text-sm font-medium text-gray-800 truncate">{asset.name}</p>
-        {asset.size > 0 && <p className="text-xs text-gray-400 mt-0.5">{formatSize(asset.size)}</p>}
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 dark:text-gray-700 truncate">{asset.name}</p>
+        {asset.size > 0 && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatSize(asset.size)}</p>}
       </div>
     </div>
   );
@@ -309,16 +309,16 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {sectionId ? sections.find(s => s.id === sectionId)?.name ?? 'Section' : 'Rubriques'}
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">{assets.length} asset{assets.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{assets.length} asset{assets.length !== 1 ? 's' : ''}</p>
         </div>
         {sectionId && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setShowColorForm(!showColorForm); if (!showColorForm) { setColorName(suggestColorName('#000000')); setColorNameTouched(false); } }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors"
               style={{ borderColor: 'var(--border)' }}
             >
               <Palette size={14} /> Couleur
@@ -337,7 +337,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
 
       {/* Color form */}
       {showColorForm && (
-        <div className="mb-4 p-4 rounded-xl border bg-white flex items-center gap-3" style={{ borderColor: 'var(--border)' }}>
+        <div className="mb-4 p-4 rounded-xl border bg-white dark:bg-gray-900 flex items-center gap-3" style={{ borderColor: 'var(--border)' }}>
           <input
             type="color"
             value={colorValue}
@@ -345,7 +345,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
             className="w-10 h-10 rounded-lg cursor-pointer border-0 flex-shrink-0"
           />
           <div className="flex items-center rounded-lg border overflow-hidden flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
-            <span className="px-2 text-xs text-gray-400 font-mono select-none">#</span>
+            <span className="px-2 text-xs text-gray-400 dark:text-gray-500 font-mono select-none">#</span>
             <input
               className="w-20 py-2 pr-2 text-sm font-mono outline-none bg-transparent"
               value={colorHexInput}
@@ -369,24 +369,24 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
             onKeyDown={e => { if (e.key === 'Enter') addColor(); if (e.key === 'Escape') setShowColorForm(false); }}
           />
           <button onClick={addColor} className="px-4 py-2 rounded-lg text-white text-sm font-medium flex-shrink-0" style={{ background: brand.color }}>Ajouter</button>
-          <button onClick={() => setShowColorForm(false)} className="text-gray-400 hover:text-gray-600 text-sm flex-shrink-0">Annuler</button>
+          <button onClick={() => setShowColorForm(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">Annuler</button>
         </div>
       )}
 
       {/* Drop zone or no section message */}
       {noSection ? (
         assets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-300">
+          <div className="flex flex-col items-center justify-center h-64 text-gray-300 dark:text-gray-600">
             <p className="text-sm">Sélectionnez une rubrique dans la sidebar pour voir ou ajouter des assets</p>
           </div>
         ) : null
       ) : assets.length === 0 ? (
         <div
-          className={`flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed transition-colors ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200'}`}
+          className={`flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed transition-colors ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 dark:border-gray-700'}`}
           onClick={() => fileRef.current?.click()}
         >
-          <Upload size={32} className={dragging ? 'text-indigo-400' : 'text-gray-300'} />
-          <p className="mt-2 text-sm text-gray-400">Déposez des fichiers ici ou cliquez pour uploader</p>
+          <Upload size={32} className={dragging ? 'text-indigo-400' : 'text-gray-300 dark:text-gray-600'} />
+          <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">Déposez des fichiers ici ou cliquez pour uploader</p>
         </div>
       ) : null}
 
@@ -401,7 +401,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
           ))}
           {sectionId && (
             <div
-              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 text-gray-300 cursor-pointer hover:border-gray-300 hover:text-gray-400 transition-colors min-h-[140px]"
+              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-pointer hover:border-gray-300 dark:border-gray-700 hover:text-gray-400 dark:text-gray-500 transition-colors min-h-[140px]"
               onClick={() => fileRef.current?.click()}
             >
               <Plus size={24} />
