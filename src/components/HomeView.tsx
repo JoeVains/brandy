@@ -101,7 +101,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   return (
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+      <header className="bg-card border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ background: 'var(--accent)' }}>B</div>
           <span className="font-semibold text-xl tracking-tight">Brandy</span>
@@ -128,7 +128,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
 
         {/* New brand inline form */}
         {showNew && (
-          <div className="mb-6 p-5 border-2 border-dashed rounded-2xl bg-white dark:bg-gray-900 flex flex-col gap-3" style={{ borderColor: 'var(--border)' }}>
+          <div className="mb-6 p-5 border-2 border-dashed rounded-2xl bg-card flex flex-col gap-3" style={{ borderColor: 'var(--border)' }}>
             <input
               autoFocus
               className="w-full text-lg font-medium outline-none placeholder-gray-300"
@@ -172,7 +172,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               const isOver = dragOverId === brand.id;
               return (
                 <div key={brand.id}
-                  className="group bg-white dark:bg-gray-900 border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg"
+                  className="group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg"
                   style={{ borderColor: isOver && !isDragging ? brand.color : 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
                   draggable
                   onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}

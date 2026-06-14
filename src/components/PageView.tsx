@@ -107,7 +107,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
 
   return (
     <div ref={cardRef} className={`border rounded-2xl transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
-      style={{ borderColor: 'var(--border)', background: module.backgroundColor ? `${module.backgroundColor}1a` : 'white', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
+      style={{ borderColor: 'var(--border)', background: module.backgroundColor ? `${module.backgroundColor}1a` : 'var(--card-bg)', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
       {/* Module header */}
       {module.type !== 'divider' && (
         <div className="flex items-center gap-3 px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -154,7 +154,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                   <Paintbrush size={14} />
                 </button>
                 {showBgPalette && (
-                  <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-white dark:bg-gray-900 border rounded-xl shadow-lg px-2.5 py-2 z-50" style={{ borderColor: 'var(--border)' }}>
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-card border rounded-xl shadow-lg px-2.5 py-2 z-50" style={{ borderColor: 'var(--border)' }}>
                     {/* Reset */}
                     <button
                       onClick={async () => {
@@ -201,7 +201,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
                 <MoreHorizontal size={16} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-900 border rounded-xl shadow-lg z-50 py-1 min-w-[200px]" style={{ borderColor: 'var(--border)' }}>
+                <div className="absolute right-0 top-full mt-1 bg-card border rounded-xl shadow-lg z-50 py-1 min-w-[200px]" style={{ borderColor: 'var(--border)' }}>
                   {/* Duplicate */}
                   <button
                     onClick={() => { onDuplicate(); setMenuOpen(false); }}
@@ -302,7 +302,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
 function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAdd: (type: ModuleType) => void; onClose: () => void }) {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.25)' }} onClick={onClose}>
-      <div className="border rounded-2xl bg-white dark:bg-gray-900 shadow-xl overflow-hidden w-[480px] max-w-[90vw]" style={{ borderColor: 'var(--border)' }} onClick={e => e.stopPropagation()}>
+      <div className="border rounded-2xl bg-card shadow-xl overflow-hidden w-[480px] max-w-[90vw]" style={{ borderColor: 'var(--border)' }} onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
           <p className="font-semibold text-gray-800 dark:text-gray-200">Ajouter un module</p>
           <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300"><X size={16} /></button>

@@ -50,7 +50,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
     <div
       ref={ref}
       style={style}
-      className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border p-3"
+      className="bg-card rounded-xl shadow-xl border p-3"
       onClick={e => e.stopPropagation()}
     >
       <input
@@ -356,7 +356,7 @@ export default function BrandyApp() {
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
       {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-3 bg-white dark:bg-gray-900 border-b" style={{ borderColor: 'var(--border)' }}>
+      <header className="flex items-center gap-4 px-6 py-3 bg-card border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2 mr-4">
           <button onClick={() => setView('home')} className="flex items-center gap-2 hover:opacity-70 transition-opacity">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>B</div>
@@ -567,7 +567,7 @@ export default function BrandyApp() {
                               <button
                                 key={section.id}
                                 onClick={() => setActiveSectionId(section.id)}
-                                className="flex items-center gap-3 p-4 border rounded-xl bg-white dark:bg-gray-800 text-left hover:shadow-md transition-all"
+                                className="flex items-center gap-3 p-4 border rounded-xl bg-card text-left hover:shadow-md transition-all"
                                 style={{ borderColor: 'var(--border)' }}
                               >
                                 <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"

@@ -47,7 +47,7 @@ export default function HistoryPanel({ onClose }: Props) {
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 bottom-0 z-50 w-80 bg-white dark:bg-gray-900 shadow-2xl flex flex-col border-l"
+      <div className="fixed top-0 right-0 bottom-0 z-50 w-80 bg-card shadow-2xl flex flex-col border-l"
         style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
           style={{ borderColor: 'var(--border)' }}>

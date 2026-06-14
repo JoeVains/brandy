@@ -103,7 +103,7 @@ function Column({
                   {(['cover', 'contain'] as const).map(f => (
                     <button key={f} onClick={() => onUpdateFit(item.id, f)}
                       className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
-                      style={item.fit === f || (!item.fit && f === 'cover') ? { background: 'white', color: '#111' } : { color: 'white' }}>
+                      style={item.fit === f || (!item.fit && f === 'cover') ? { background: 'var(--card-bg)', color: 'var(--text-primary)' } : { color: 'white' }}>
                       {f === 'cover' ? 'Remplir' : 'Ajuster'}
                     </button>
                   ))}
@@ -271,12 +271,12 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
         <div className="flex items-center gap-1 mb-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
           <button onClick={() => setLayout('stacked')}
             className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            style={layout === 'stacked' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+            style={layout === 'stacked' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
             Empilé
           </button>
           <button onClick={() => setLayout('sidebyside')}
             className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            style={layout === 'sidebyside' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+            style={layout === 'sidebyside' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
             Côte à côte
           </button>
         </div>

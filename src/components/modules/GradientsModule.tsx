@@ -218,7 +218,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
               {(['linear', 'radial'] as const).map(t => (
                 <button key={t} onClick={() => setType(t)}
                   className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-                  style={type === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+                  style={type === t ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
                   {t === 'linear' ? 'Linéaire' : 'Radial'}
                 </button>
               ))}
@@ -366,12 +366,12 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
       <button onClick={() => setMode('cards')}
         className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-        style={gradientMode === 'cards' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+        style={gradientMode === 'cards' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
         Cards
       </button>
       <button onClick={() => setMode('drops')}
         className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-        style={gradientMode === 'drops' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+        style={gradientMode === 'drops' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
         Drops
       </button>
     </div>
@@ -505,7 +505,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
             {(['linear', 'radial'] as const).map(t => (
               <button key={t} onClick={() => setNewType(t)}
                 className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-                style={newType === t ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+                style={newType === t ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
                 {t === 'linear' ? 'Linéaire' : 'Radial'}
               </button>
             ))}

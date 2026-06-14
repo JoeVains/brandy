@@ -316,7 +316,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
   };
 
   return (
-    <aside className="w-56 flex-shrink-0 flex flex-col border-r bg-white dark:bg-gray-900 overflow-y-auto" style={{ borderColor: 'var(--border)' }}>
+    <aside className="w-56 flex-shrink-0 flex flex-col border-r bg-sidebar overflow-y-auto" style={{ borderColor: 'var(--border)' }}>
       <div className="p-3 flex-1">
         {/* All assets */}
         <button

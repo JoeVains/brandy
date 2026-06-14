@@ -310,14 +310,14 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       <button
         onClick={() => setMode('single')}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-        style={mode === 'single' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}
+        style={mode === 'single' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}
       >
         <Square size={12} /> Image unique
       </button>
       <button
         onClick={() => setMode('gallery')}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-        style={mode === 'gallery' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}
+        style={mode === 'gallery' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}
       >
         <LayoutGrid size={12} /> Galerie
       </button>
@@ -329,14 +329,14 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       <button
         onClick={() => setFit('contain')}
         className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-        style={fit === 'contain' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}
+        style={fit === 'contain' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}
       >
         Ajuster
       </button>
       <button
         onClick={() => setFit('cover')}
         className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-        style={fit === 'cover' ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}
+        style={fit === 'cover' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}
       >
         Remplir
       </button>

@@ -163,7 +163,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-xl mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+      <div className="relative w-full max-w-xl mx-4 bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         style={{ maxHeight: '65vh' }}>
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>

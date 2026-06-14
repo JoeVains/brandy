@@ -92,7 +92,7 @@ export default function AudioModule({ module, brandColor, onUpdate, isEditing }:
           {(['embed', 'upload'] as const).map(m => (
             <button key={m} onClick={() => setMode(m)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-              style={mode === m ? { background: 'white', color: '#111', boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: '#6b7280' }}>
+              style={mode === m ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
               {m === 'embed' ? <><Link size={11} /> Embed</> : <><Upload size={11} /> Upload</>}
             </button>
           ))}
