@@ -199,11 +199,11 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             <button
               onClick={() => downloadZip()}
               disabled={downloading}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
               style={{ borderColor: 'var(--border)' }}
             >
               <Download size={12} />
-              {downloading ? 'Génération…' : 'Tout télécharger'}
+              {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
             </button>
           </div>
         </div>
