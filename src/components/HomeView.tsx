@@ -198,7 +198,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={e => startEdit(brand, e)}
-                        className="p-1.5 rounded-lg bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/40 text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-white/90 dark:bg-gray-900/20 hover:bg-white dark:hover:bg-gray-900/40 text-gray-600 dark:text-white transition-colors"
                         title="Éditer"
                       >
                         <Pencil size={13} />
@@ -206,14 +206,14 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       <button
                         onClick={() => duplicateBrand(brand.id)}
                         disabled={duplicating === brand.id}
-                        className="p-1.5 rounded-lg bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/40 text-white transition-colors disabled:opacity-40"
+                        className="p-1.5 rounded-lg bg-white/90 dark:bg-gray-900/20 hover:bg-white dark:hover:bg-gray-900/40 text-gray-600 dark:text-white transition-colors disabled:opacity-40"
                         title="Dupliquer"
                       >
                         <Copy size={13} />
                       </button>
                       <button
                         onClick={() => deleteBrand(brand.id)}
-                        className="p-1.5 rounded-lg bg-white dark:bg-gray-900/20 hover:bg-red-500/80 text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-white/90 dark:bg-gray-900/20 hover:bg-red-500/80 text-gray-600 dark:text-white hover:text-white transition-colors"
                         title="Supprimer"
                       >
                         <Trash2 size={13} />
