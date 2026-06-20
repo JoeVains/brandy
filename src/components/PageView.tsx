@@ -326,10 +326,13 @@ function ModulePicker({ brandColor, onAdd, onClose }: { brandColor: string; onAd
   );
 }
 
-function InsertSeparator({ color, onClick }: { color: string; onClick: () => void }) {
+function InsertSeparator({ color, onClick, isDropTarget }: { color: string; onClick: () => void; isDropTarget?: boolean }) {
   return (
     <div className="group relative flex items-center justify-center h-6 z-10">
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-transparent group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors" />
+      <div
+        className={`absolute inset-x-0 top-1/2 -translate-y-1/2 rounded-full transition-all group-hover:bg-gray-200 dark:group-hover:bg-gray-600 ${isDropTarget ? 'h-0.5' : 'h-px'}`}
+        style={{ background: isDropTarget ? color : undefined }}
+      />
       <button
         onClick={onClick}
         className="relative opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md hover:scale-110 active:scale-95"
@@ -555,42 +558,47 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
         )}
 
         <div className="flex flex-col gap-3">
-        <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }} />
+          <InsertSeparator
+            color={brand.color}
+            onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }}
+            isDropTarget={!!dragId && dragOverId === modules[0]?.id && dragId !== modules[0]?.id}
+          />
 
-        {modules.map((module, idx) => (
-          <React.Fragment key={module.id}>
-            <div
-              data-module-id={module.id}
-              onDragOver={e => onDragOver(e, module.id)}
-              onDragLeave={onDragLeave}
-              onDrop={() => onDrop(module.id)}
-              onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
-            >
-              {dragOverId === module.id && dragId && dragId !== module.id && (
-                <div className="h-0.5 rounded-full mb-2" style={{ background: brand.color }} />
-              )}
-              <ModuleCard
-                module={module}
-                brandColor={brand.color}
-                sections={sections}
-                currentSectionId={section.id}
-                onUpdate={updateModule}
-                onDelete={() => deleteModule(module.id)}
-                onDuplicate={() => duplicateModule(module)}
-                onMoveTo={targetId => moveModuleTo(module, targetId)}
-                onCopyTo={targetId => copyModuleTo(module, targetId)}
-                isDragging={dragId === module.id}
-                defaultEditing={newModuleId === module.id}
-                dragHandleProps={{
-                  draggable: true,
-                  onDragStart: (e: React.DragEvent) => onDragStart(e, module),
-                }}
+          {modules.map((module, idx) => (
+            <React.Fragment key={module.id}>
+              <div
+                data-module-id={module.id}
+                onDragOver={e => onDragOver(e, module.id)}
+                onDragLeave={onDragLeave}
+                onDrop={() => onDrop(module.id)}
+                onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
+              >
+                <ModuleCard
+                  module={module}
+                  brandColor={brand.color}
+                  sections={sections}
+                  currentSectionId={section.id}
+                  onUpdate={updateModule}
+                  onDelete={() => deleteModule(module.id)}
+                  onDuplicate={() => duplicateModule(module)}
+                  onMoveTo={targetId => moveModuleTo(module, targetId)}
+                  onCopyTo={targetId => copyModuleTo(module, targetId)}
+                  isDragging={dragId === module.id}
+                  defaultEditing={newModuleId === module.id}
+                  dragHandleProps={{
+                    draggable: true,
+                    onDragStart: (e: React.DragEvent) => onDragStart(e, module),
+                  }}
+                />
+              </div>
+
+              <InsertSeparator
+                color={brand.color}
+                onClick={() => { setInsertAfterIdx(idx); setShowPicker(true); }}
+                isDropTarget={!!dragId && dragOverId === modules[idx + 1]?.id && dragId !== modules[idx + 1]?.id}
               />
-            </div>
-
-            <InsertSeparator color={brand.color} onClick={() => { setInsertAfterIdx(idx); setShowPicker(true); }} />
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          ))}
         </div>
 
         {/* Add module */}
