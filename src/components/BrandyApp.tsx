@@ -358,9 +358,9 @@ export default function BrandyApp() {
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-3 bg-card border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2 mr-4">
-          <button onClick={() => setView('home')} className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: 'var(--accent)' }}>B</div>
-            <span className="font-semibold text-lg tracking-tight">Brandy</span>
+          <button onClick={() => setView('home')} className="flex items-center hover:opacity-70 transition-opacity">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brandy-logo.svg" alt="Brandy" className="h-6 dark:[filter:brightness(0)_invert(1)]" />
           </button>
         </div>
         <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors mr-2">

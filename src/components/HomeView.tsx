@@ -102,9 +102,9 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Header */}
       <header className="bg-card border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ background: 'var(--accent)' }}>B</div>
-          <span className="font-semibold text-xl tracking-tight">Brandy</span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brandy-logo.svg" alt="Brandy" className="h-7 dark:[filter:brightness(0)_invert(1)]" />
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggle}
