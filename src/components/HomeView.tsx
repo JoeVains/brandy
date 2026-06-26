@@ -190,7 +190,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               const isOver = dragOverId === brand.id;
               return (
                 <div key={brand.id}
-                  className="group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg"
+                  className="group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg min-h-[220px]"
                   style={{ borderColor: isOver && !isDragging ? brand.color : 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
                   draggable
                   onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
@@ -316,7 +316,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             {!showNew && (
               <button
                 onClick={() => setShowNew(true)}
-                className="border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
+                className="w-full min-h-[220px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <Plus size={22} />
