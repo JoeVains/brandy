@@ -28,19 +28,19 @@ interface Props {
 }
 
 const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
+  { type: 'audio', label: 'Audio', icon: <span className="font-bold text-base leading-none">♪</span>, description: 'Embed SoundCloud / Spotify ou upload d\'un fichier audio' },
   { type: 'colors', label: 'Couleurs', icon: <Palette size={18} />, description: 'Nuancier de couleurs avec valeurs HEX, RVB et TSL' },
-  { type: 'typography', label: 'Typographie', icon: <Type size={18} />, description: 'Polices Google Fonts ou fichiers locaux' },
-  { type: 'heading', label: 'Titre', icon: <span className="font-bold text-base leading-none">H</span>, description: 'Titre de section en grand format' },
-  { type: 'text', label: 'Texte', icon: <AlignLeft size={18} />, description: 'Bloc de texte libre' },
-  { type: 'image', label: 'Image', icon: <Image size={18} />, description: 'Une image par module' },
+  { type: 'gradients', label: 'Dégradés', icon: <span className="font-bold text-base leading-none">◑</span>, description: 'Palette de dégradés CSS linéaires et radiaux' },
+  { type: 'dodont', label: 'Do & Don\'t', icon: <span className="font-bold text-base leading-none">✓✗</span>, description: 'Bonnes et mauvaises pratiques côte à côte' },
+  { type: 'spacing', label: 'Espacements', icon: <span className="font-bold text-base leading-none">⇥</span>, description: 'Grille d\'espacements et unité de base' },
   { type: 'attachments', label: 'Fichiers', icon: <Paperclip size={18} />, description: 'ZIP, PDF et autres pièces jointes' },
   { type: 'icons', label: 'Icônes', icon: <span className="font-bold text-base leading-none">❖</span>, description: 'Bibliothèque d\'icônes SVG téléchargeables en ZIP' },
-  { type: 'spacing', label: 'Espacements', icon: <span className="font-bold text-base leading-none">⇥</span>, description: 'Grille d\'espacements et unité de base' },
-  { type: 'dodont', label: 'Do & Don\'t', icon: <span className="font-bold text-base leading-none">✓✗</span>, description: 'Bonnes et mauvaises pratiques côte à côte' },
-  { type: 'gradients', label: 'Dégradés', icon: <span className="font-bold text-base leading-none">◑</span>, description: 'Palette de dégradés CSS linéaires et radiaux' },
-  { type: 'video', label: 'Vidéo', icon: <span className="font-bold text-base leading-none">▶</span>, description: 'Embed YouTube / Vimeo ou upload d\'un fichier vidéo' },
-  { type: 'audio', label: 'Audio', icon: <span className="font-bold text-base leading-none">♪</span>, description: 'Embed SoundCloud / Spotify ou upload d\'un fichier audio' },
+  { type: 'image', label: 'Image', icon: <Image size={18} />, description: 'Une image par module' },
   { type: 'divider', label: 'Séparateur', icon: <Minus size={18} />, description: 'Ligne de séparation horizontale' },
+  { type: 'text', label: 'Texte', icon: <AlignLeft size={18} />, description: 'Bloc de texte libre' },
+  { type: 'heading', label: 'Titre', icon: <span className="font-bold text-base leading-none">H</span>, description: 'Titre de section en grand format' },
+  { type: 'typography', label: 'Typographie', icon: <Type size={18} />, description: 'Polices Google Fonts ou fichiers locaux' },
+  { type: 'video', label: 'Vidéo', icon: <span className="font-bold text-base leading-none">▶</span>, description: 'Embed YouTube / Vimeo ou upload d\'un fichier vidéo' },
 ];
 
 function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, onDelete, onDuplicate, onMoveTo, onCopyTo, dragHandleProps, isDragging, defaultEditing }: {
