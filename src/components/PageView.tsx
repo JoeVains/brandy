@@ -549,12 +549,15 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
 
         {/* Modules */}
         {modules.length === 0 && !showPicker && (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-gray-400 dark:text-gray-400">
-            <div className="p-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+          <button
+            onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }}
+            className="flex flex-col items-center justify-center py-24 gap-4 text-gray-400 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 w-full transition-colors"
+          >
+            <div className="p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
               <Plus size={28} />
             </div>
             <p className="text-sm">Cette page est vide. Ajoutez votre premier module.</p>
-          </div>
+          </button>
         )}
 
         <div className="flex flex-col gap-3">
@@ -601,14 +604,16 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
           ))}
         </div>
 
-        {/* Add module */}
-        <button
-          onClick={() => { setInsertAfterIdx(null); setShowPicker(true); }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <Plus size={16} /> Ajouter un module
-        </button>
+        {/* Add module — only shown when page has modules */}
+        {modules.length > 0 && (
+          <button
+            onClick={() => { setInsertAfterIdx(null); setShowPicker(true); }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed rounded-2xl text-sm text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <Plus size={16} /> Ajouter un module
+          </button>
+        )}
         {showPicker && <ModulePicker brandColor={brand.color} onAdd={addModule} onClose={() => { setShowPicker(false); setInsertAfterIdx(null); }} />}
       </div>
     </div>
