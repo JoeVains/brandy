@@ -321,11 +321,11 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
       <div className="flex-shrink-0">
         <div className="h-16 flex items-center justify-center" style={{ background: brand.color }}>
           <div
-            className="w-10 h-10 rounded-full border-2 border-white/40 overflow-hidden flex items-center justify-center"
+            className="w-12 h-12 rounded-full border-2 border-white/40 overflow-hidden flex items-center justify-center"
             style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.25)' }}
           >
             {brand.logoImage
-              ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
+              ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-2" />
               : <span className="text-white text-lg font-bold leading-none">{brand.name.charAt(0).toUpperCase()}</span>
             }
           </div>
