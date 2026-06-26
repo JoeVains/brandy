@@ -116,7 +116,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
           { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—', key: 'hsl' },
         ].map(row => (
           <button key={row.key} onClick={() => copyText(row.text, row.key)}
-            className="w-full flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 group/row">
+            className="w-full flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
             <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] w-7 flex-shrink-0 text-left">{row.label}</span>
             <span className="font-mono text-left flex-1 whitespace-nowrap overflow-hidden">{copied === row.key ? '✓ copié' : row.text}</span>
             <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
@@ -219,7 +219,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 text-center">{item.name}</p>
         {rows.map(row => (
           <button key={row.key} onClick={() => copyText(row.text, row.key)}
-            className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 group/row">
+            className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
             <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px]">{row.label}</span>
             <span className="font-mono">{copied === row.key ? '✓ copié' : row.text}</span>
             <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
@@ -327,7 +327,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
       <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Exporter :</span>
       {(['scss', 'less', 'ase'] as const).map(fmt => (
         <button key={fmt} onClick={() => downloadExport(fmt)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:text-gray-200 transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 transition-colors"
           style={{ borderColor: 'var(--border)' }}>
           <Download size={10} />
           .{fmt}
