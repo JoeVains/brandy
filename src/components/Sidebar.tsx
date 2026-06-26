@@ -325,7 +325,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
             style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.25)' }}
           >
             {brand.logoImage
-              ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain" />
+              ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
               : <span className="text-white text-lg font-bold leading-none">{brand.name.charAt(0).toUpperCase()}</span>
             }
           </div>

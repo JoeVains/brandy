@@ -212,7 +212,7 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
           {logoUploading ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : brand.logoImage ? (
-            <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain" />
+            <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
           ) : (
             <span className="text-white text-2xl font-bold select-none">
               {brand.name.charAt(0).toUpperCase()}

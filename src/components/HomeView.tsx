@@ -191,7 +191,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     <div className="w-16 h-16 rounded-full border-2 border-white/60 overflow-hidden flex items-center justify-center"
                       style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.2)' }}>
                       {brand.logoImage
-                        ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain" />
+                        ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
                         : <span className="text-white text-2xl font-bold">{initial}</span>
                       }
                     </div>
