@@ -68,22 +68,22 @@ function Lightbox({ items, index, onNavigate, onClose }: {
         {isSvg ? (
           <>
             <a href={src} download={filename} onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white text-sm transition-colors">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
               <Download size={14} /> SVG
             </a>
             <button onClick={e => { e.stopPropagation(); downloadAsPng(src, filename); }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white text-sm transition-colors">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
               <Download size={14} /> PNG
             </button>
           </>
         ) : (
           <a href={src} download={filename} onClick={e => e.stopPropagation()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white text-sm transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
             <Download size={14} /> Télécharger
           </a>
         )}
         <button onClick={onClose}
-          className="p-2 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white transition-colors">
+          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors">
           <X size={16} />
         </button>
       </div>
@@ -92,7 +92,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
       {total > 1 && (
         <button
           onClick={e => { e.stopPropagation(); onNavigate(prevIndex); }}
-          className="absolute left-4 p-3 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white transition-colors"
+          className="absolute left-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
         >
           <ChevronLeft size={24} />
         </button>
@@ -106,7 +106,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
       {total > 1 && (
         <button
           onClick={e => { e.stopPropagation(); onNavigate(nextIndex); }}
-          className="absolute right-4 p-3 rounded-xl bg-white dark:bg-gray-900/10 hover:bg-white dark:bg-gray-900/20 text-white transition-colors"
+          className="absolute right-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
         >
           <ChevronRight size={24} />
         </button>
@@ -118,7 +118,7 @@ function Lightbox({ items, index, onNavigate, onClose }: {
           <p className="px-4 py-1.5 rounded-xl bg-black/50 text-white text-sm text-center max-w-lg">{caption}</p>
         )}
         {items.length > 1 && (
-          <div className="px-3 py-1 rounded-full bg-white dark:bg-gray-900/10 text-white text-xs">
+          <div className="px-3 py-1 rounded-full bg-white/10 text-white text-xs">
             {index + 1} / {items.length}
           </div>
         )}

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
@@ -33,6 +33,24 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [editColor, setEditColor] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  async function uploadLogo(brandId: string, file: File) {
+    setLogoUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/brands/${brandId}/logo`, { method: 'POST', body: fd });
+    const updated = await res.json();
+    onBrandsChange(brands.map(b => b.id === brandId ? updated : b));
+    setLogoUploading(false);
+  }
+
+  async function removeLogo(brandId: string) {
+    const res = await fetch(`/api/brands/${brandId}/logo`, { method: 'DELETE' });
+    const updated = await res.json();
+    onBrandsChange(brands.map(b => b.id === brandId ? updated : b));
+  }
 
   async function createBrand() {
     if (!newName.trim()) return;
@@ -188,12 +206,34 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                       : { background: editingId === brand.id ? editColor : brand.color }
                   }>
-                    <div className="w-16 h-16 rounded-full border-2 border-white/60 overflow-hidden flex items-center justify-center"
-                      style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.2)' }}>
-                      {brand.logoImage
-                        ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
-                        : <span className="text-white text-2xl font-bold">{initial}</span>
-                      }
+                    <div className="relative group/logo">
+                      <div className="w-16 h-16 rounded-full border-2 border-white/60 overflow-hidden flex items-center justify-center"
+                        style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.2)' }}>
+                        {logoUploading && editingId === brand.id
+                          ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          : brand.logoImage
+                            ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
+                            : <span className="text-white text-2xl font-bold">{initial}</span>
+                        }
+                      </div>
+                      {editingId === brand.id && (
+                        <>
+                          <div
+                            className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                            onClick={e => { e.stopPropagation(); logoInputRef.current?.dataset.brandId !== brand.id && (logoInputRef.current!.dataset.brandId = brand.id); logoInputRef.current?.click(); }}
+                          >
+                            <Upload size={14} className="text-white" />
+                          </div>
+                          {brand.logoImage && (
+                            <button
+                              onClick={e => { e.stopPropagation(); removeLogo(brand.id); }}
+                              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-red-400 hover:text-red-600 opacity-0 group-hover/logo:opacity-100 transition-opacity"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                     <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button
@@ -286,6 +326,18 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           </div>
         )}
       </main>
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          const brandId = logoInputRef.current?.dataset.brandId;
+          if (file && brandId) uploadLogo(brandId, file);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }
