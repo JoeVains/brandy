@@ -31,6 +31,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [editHexInput, setEditHexInput] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -95,6 +96,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     setEditingId(brand.id);
     setEditName(brand.name);
     setEditColor(brand.color);
+    setEditHexInput(brand.color.replace('#', ''));
   }
 
   async function saveBrand(id: string) {
@@ -289,8 +291,32 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                           <button key={c}
                             className={`w-5 h-5 rounded-full transition-transform ${editColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : 'hover:scale-110'}`}
                             style={{ background: c }}
-                            onClick={() => setEditColor(c)} />
+                            onClick={() => { setEditColor(c); setEditHexInput(c.replace('#', '')); }} />
                         ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={editColor}
+                          onChange={e => { setEditColor(e.target.value); setEditHexInput(e.target.value.replace('#', '')); }}
+                          className="w-7 h-7 rounded-lg cursor-pointer border-0 p-0 flex-shrink-0"
+                        />
+                        <div className="flex items-center flex-1 rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                          <span className="px-2 text-xs text-gray-400 dark:text-gray-500 font-mono select-none">#</span>
+                          <input
+                            className="flex-1 py-1 pr-2 text-xs font-mono outline-none bg-transparent"
+                            style={{ color: 'var(--text-primary)' }}
+                            value={editHexInput}
+                            maxLength={6}
+                            placeholder="b14100"
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+                              setEditHexInput(val);
+                              if (val.length === 6) { setEditColor('#' + val); }
+                            }}
+                          />
+                          <div className="w-5 h-5 mr-1.5 rounded flex-shrink-0" style={{ background: editColor }} />
+                        </div>
                       </div>
                       <div className="flex gap-2 mt-auto">
                         <button onClick={() => setEditingId(null)} className="flex-1 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400" style={{ borderColor: 'var(--border)' }}>Annuler</button>
