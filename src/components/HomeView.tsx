@@ -183,15 +183,27 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {brands.map(brand => {
+            {brands.map((brand, idx) => {
               const sectionCount = sections.filter(s => s.brandId === brand.id && s.parentId === null).length;
               const initial = brand.name.charAt(0).toUpperCase();
               const isDragging = dragId === brand.id;
               const isOver = dragOverId === brand.id;
+              const dragIdx = brands.findIndex(b => b.id === dragId);
+              // dragging forward → indicator on right of target; dragging backward → indicator on left
+              const indicatorOnRight = isOver && !isDragging && dragIdx < idx;
+              const indicatorOnLeft = isOver && !isDragging && dragIdx > idx;
+              const indicatorColor = brands.find(b => b.id === dragId)?.color ?? brand.color;
               return (
-                <div key={brand.id}
+                <div key={brand.id} className="relative">
+                  {indicatorOnLeft && (
+                    <div className="absolute -left-3 top-4 bottom-4 w-0.5 rounded-full z-10" style={{ background: indicatorColor }} />
+                  )}
+                  {indicatorOnRight && (
+                    <div className="absolute -right-3 top-4 bottom-4 w-0.5 rounded-full z-10" style={{ background: indicatorColor }} />
+                  )}
+                <div
                   className="group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg min-h-[220px]"
-                  style={{ borderColor: isOver && !isDragging ? brand.color : 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
+                  style={{ borderColor: 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
                   draggable
                   onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
                   onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverId(brand.id); }}
@@ -308,6 +320,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       </button>
                     </div>
                   )}
+                </div>
                 </div>
               );
             })}
