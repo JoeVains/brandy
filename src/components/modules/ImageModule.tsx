@@ -506,14 +506,24 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
                     </div>
                   </div>
                 )}
-                {isEditing && (
-                  <button
-                    onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <a
+                    href={`/uploads/${item.filename}`}
+                    download={item.filename}
+                    onClick={e => e.stopPropagation()}
+                    className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 shadow-sm"
                   >
-                    <Trash2 size={13} />
-                  </button>
-                )}
+                    <Download size={13} />
+                  </a>
+                  {isEditing && (
+                    <button
+                      onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
+                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500 shadow-sm"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             {/* Caption — outside the draggable div */}

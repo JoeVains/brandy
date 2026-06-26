@@ -196,7 +196,7 @@ function SectionNode({
             onChange={e => setChildName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addChild(); if (e.key === 'Escape') setShowAddChild(false); }}
           />
-          <button onClick={addChild} className="text-indigo-600"><Check size={12} /></button>
+          <button onClick={addChild} className="text-accent"><Check size={12} /></button>
           <button onClick={() => setShowAddChild(false)} className="text-gray-400 dark:text-gray-400"><X size={12} /></button>
         </div>
       )}
@@ -371,7 +371,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') addRoot(); if (e.key === 'Escape') setShowAdd(false); }}
             />
-            <button onClick={addRoot} className="text-indigo-600"><Check size={12} /></button>
+            <button onClick={addRoot} className="text-accent"><Check size={12} /></button>
             <button onClick={() => setShowAdd(false)} className="text-gray-400 dark:text-gray-400"><X size={12} /></button>
           </div>
         ) : (

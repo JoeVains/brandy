@@ -55,7 +55,7 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
     >
       <input
         autoFocus
-        className="w-full px-2.5 py-1.5 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-indigo-300 mb-2"
+        className="w-full px-2.5 py-1.5 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 mb-2"
         style={{ borderColor: 'var(--border)' }}
         value={name}
         onChange={e => setName(e.target.value)}
@@ -432,7 +432,7 @@ export default function BrandyApp() {
                 onChange={e => setNewBrandName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') createBrand(); if (e.key === 'Escape') setShowNewBrand(false); }}
               />
-              <button onClick={createBrand} className="text-indigo-600 hover:text-indigo-800"><Check size={14} /></button>
+              <button onClick={createBrand} className="text-accent hover:text-accent"><Check size={14} /></button>
               <button onClick={() => setShowNewBrand(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300"><X size={14} /></button>
             </div>
           ) : (
@@ -596,7 +596,7 @@ export default function BrandyApp() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400 dark:text-gray-500">
             <p className="text-sm">Aucune marque sélectionnée.</p>
-            <button onClick={() => setView('home')} className="text-sm text-indigo-500 hover:text-indigo-700 transition-colors">
+            <button onClick={() => setView('home')} className="text-sm text-accent hover:text-accent transition-colors">
               ← Retour à l'accueil
             </button>
           </div>

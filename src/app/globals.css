@@ -11,7 +11,9 @@
   --surface:       #f3f4f6;
   --surface-hover: #e5e7eb;
   --border:        #e5e5e5;
-  --accent:        #6366f1;
+  --accent:        #b14100;
+  --accent-hover:  #8f3400;
+  --accent-subtle: #b141001a;
 
   --text-primary:   #111827;
   --text-secondary: #374151;
@@ -30,7 +32,9 @@
   --surface:       #172033;
   --surface-hover: #1e293b;
   --border:        #334155;
-  --accent:        #818cf8;
+  --accent:        #e0621e;
+  --accent-hover:  #f07030;
+  --accent-subtle: #e0621e1a;
 
   --text-primary:   #f1f5f9;
   --text-secondary: #cbd5e1;
@@ -51,7 +55,8 @@ body {
 .bg-surface { background-color: var(--surface);    }
 .bg-app     { background-color: var(--background); }
 .bg-sidebar { background-color: var(--sidebar-bg); }
-.text-muted { color: var(--text-muted); }
+.text-muted  { color: var(--text-muted); }
+.text-accent { color: var(--accent); }
 
 /* ─── Dark mode: override any remaining hardcoded white backgrounds ─── */
 .dark .bg-white {

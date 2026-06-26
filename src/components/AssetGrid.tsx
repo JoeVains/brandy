@@ -123,7 +123,7 @@ function ColorSwatch({ asset, onUpdate, onDelete }: { asset: Asset; onUpdate: (n
           </div>
           <input
             autoFocus
-            className="w-full px-2 py-1 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full px-2 py-1 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
             style={{ borderColor: 'var(--border)' }}
             value={editName}
             onChange={e => { setEditName(e.target.value); setNameTouched(true); }}
@@ -362,7 +362,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
           <input
             autoFocus
             placeholder="Nom de la couleur"
-            className="flex-1 px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-indigo-300"
+            className="flex-1 px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
             style={{ borderColor: 'var(--border)' }}
             value={colorName}
             onChange={e => { setColorName(e.target.value); setColorNameTouched(true); }}
@@ -382,10 +382,10 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
         ) : null
       ) : assets.length === 0 ? (
         <div
-          className={`flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed transition-colors ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 dark:border-gray-700'}`}
+          className={`flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed transition-colors ${dragging ? 'border-[var(--accent)] bg-[var(--accent-subtle)]' : 'border-gray-200 dark:border-gray-700'}`}
           onClick={() => fileRef.current?.click()}
         >
-          <Upload size={32} className={dragging ? 'text-indigo-400' : 'text-gray-300 dark:text-gray-600'} />
+          <Upload size={32} className={dragging ? 'text-[var(--accent)]' : 'text-gray-300 dark:text-gray-600'} />
           <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">Déposez des fichiers ici ou cliquez pour uploader</p>
         </div>
       ) : null}
@@ -393,7 +393,7 @@ export default function AssetGrid({ brand, sectionId, assets, sections, onAssets
       {/* Grid */}
       {assets.length > 0 && (
         <div
-          className={`grid gap-4 ${dragging ? 'ring-2 ring-indigo-300 ring-offset-2 rounded-2xl' : ''}`}
+          className={`grid gap-4 ${dragging ? 'ring-2 ring-[var(--accent)]/30 ring-offset-2 rounded-2xl' : ''}`}
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}
         >
           {assets.map(asset => (
