@@ -174,6 +174,14 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       patch.imageSize = null;
     }
 
+    if (newMode === 'single' && imageItems.length > 0) {
+      const first = imageItems[0];
+      patch.imageFilename = first.filename;
+      patch.imageMimeType = first.mimeType;
+      patch.imageSize = first.size ?? 0;
+      patch.imageItems = imageItems.slice(1);
+    }
+
     const res = await fetch(`/api/modules/${module.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
