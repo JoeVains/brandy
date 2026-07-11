@@ -95,7 +95,15 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
   return (
     <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
       <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
-        draggable={isEditing} onDragStart={onDragStart}>
+        draggable={isEditing}
+        onDragStart={e => {
+          const cardEl = (e.currentTarget as HTMLElement).parentElement;
+          if (cardEl) {
+            const rect = cardEl.getBoundingClientRect();
+            e.dataTransfer.setDragImage(cardEl, e.clientX - rect.left, e.clientY - rect.top);
+          }
+          onDragStart?.(e);
+        }}>
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
             <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
@@ -202,7 +210,15 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
     <div className="flex flex-col items-center gap-3 text-center group">
       <div className="relative">
         <div className="w-20 h-20 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
-          draggable={isEditing} onDragStart={onDragStart} />
+          draggable={isEditing}
+          onDragStart={e => {
+            const cardEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
+            if (cardEl) {
+              const rect = cardEl.getBoundingClientRect();
+              e.dataTransfer.setDragImage(cardEl, e.clientX - rect.left, e.clientY - rect.top);
+            }
+            onDragStart?.(e);
+          }} />
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/20">
             <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
@@ -316,6 +332,16 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
     await patch({ colorItems: reordered });
   }
 
+  async function onDropAtEnd() {
+    if (dragIdx === null || dragIdx === items.length - 1) { setDragIdx(null); setDragOverIdx(null); return; }
+    const reordered = [...items];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.push(moved);
+    setDragIdx(null);
+    setDragOverIdx(null);
+    await patch({ colorItems: reordered });
+  }
+
   function downloadExport(format: 'ase' | 'less' | 'scss') {
     const a = document.createElement('a');
     a.href = `/api/modules/${module.id}/export?format=${format}`;
@@ -390,6 +416,18 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
                 onDragStart={e => onDragStart(e, idx)} />
             </div>
           ))}
+          {isEditing && dragIdx !== null && (
+            <div
+              className="relative flex-1 min-w-[24px] self-stretch"
+              onDragOver={e => { e.preventDefault(); setDragOverIdx(items.length); }}
+              onDrop={onDropAtEnd}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+            >
+              {dragOverIdx === items.length && (
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              )}
+            </div>
+          )}
           {isEditing && showAdd ? (
             <div className="flex flex-col items-center gap-3 p-4 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
               <div className="w-20 h-20 rounded-full relative" style={{ background: newHex }}>
@@ -462,6 +500,18 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               onDragStart={e => onDragStart(e, idx)} />
           </div>
         ))}
+        {isEditing && dragIdx !== null && (
+          <div
+            className="relative min-h-[24px]"
+            onDragOver={e => { e.preventDefault(); setDragOverIdx(items.length); }}
+            onDrop={onDropAtEnd}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+          >
+            {dragOverIdx === items.length && (
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+            )}
+          </div>
+        )}
 
         {isEditing && showAdd ? (
           <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
