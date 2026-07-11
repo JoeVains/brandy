@@ -506,6 +506,11 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
     setDragId(module.id);
     e.dataTransfer.setData('brandy/module', module.id);
     e.dataTransfer.effectAllowed = 'move';
+    const cardEl = (e.currentTarget as HTMLElement).closest('[data-module-id]') as HTMLElement | null;
+    if (cardEl) {
+      const rect = cardEl.getBoundingClientRect();
+      e.dataTransfer.setDragImage(cardEl, e.clientX - rect.left, e.clientY - rect.top);
+    }
     onModuleDragStart?.(module);
   }
   function onDragOver(e: React.DragEvent, id: string) {
