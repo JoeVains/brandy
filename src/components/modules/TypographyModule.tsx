@@ -137,10 +137,19 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
   const [googleFamily, setGoogleFamily] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [addingVariantFor, setAddingVariantFor] = useState<string | null>(null);
-  const [previewText, setPreviewText] = useState('');
+  const [previewText, setPreviewText] = useState(module.typographyPreviewText ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
   const items = module.fontItems ?? [];
   const SAMPLE_DEFAULT = 'The quick brown fox jumps over the lazy dog';
+
+  async function savePreviewText(text: string) {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ typographyPreviewText: text }),
+    });
+    onUpdate(await res.json());
+  }
 
   async function patch(fontItems: FontItem[]) {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -265,9 +274,10 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                     placeholder={SAMPLE_DEFAULT}
                     value={previewText}
                     onChange={e => setPreviewText(e.target.value)}
+                    onBlur={e => savePreviewText(e.target.value)}
                   />
                   {previewText && (
-                    <button onClick={() => setPreviewText('')} className="text-xs text-gray-300 dark:text-gray-500 hover:text-gray-500 transition-colors flex-shrink-0">
+                    <button onClick={() => { setPreviewText(''); savePreviewText(''); }} className="text-xs text-gray-300 dark:text-gray-500 hover:text-gray-500 transition-colors flex-shrink-0">
                       Réinitialiser
                     </button>
                   )}

@@ -101,6 +101,7 @@ export interface Module {
   colorItems?: ColorItem[];
   // typography
   fontItems?: FontItem[];
+  typographyPreviewText?: string;
   // text
   content?: string;
   // image

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X, Link } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
@@ -35,7 +35,11 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [headerUploading, setHeaderUploading] = useState(false);
+  const [headerUrlInput, setHeaderUrlInput] = useState('');
+  const [showHeaderUrl, setShowHeaderUrl] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const headerInputRef = useRef<HTMLInputElement>(null);
 
   async function uploadLogo(brandId: string, file: File) {
     setLogoUploading(true);
@@ -51,6 +55,36 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     const res = await fetch(`/api/brands/${brandId}/logo`, { method: 'DELETE' });
     const updated = await res.json();
     onBrandsChange(brands.map(b => b.id === brandId ? updated : b));
+  }
+
+  async function uploadHeader(brandId: string, file: File) {
+    setHeaderUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/brands/${brandId}/header`, { method: 'POST', body: fd });
+    const updated = await res.json();
+    onBrandsChange(brands.map(b => b.id === brandId ? updated : b));
+    setHeaderUploading(false);
+  }
+
+  async function removeHeader(brandId: string) {
+    const res = await fetch(`/api/brands/${brandId}/header`, { method: 'DELETE' });
+    const updated = await res.json();
+    onBrandsChange(brands.map(b => b.id === brandId ? updated : b));
+  }
+
+  async function uploadHeaderFromUrl(brandId: string, url: string) {
+    setHeaderUploading(true);
+    const res = await fetch(`/api/brands/${brandId}/header`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const updated = await res.json();
+    onBrandsChange(brands.map(b => b.id === brandId ? updated : b));
+    setHeaderUploading(false);
+    setHeaderUrlInput('');
+    setShowHeaderUrl(false);
   }
 
   async function createBrand() {
@@ -93,6 +127,10 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
 
   function startEdit(brand: Brand, e: React.MouseEvent) {
     e.stopPropagation();
+    if (editingId === brand.id) {
+      setEditingId(null);
+      return;
+    }
     setEditingId(brand.id);
     setEditName(brand.name);
     setEditColor(brand.color);
@@ -204,7 +242,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     <div className="absolute -right-3 top-4 bottom-4 w-0.5 rounded-full z-10" style={{ background: indicatorColor }} />
                   )}
                 <div
-                  className="group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col hover:scale-[1.02] hover:shadow-lg min-h-[220px]"
+                  className={`group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col min-h-[220px] ${editingId === brand.id ? '' : 'hover:scale-[1.02] hover:shadow-lg'}`}
                   style={{ borderColor: 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
                   draggable
                   onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
@@ -215,11 +253,69 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                   onClick={() => onOpenBrand(brand.id)}
                 >
                   {/* Header band with action buttons */}
-                  <div className="h-24 flex items-center justify-center relative" style={
-                    brand.headerImage && editingId !== brand.id
+                  <div className="h-24 flex items-center justify-center relative group/header" style={
+                    brand.headerImage
                       ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                       : { background: editingId === brand.id ? editColor : brand.color }
                   }>
+                    {/* Header upload controls — edit mode only, bottom-right corner */}
+                    {editingId === brand.id && !showHeaderUrl && (
+                      <div className="absolute bottom-3 right-3 flex gap-1.5" onClick={e => e.stopPropagation()}>
+                        {headerUploading
+                          ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          : <>
+                              <button
+                                onClick={e => { e.stopPropagation(); headerInputRef.current!.dataset.brandId = brand.id; headerInputRef.current?.click(); }}
+                                className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-gray-700 shadow"
+                                title="Importer un fichier"
+                              >
+                                <Upload size={13} />
+                              </button>
+                              <button
+                                onClick={e => { e.stopPropagation(); setShowHeaderUrl(true); }}
+                                className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-gray-700 shadow"
+                                title="Utiliser une URL"
+                              >
+                                <Link size={13} />
+                              </button>
+                              {brand.headerImage && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); removeHeader(brand.id); }}
+                                  className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-red-500 shadow"
+                                  title="Supprimer l'image"
+                                >
+                                  <X size={13} />
+                                </button>
+                              )}
+                            </>
+                        }
+                      </div>
+                    )}
+                    {editingId === brand.id && showHeaderUrl && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center px-4 gap-2" onClick={e => e.stopPropagation()}>
+                        <input
+                          autoFocus
+                          type="url"
+                          value={headerUrlInput}
+                          onChange={e => setHeaderUrlInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter' && headerUrlInput.trim()) uploadHeaderFromUrl(brand.id, headerUrlInput.trim()); if (e.key === 'Escape') { setShowHeaderUrl(false); setHeaderUrlInput(''); } }}
+                          placeholder="https://exemple.com/image.jpg"
+                          className="flex-1 px-3 py-1.5 rounded-lg text-xs bg-white text-gray-800 outline-none min-w-0"
+                        />
+                        <button
+                          onClick={() => { if (headerUrlInput.trim()) uploadHeaderFromUrl(brand.id, headerUrlInput.trim()); }}
+                          className="px-3 py-1.5 rounded-lg bg-white text-xs font-medium text-gray-800 flex-shrink-0"
+                        >
+                          <Check size={12} />
+                        </button>
+                        <button
+                          onClick={() => { setShowHeaderUrl(false); setHeaderUrlInput(''); }}
+                          className="px-2 py-1.5 rounded-lg bg-white/20 text-white text-xs flex-shrink-0"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
                     <div className="relative group/logo">
                       <div className="w-16 h-16 rounded-full border-2 border-white/60 overflow-hidden flex items-center justify-center"
                         style={{ background: brand.logoImage ? 'white' : 'rgba(255,255,255,0.2)' }}>
@@ -374,6 +470,18 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           const file = e.target.files?.[0];
           const brandId = logoInputRef.current?.dataset.brandId;
           if (file && brandId) uploadLogo(brandId, file);
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={headerInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          const brandId = headerInputRef.current?.dataset.brandId;
+          if (file && brandId) uploadHeader(brandId, file);
           e.target.value = '';
         }}
       />
