@@ -292,6 +292,18 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             </div>
           );
         })}
+        {isEditing && dragIdx !== null && (
+          <div
+            className="relative min-h-[24px]"
+            onDragOver={e => { e.preventDefault(); setDragOverIdx(filtered.length); }}
+            onDrop={e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== filtered.length - 1) reorderItems(dragIdx, filtered.length); setDragIdx(null); setDragOverIdx(null); }}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+          >
+            {dragOverIdx === filtered.length && (
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+            )}
+          </div>
+        )}
 
         {/* Add button */}
         {isEditing && (
