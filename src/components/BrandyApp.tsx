@@ -6,7 +6,7 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import SearchModal from './SearchModal';
 import { useTheme } from '@/hooks/useTheme';
@@ -125,6 +125,8 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
   const [hovering, setHovering] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [showHeaderUrl, setShowHeaderUrl] = useState(false);
+  const [headerUrlInput, setHeaderUrlInput] = useState('');
 
   async function handleHeaderFile(file: File) {
     setUploading(true);
@@ -138,6 +140,19 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
   async function removeHeader() {
     const res = await fetch(`/api/brands/${brand.id}/header`, { method: 'DELETE' });
     onUpdate(await res.json());
+  }
+
+  async function handleHeaderUrl(url: string) {
+    setUploading(true);
+    const res = await fetch(`/api/brands/${brand.id}/header`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    onUpdate(await res.json());
+    setUploading(false);
+    setHeaderUrlInput('');
+    setShowHeaderUrl(false);
   }
 
   async function handleLogoFile(file: File) {
@@ -170,12 +185,16 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
         onDragLeave={() => setHovering(false)}
         onDrop={e => { e.preventDefault(); setHovering(false); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) handleHeaderFile(f); }}
       >
-        {hovering && !uploading && (
+        {hovering && !uploading && !showHeaderUrl && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3">
             <button onClick={() => headerInputRef.current?.click()}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-medium shadow">
               <Upload size={14} />
               {brand.headerImage ? 'Remplacer' : 'Ajouter une image'}
+            </button>
+            <button onClick={() => setShowHeaderUrl(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-medium shadow">
+              <LinkIcon size={14} /> URL
             </button>
             {brand.headerImage && (
               <button onClick={removeHeader}
@@ -183,6 +202,27 @@ function BrandHeader({ brand, onUpdate }: { brand: Brand; onUpdate: (updated: Br
                 <Trash size={14} /> Supprimer
               </button>
             )}
+          </div>
+        )}
+        {showHeaderUrl && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center px-8 gap-2">
+            <input
+              autoFocus
+              type="url"
+              value={headerUrlInput}
+              onChange={e => setHeaderUrlInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && headerUrlInput.trim()) handleHeaderUrl(headerUrlInput.trim()); if (e.key === 'Escape') { setShowHeaderUrl(false); setHeaderUrlInput(''); } }}
+              placeholder="https://exemple.com/image.jpg"
+              className="flex-1 max-w-md px-3 py-2 rounded-xl text-sm bg-white text-gray-800 outline-none"
+            />
+            <button onClick={() => { if (headerUrlInput.trim()) handleHeaderUrl(headerUrlInput.trim()); }}
+              className="px-3 py-2 rounded-xl bg-white text-sm font-medium text-gray-800">
+              <Check size={14} />
+            </button>
+            <button onClick={() => { setShowHeaderUrl(false); setHeaderUrlInput(''); }}
+              className="px-2 py-2 rounded-xl bg-white/20 text-white text-sm">
+              <X size={14} />
+            </button>
           </div>
         )}
         {/* Brand name centered */}
