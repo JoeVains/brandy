@@ -548,6 +548,18 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
           </div>
           );
         })}
+        {isEditing && !selectMode && dragIdx !== null && (
+          <div
+            className="relative min-h-[24px]"
+            onDragOver={e => { e.preventDefault(); setDragOverIdx(imageItems.length); }}
+            onDrop={e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== imageItems.length - 1) reorderItems(dragIdx, imageItems.length); setDragIdx(null); setDragOverIdx(null); }}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+          >
+            {dragOverIdx === imageItems.length && (
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+            )}
+          </div>
+        )}
 
         {isEditing && (
           <button
