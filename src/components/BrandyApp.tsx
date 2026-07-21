@@ -283,9 +283,6 @@ export default function BrandyApp() {
   const [sections, setSections] = useState<Section[]>([]);
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [showNewBrand, setShowNewBrand] = useState(false);
-  const [newBrandName, setNewBrandName] = useState('');
-  const [newBrandColor, setNewBrandColor] = useState(BRAND_COLORS[0]);
   const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
   const [editingAnchorRect, setEditingAnchorRect] = useState<DOMRect | null>(null);
   const [view, setView] = useState<'home' | 'brand'>('home');
@@ -318,20 +315,6 @@ export default function BrandyApp() {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
-
-  async function createBrand() {
-    if (!newBrandName.trim()) return;
-    const res = await fetch('/api/brands', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: newBrandName.trim(), color: newBrandColor }),
-    });
-    const brand = await res.json();
-    setBrands(prev => [...prev, brand]);
-    setActiveBrandId(brand.id);
-    setNewBrandName('');
-    setShowNewBrand(false);
-  }
 
   async function deleteBrand(id: string) {
     if (!confirm('Supprimer cette marque et tout son contenu ?')) return;
@@ -423,7 +406,7 @@ export default function BrandyApp() {
 
         {/* Brand tabs */}
         <div className="flex items-center gap-1 flex-1 overflow-x-auto">
-          {brands.map(brand => {
+          {brands.filter(brand => brand.id === activeBrandId).map(brand => {
             const isActive = activeBrandId === brand.id;
             const isEditing = editingBrandId === brand.id;
             const isDragging = dragId === brand.id;
@@ -470,33 +453,6 @@ export default function BrandyApp() {
               </div>
             );
           })}
-
-          {showNewBrand ? (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">
-              <div className="flex gap-1">
-                {BRAND_COLORS.map(c => (
-                  <button key={c} className={`w-3.5 h-3.5 rounded-full transition-transform ${newBrandColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : ''}`} style={{ background: c }} onClick={() => setNewBrandColor(c)} />
-                ))}
-              </div>
-              <input
-                autoFocus
-                placeholder="Nom de la marque"
-                className="bg-transparent outline-none text-sm w-32"
-                value={newBrandName}
-                onChange={e => setNewBrandName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') createBrand(); if (e.key === 'Escape') setShowNewBrand(false); }}
-              />
-              <button onClick={createBrand} className="text-accent hover:text-accent"><Check size={14} /></button>
-              <button onClick={() => setShowNewBrand(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300"><X size={14} /></button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowNewBrand(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <Plus size={14} /> Marque
-            </button>
-          )}
         </div>
 
         {/* Search button */}

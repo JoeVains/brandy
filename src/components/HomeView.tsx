@@ -27,6 +27,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const { dark, toggle } = useTheme();
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(BRAND_COLORS[0]);
+  const [newHexInput, setNewHexInput] = useState(BRAND_COLORS[0].replace('#', ''));
   const [duplicating, setDuplicating] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -195,14 +196,38 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') createBrand(); if (e.key === 'Escape') setShowNew(false); }}
             />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <div className="flex gap-1.5">
                 {BRAND_COLORS.map(c => (
                   <button key={c}
                     className={`w-6 h-6 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600' : 'hover:scale-110'}`}
                     style={{ background: c }}
-                    onClick={() => setNewColor(c)} />
+                    onClick={() => { setNewColor(c); setNewHexInput(c.replace('#', '')); }} />
                 ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="color"
+                  value={newColor}
+                  onChange={e => { setNewColor(e.target.value); setNewHexInput(e.target.value.replace('#', '')); }}
+                  className="w-7 h-7 rounded-lg cursor-pointer border-0 p-0 flex-shrink-0"
+                />
+                <div className="flex items-center rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                  <span className="px-2 text-xs text-gray-400 dark:text-gray-500 font-mono select-none">#</span>
+                  <input
+                    className="w-20 py-1 pr-2 text-xs font-mono outline-none bg-transparent"
+                    style={{ color: 'var(--text-primary)' }}
+                    value={newHexInput}
+                    maxLength={6}
+                    placeholder="b14100"
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9a-fA-F]/g, '');
+                      setNewHexInput(val);
+                      if (val.length === 6) setNewColor('#' + val);
+                    }}
+                    onKeyDown={e => { if (e.key === 'Enter') createBrand(); }}
+                  />
+                </div>
               </div>
               <div className="ml-auto flex gap-2">
                 <button onClick={() => setShowNew(false)} className="px-4 py-1.5 rounded-lg border text-sm text-gray-500 dark:text-gray-400" style={{ borderColor: 'var(--border)' }}>Annuler</button>
