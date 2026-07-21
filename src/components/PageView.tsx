@@ -185,7 +185,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             )}
             <button
               onClick={() => setIsEditing(e => !e)}
-              className="p-1.5 rounded-lg transition-colors"
+              className={`p-1.5 rounded-lg transition-colors ${isEditing ? '' : 'hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
               title={isEditing ? 'Terminé' : 'Éditer'}
               style={isEditing ? { background: brandColor, color: 'white' } : { color: '#9ca3af' }}
             >
@@ -196,63 +196,67 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(o => !o)}
-                className="p-1 rounded-lg text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <MoreHorizontal size={16} />
+                <MoreHorizontal size={14} />
               </button>
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-1 bg-card border rounded-xl shadow-lg z-50 py-1 min-w-[200px]" style={{ borderColor: 'var(--border)' }}>
                   {/* Duplicate */}
                   <button
                     onClick={() => { onDuplicate(); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <Copy size={14} className="text-gray-400 dark:text-gray-400" /> Dupliquer le module
                   </button>
 
                   {/* Move to */}
-                  <button
-                    onClick={() => setSubMenu(subMenu === 'move' ? null : 'move')}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <FolderSymlink size={14} className="text-gray-400 dark:text-gray-400" />
-                    <span className="flex-1 text-left">Déplacer vers…</span>
-                    <ArrowRight size={12} className="text-gray-400 dark:text-gray-400" />
-                  </button>
-                  {subMenu === 'move' && (
-                    <div className="mx-2 mb-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
-                      {otherSections.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-400 italic">Aucune autre rubrique</p>
-                      ) : otherSections.map(s => (
-                        <button key={s.id} onClick={() => { onMoveTo(s.id); setMenuOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-white dark:bg-gray-900 transition-colors truncate">
-                          {s.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="relative">
+                    <button
+                      onClick={() => setSubMenu(subMenu === 'move' ? null : 'move')}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <FolderSymlink size={14} className="text-gray-400 dark:text-gray-400" />
+                      <span className="flex-1 text-left">Déplacer vers…</span>
+                      <ArrowRight size={12} className="text-gray-400 dark:text-gray-400" />
+                    </button>
+                    {subMenu === 'move' && (
+                      <div className="absolute left-full top-0 ml-1 bg-card border rounded-xl shadow-lg z-50 py-1 min-w-[160px] max-w-[220px]" style={{ borderColor: 'var(--border)' }}>
+                        {otherSections.length === 0 ? (
+                          <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-400 italic">Aucune autre rubrique</p>
+                        ) : otherSections.map(s => (
+                          <button key={s.id} onClick={() => { onMoveTo(s.id); setMenuOpen(false); }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate">
+                            {s.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Copy to */}
-                  <button
-                    onClick={() => setSubMenu(subMenu === 'copy' ? null : 'copy')}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <Copy size={14} className="text-gray-400 dark:text-gray-400" />
-                    <span className="flex-1 text-left">Copier vers…</span>
-                    <ArrowRight size={12} className="text-gray-400 dark:text-gray-400" />
-                  </button>
-                  {subMenu === 'copy' && (
-                    <div className="mx-2 mb-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
-                      {otherSections.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-400 italic">Aucune autre rubrique</p>
-                      ) : otherSections.map(s => (
-                        <button key={s.id} onClick={() => { onCopyTo(s.id); setMenuOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-white dark:bg-gray-900 transition-colors truncate">
-                          {s.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="relative">
+                    <button
+                      onClick={() => setSubMenu(subMenu === 'copy' ? null : 'copy')}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Copy size={14} className="text-gray-400 dark:text-gray-400" />
+                      <span className="flex-1 text-left">Copier vers…</span>
+                      <ArrowRight size={12} className="text-gray-400 dark:text-gray-400" />
+                    </button>
+                    {subMenu === 'copy' && (
+                      <div className="absolute left-full top-0 ml-1 bg-card border rounded-xl shadow-lg z-50 py-1 min-w-[160px] max-w-[220px]" style={{ borderColor: 'var(--border)' }}>
+                        {otherSections.length === 0 ? (
+                          <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-400 italic">Aucune autre rubrique</p>
+                        ) : otherSections.map(s => (
+                          <button key={s.id} onClick={() => { onCopyTo(s.id); setMenuOpen(false); }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate">
+                            {s.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="h-px mx-3 my-1" style={{ background: 'var(--border)' }} />
 
