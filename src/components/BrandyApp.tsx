@@ -403,7 +403,7 @@ export default function BrandyApp() {
           </button>
         </div>
         <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors mr-2">
-          <ChevronLeft size={14} /> Accueil
+          <ChevronLeft size={14} /> Mes marques
         </button>
 
         {/* Brand tabs */}
