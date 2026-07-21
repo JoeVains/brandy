@@ -158,7 +158,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
       {/* Header */}
       <header className="bg-card border-b px-8 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center">
@@ -181,7 +181,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-8 py-10">
+      <main className="flex-1 max-w-6xl mx-auto px-8 py-10 w-full">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Mes marques</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">{brands.length} marque{brands.length !== 1 ? 's' : ''}</p>
 
@@ -486,6 +486,17 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           </div>
         )}
       </main>
+      <div className="px-6 py-4 border-t text-center" style={{ borderColor: 'var(--border)' }}>
+        <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed">
+          Made with 🩷 in Paris
+          {' '}by{' '}
+          <a href="https://joevains.com" target="_blank" rel="noopener noreferrer"
+            className="hover:text-gray-300 dark:text-gray-500 transition-colors underline underline-offset-2">
+            Sylvain &ldquo;Joe Vains&rdquo; Guizard
+          </a>
+          {' '}© {new Date().getFullYear()}
+        </p>
+      </div>
       <input
         ref={logoInputRef}
         type="file"
