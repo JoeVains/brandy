@@ -268,11 +268,11 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
 
           {/* Actions */}
           <div className="flex gap-2 pt-1">
-            <button onClick={save} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-              <Check size={11} /> Sauvegarder
+            <button onClick={save} className="flex-1 flex items-center justify-center gap-1 px-3 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+              <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
             </button>
-            <button onClick={cancel} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-              <X size={11} /> Annuler
+            <button onClick={cancel} className="flex-1 flex items-center justify-center gap-1 px-3 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+              <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
             </button>
           </div>
         </div>
@@ -555,11 +555,11 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
           </button>
         </div>
         <div className="flex gap-2 pt-1">
-          <button onClick={addGradient} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-            <Check size={11} /> Ajouter
+          <button onClick={addGradient} className="flex-1 flex items-center justify-center gap-1 px-3 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+            <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
           </button>
-          <button onClick={() => setShowAdd(false)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-            <X size={11} /> Annuler
+          <button onClick={() => setShowAdd(false)} className="flex-1 flex items-center justify-center gap-1 px-3 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+            <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
           </button>
         </div>
       </div>
