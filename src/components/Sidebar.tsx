@@ -102,13 +102,14 @@ function SectionNode({
   return (
     <div style={{ opacity: isDragging ? 0.4 : 1, transition: 'opacity 0.15s' }}>
       <div
-        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+        className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'text-white' : isModuleDropTarget ? '' : 'text-gray-600 dark:text-gray-200 hover:bg-[var(--section-hover)]'}`}
         style={{
           paddingLeft: `${8 + depth * 14}px`,
+          '--section-hover': `${brandColor}26`,
           ...(isActive ? { background: brandColor } : {}),
           ...(isModuleDropTarget ? { background: `${brandColor}20`, color: brandColor, outline: `2px solid ${brandColor}`, outlineOffset: '-2px' } : {}),
           ...(isOver && !isModuleDropTarget ? { outline: `2px solid ${brandColor}`, outlineOffset: '-2px', borderRadius: 8 } : {}),
-        }}
+        } as React.CSSProperties}
         onClick={() => onSelect(section.id)}
         draggable
         onDragStart={e => {
