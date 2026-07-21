@@ -6,8 +6,9 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy, DatabaseBackup } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
+import BackupsPanel from './BackupsPanel';
 import SearchModal from './SearchModal';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -288,6 +289,7 @@ export default function BrandyApp() {
   const [view, setView] = useState<'home' | 'brand'>('home');
   const [dragId, setDragId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showBackups, setShowBackups] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
@@ -543,9 +545,17 @@ export default function BrandyApp() {
           title="Historique">
           <Clock size={15} />
         </button>
+
+        {/* Backups button */}
+        <button onClick={() => setShowBackups(v => !v)}
+          className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          title="Sauvegardes">
+          <DatabaseBackup size={15} />
+        </button>
       </header>
 
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
+      {showBackups && <BackupsPanel onClose={() => setShowBackups(false)} onRestored={fetchAll} />}
       {showSearch && activeBrandId && (
         <SearchModal
           brandId={activeBrandId}
