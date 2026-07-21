@@ -79,12 +79,12 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
             onChange={e => { setName(e.target.value); setNameTouched(true); }}
             placeholder="Nom de la couleur"
           />
-          <div className="flex gap-2 pt-1">
-            <button onClick={save} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-              <Check size={11} /> Sauvegarder
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button onClick={save} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+              <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
             </button>
-            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-              <X size={11} /> Annuler
+            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+              <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
             </button>
           </div>
         </div>
@@ -186,13 +186,13 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             value={hexInput} onChange={e => applyHex(e.target.value)} placeholder="#000000" />
           <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
             value={name} onChange={e => { setName(e.target.value); setNameTouched(true); }} placeholder="Nom de la couleur" />
-          <div className="flex gap-2 pt-1">
-            <button onClick={save} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-              <Check size={11} /> Sauvegarder
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button onClick={save} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+              <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
             </button>
             <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }}
-              className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-              <X size={11} /> Annuler
+              className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+              <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
             </button>
           </div>
         </div>
@@ -439,12 +439,12 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
                   value={newHexInput} onChange={e => applyNew(e.target.value)} placeholder="#000000" />
                 <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
                   value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
-                <div className="flex gap-2 pt-1">
-                  <button onClick={addColor} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-                    <Check size={11} /> Ajouter
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button onClick={addColor} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+                    <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
                   </button>
-                  <button onClick={() => setShowAdd(false)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-                    <X size={11} /> Annuler
+                  <button onClick={() => setShowAdd(false)} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+                    <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
                   </button>
                 </div>
               </div>
@@ -524,12 +524,12 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
                 value={newHexInput} onChange={e => applyNew(e.target.value)} placeholder="#000000" />
               <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
                 value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
-              <div className="flex gap-2 pt-1">
-                <button onClick={addColor} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs text-white" style={{ background: brandColor }}>
-                  <Check size={11} /> Ajouter
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button onClick={addColor} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+                  <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
                 </button>
-                <button onClick={() => setShowAdd(false)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs border" style={{ borderColor: 'var(--border)' }}>
-                  <X size={11} /> Annuler
+                <button onClick={() => setShowAdd(false)} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+                  <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
                 </button>
               </div>
             </div>

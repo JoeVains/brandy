@@ -6,7 +6,7 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import SearchModal from './SearchModal';
 import { useTheme } from '@/hooks/useTheme';
@@ -295,6 +295,8 @@ export default function BrandyApp() {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
   const [pageViewKey, setPageViewKey] = useState(0);
+  const [showShare, setShowShare] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const { dark, toggle } = useTheme();
 
   const fetchAll = useCallback(async () => {
@@ -364,6 +366,18 @@ export default function BrandyApp() {
     setBrands(prev => prev.map(b => b.id === id ? { ...b, name, color } : b));
     setEditingBrandId(null);
     setEditingAnchorRect(null);
+  }
+
+  async function enableShare(id: string) {
+    const res = await fetch(`/api/brands/${id}/share`, { method: 'POST' });
+    const updated = await res.json();
+    setBrands(prev => prev.map(b => b.id === id ? updated : b));
+  }
+
+  async function disableShare(id: string) {
+    const res = await fetch(`/api/brands/${id}/share`, { method: 'DELETE' });
+    const updated = await res.json();
+    setBrands(prev => prev.map(b => b.id === id ? updated : b));
   }
 
   async function handleModuleDrop(targetSectionId: string) {
@@ -495,6 +509,60 @@ export default function BrandyApp() {
             <span className="text-xs hidden sm:inline">Rechercher</span>
             <kbd className="text-[10px] font-mono hidden sm:inline">⌘K</kbd>
           </button>
+        )}
+
+        {/* Share link */}
+        {activeBrandId && activeBrand && (
+          <div className="relative">
+            <button onClick={() => { setShowShare(v => !v); setShareCopied(false); }}
+              className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Partager">
+              <Share2 size={15} />
+            </button>
+            {showShare && (
+              <div className="absolute right-0 top-full mt-1 bg-card border rounded-xl shadow-lg z-50 p-3 w-72" style={{ borderColor: 'var(--border)' }}>
+                {activeBrand.shareToken ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Lien de partage en lecture seule :</p>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        readOnly
+                        value={`${window.location.origin}/share/${activeBrand.shareToken}`}
+                        className="flex-1 min-w-0 px-2 py-1.5 rounded-lg text-xs font-mono outline-none border"
+                        style={{ borderColor: 'var(--border)', color: 'var(--text-primary)', background: 'var(--surface)' }}
+                        onFocus={e => e.target.select()}
+                      />
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/share/${activeBrand.shareToken}`); setShareCopied(true); }}
+                        className="flex-shrink-0 p-1.5 rounded-lg text-white"
+                        style={{ background: activeBrand.color }}
+                        title="Copier"
+                      >
+                        {shareCopied ? <Check size={13} /> : <Copy size={13} />}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => disableShare(activeBrand.id)}
+                      className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 mt-1"
+                    >
+                      <X size={12} /> Désactiver le lien
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Génère un lien public en lecture seule pour cette marque (consultation et téléchargements uniquement).</p>
+                    <button
+                      onClick={() => enableShare(activeBrand.id)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium"
+                      style={{ background: activeBrand.color }}
+                    >
+                      <Share2 size={12} /> Créer le lien
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Export PDF */}

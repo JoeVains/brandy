@@ -5,6 +5,7 @@ export interface Brand {
   createdAt: string;
   headerImage?: string;
   logoImage?: string;
+  shareToken?: string;
 }
 
 export interface Section {
