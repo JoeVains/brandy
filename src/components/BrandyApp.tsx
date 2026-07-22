@@ -511,7 +511,11 @@ export default function BrandyApp() {
             <img src="/brandy-logo.svg" alt="Brandy" className="h-6 dark:[filter:brightness(0)_invert(1)]" />
           </button>
         </div>
-        <button onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors mr-2">
+        <button
+          onClick={() => setView('home')}
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[var(--section-hover)] transition-colors mr-2 cursor-pointer"
+          style={activeBrand ? ({ '--section-hover': `${activeBrand.color}26` } as React.CSSProperties) : undefined}
+        >
           <ChevronLeft size={14} /> Mes marques
         </button>
 
