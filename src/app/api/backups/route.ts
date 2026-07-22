@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { listBackups, createBackup } from '@/lib/backup';
+import { listBackups, createBackupNow } from '@/lib/db';
 
 export async function GET() {
-  return NextResponse.json(listBackups());
+  return NextResponse.json(await listBackups());
 }
 
 export async function POST() {
-  const backup = await createBackup(true);
-  return NextResponse.json(backup ?? { error: 'No data to back up' }, { status: backup ? 201 : 400 });
+  const backup = await createBackupNow();
+  return NextResponse.json(backup, { status: 201 });
 }

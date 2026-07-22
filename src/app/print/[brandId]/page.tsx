@@ -5,11 +5,11 @@ import PrintClient from './PrintClient';
 
 export default async function PrintPage({ params }: { params: Promise<{ brandId: string }> }) {
   const { brandId } = await params;
-  const brand = db.brands.all().find(b => b.id === brandId);
+  const brand = (await db.brands.all()).find(b => b.id === brandId);
   if (!brand) return notFound();
 
-  const allSections = db.sections.all().filter(s => s.brandId === brandId).sort((a, b) => a.order - b.order);
-  const allModules = db.modules.all().filter(m => m.brandId === brandId).sort((a, b) => a.order - b.order);
+  const allSections = (await db.sections.all()).filter(s => s.brandId === brandId).sort((a, b) => a.order - b.order);
+  const allModules = (await db.modules.all()).filter(m => m.brandId === brandId).sort((a, b) => a.order - b.order);
 
   // Build tree: roots first, then children
   const roots = allSections.filter(s => s.parentId === null);

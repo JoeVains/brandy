@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { getStore } from '@netlify/blobs';
 import { randomUUID } from 'crypto';
 
 export type HistoryAction =
@@ -17,20 +16,26 @@ export interface HistoryEntry {
   entityType?: string; // module type
 }
 
-const FILE = path.join(process.cwd(), 'data', 'history.json');
+const STORE_NAME = 'brandy';
+const KEY = 'history';
 const MAX = 200;
 
-function read(): HistoryEntry[] {
-  if (!fs.existsSync(FILE)) return [];
-  try { return JSON.parse(fs.readFileSync(FILE, 'utf-8')); } catch { return []; }
+function store() {
+  return getStore(STORE_NAME);
 }
 
-export function logHistory(entry: Omit<HistoryEntry, 'id' | 'timestamp'>) {
-  const entries = read();
+async function read(): Promise<HistoryEntry[]> {
+  const s = store();
+  const data = await s.get(KEY, { type: 'json' }).catch(() => null);
+  return (data as HistoryEntry[]) ?? [];
+}
+
+export async function logHistory(entry: Omit<HistoryEntry, 'id' | 'timestamp'>) {
+  const entries = await read();
   entries.unshift({ id: randomUUID(), timestamp: new Date().toISOString(), ...entry });
-  fs.writeFileSync(FILE, JSON.stringify(entries.slice(0, MAX), null, 2));
+  await store().setJSON(KEY, entries.slice(0, MAX));
 }
 
-export function getHistory(): HistoryEntry[] {
+export async function getHistory(): Promise<HistoryEntry[]> {
   return read();
 }

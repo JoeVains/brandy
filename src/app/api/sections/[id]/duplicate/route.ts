@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const allSections = db.sections.all();
+  const allSections = await db.sections.all();
   const original = allSections.find(s => s.id === id);
   if (!original) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -32,7 +32,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   }));
 
   const copiedSectionIds = new Set(toCopy.map(s => s.id));
-  const oldModules = db.modules.all().filter(m => copiedSectionIds.has(m.sectionId));
+  const oldModules = (await db.modules.all()).filter(m => copiedSectionIds.has(m.sectionId));
   const newModules = oldModules.map(m => ({
     ...m,
     id: uuid(),
@@ -40,8 +40,8 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     createdAt: new Date().toISOString(),
   }));
 
-  db.sections.save([...allSections, ...newSections]);
-  db.modules.save([...db.modules.all(), ...newModules]);
+  await db.sections.save([...allSections, ...newSections]);
+  await db.modules.save([...(await db.modules.all()), ...newModules]);
 
   return NextResponse.json(newSections.find(s => s.id === idMap.get(original.id)), { status: 201 });
 }

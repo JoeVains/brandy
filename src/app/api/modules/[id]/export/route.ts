@@ -92,7 +92,7 @@ function encodeUtf16BE(str: string): Buffer {
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const module = db.modules.all().find(m => m.id === id);
+  const module = (await db.modules.all()).find(m => m.id === id);
   if (!module || module.type !== 'colors') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (format === 'ase') {
     const buf = generateAse(colors, title);
-    return new NextResponse(buf, {
+    return new NextResponse(buf as BodyInit, {
       headers: {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${slug}.ase"`,

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { saveFile, deleteFile } from '@/lib/files';
 import { AttachmentItem, DoDontItem, FontItem, IconItem, ImageItem } from '@/types';
-import fs from 'fs';
-import path from 'path';
 import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const all = db.modules.all();
+  const all = await db.modules.all();
   const idx = all.findIndex(m => m.id === id);
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -19,20 +18,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 });
 
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
   const ext = file.name.split('.').pop() ?? 'bin';
   const filename = `${randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+  await saveFile(filename, await file.arrayBuffer(), file.type || 'application/octet-stream');
 
   if (slot === 'image') {
-    // Delete old image if present
-    if (module.imageFilename) {
-      const old = path.join(uploadsDir, module.imageFilename);
-      if (fs.existsSync(old)) fs.unlinkSync(old);
-    }
+    if (module.imageFilename) await deleteFile(module.imageFilename);
     module.imageFilename = filename;
     module.imageMimeType = file.type;
     module.imageSize = file.size;
@@ -66,28 +57,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const replaceId = formData.get('replaceId') as string | null;
     const col = slot === 'do' ? 'doItems' : 'dontItems';
     if (replaceId) {
-      module[col] = (module[col] ?? []).map(i => {
-        if (i.id !== replaceId) return i;
-        if (i.filename) { const old = path.join(uploadsDir, i.filename); if (fs.existsSync(old)) fs.unlinkSync(old); }
-        return { ...i, filename, mimeType: file.type };
-      });
+      const items = module[col] ?? [];
+      const target = items.find(i => i.id === replaceId);
+      if (target?.filename) await deleteFile(target.filename);
+      module[col] = items.map(i => i.id === replaceId ? { ...i, filename, mimeType: file.type } : i);
     } else {
       const item: DoDontItem = { id: randomUUID(), type: 'image', filename, mimeType: file.type };
       module[col] = [...(module[col] ?? []), item];
     }
   } else if (slot === 'audio') {
-    if (module.audioFilename) {
-      const old = path.join(uploadsDir, module.audioFilename);
-      if (fs.existsSync(old)) fs.unlinkSync(old);
-    }
+    if (module.audioFilename) await deleteFile(module.audioFilename);
     module.audioFilename = filename;
     module.audioMimeType = file.type;
     module.audioSize = file.size;
   } else if (slot === 'video') {
-    if (module.videoFilename) {
-      const old = path.join(uploadsDir, module.videoFilename);
-      if (fs.existsSync(old)) fs.unlinkSync(old);
-    }
+    if (module.videoFilename) await deleteFile(module.videoFilename);
     module.videoFilename = filename;
     module.videoMimeType = file.type;
     module.videoSize = file.size;
@@ -103,6 +87,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   all[idx] = module;
-  db.modules.save(all);
+  await db.modules.save(all);
   return NextResponse.json(module);
 }

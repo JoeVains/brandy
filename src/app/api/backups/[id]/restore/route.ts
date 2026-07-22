@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { restoreBackup } from '@/lib/backup';
+import { restoreBackup } from '@/lib/db';
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -195,8 +195,8 @@ export default function PrintClient({ brand, sections, modulesMap }: Props) {
     <div style={{ background: 'white', minHeight: '100vh' }}>
       {/* Cover page */}
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: brand.color, color: 'white', padding: 48 }}>
-        {brand.logoFilename && (
-          <img src={`/uploads/${brand.logoFilename}`} alt="" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 32, borderRadius: '50%', background: 'white', padding: 8 }} />
+        {brand.logoImage && (
+          <img src={`/uploads/${brand.logoImage}`} alt="" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 32, borderRadius: '50%', background: 'white', padding: 8 }} />
         )}
         <h1 style={{ fontSize: 48, fontWeight: 800, textAlign: 'center', marginBottom: 12 }}>{brand.name}</h1>
         <p style={{ fontSize: 16, opacity: 0.7 }}>Brand Book</p>

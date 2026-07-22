@@ -7,7 +7,7 @@ import { logHistory } from '@/lib/history';
 export async function GET(req: NextRequest) {
   const sectionId = req.nextUrl.searchParams.get('sectionId');
   const brandId = req.nextUrl.searchParams.get('brandId');
-  const all = db.modules.all();
+  const all = await db.modules.all();
   let filtered = all;
   if (sectionId) filtered = filtered.filter(m => m.sectionId === sectionId);
   if (brandId) filtered = filtered.filter(m => m.brandId === brandId);
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { sectionId, brandId, type, title } = body;
-  const all = db.modules.all();
+  const all = await db.modules.all();
   const sectionModules = all.filter(m => m.sectionId === sectionId);
   const order = sectionModules.length > 0 ? Math.max(...sectionModules.map(m => m.order)) + 1 : 0;
 
@@ -37,11 +37,11 @@ export async function POST(req: NextRequest) {
   if (type === 'text') module.content = '';
   if (type === 'icons') module.iconItems = [];
 
-  db.modules.save([...all, module]);
+  await db.modules.save([...all, module]);
 
-  const brand = db.brands.all().find(b => b.id === brandId);
-  const section = db.sections.all().find(s => s.id === sectionId);
-  logHistory({ action: 'module.create', brandName: brand?.name, sectionName: section?.name, entityName: title ?? type, entityType: type });
+  const brand = (await db.brands.all()).find(b => b.id === brandId);
+  const section = (await db.sections.all()).find(s => s.id === sectionId);
+  await logHistory({ action: 'module.create', brandName: brand?.name, sectionName: section?.name, entityName: title ?? type, entityType: type });
 
   return NextResponse.json(module);
 }
