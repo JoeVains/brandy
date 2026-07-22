@@ -167,13 +167,13 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggle}
-            className="p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
             title={dark ? 'Mode clair' : 'Mode sombre'}>
             {dark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <button
             onClick={() => setShowNew(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
             style={{ background: 'var(--accent)' }}
           >
             <Plus size={15} /> Nouvelle marque
@@ -460,7 +460,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                     <div className="px-4 pb-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => onOpenBrand(brand.id)}
-                        className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-opacity cursor-pointer"
                         style={{ background: brand.color }}
                       >
                         Ouvrir <ArrowRight size={12} />
@@ -476,7 +476,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             {!showNew && (
               <button
                 onClick={() => setShowNew(true)}
-                className="w-full min-h-[220px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
+                className="w-full min-h-[220px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <Plus size={22} />
@@ -491,7 +491,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           Made with 🩷 in Paris
           {' '}by{' '}
           <a href="https://joevains.com" target="_blank" rel="noopener noreferrer"
-            className="hover:text-gray-300 dark:text-gray-500 transition-colors underline underline-offset-2">
+            className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors underline underline-offset-2">
             Sylvain &ldquo;Joe Vains&rdquo; Guizard
           </a>
           {' '}© {new Date().getFullYear()}

@@ -390,7 +390,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
           Made with 🩷 in Paris<br />
           by{' '}
           <a href="https://joevains.com" target="_blank" rel="noopener noreferrer"
-            className="hover:text-gray-300 dark:text-gray-500 transition-colors underline underline-offset-2">
+            className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors underline underline-offset-2">
             Sylvain &ldquo;Joe Vains&rdquo; Guizard
           </a>
           {' '}© {new Date().getFullYear()}

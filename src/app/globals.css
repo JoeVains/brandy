@@ -50,6 +50,10 @@ body {
   font-family: 'Rubik', sans-serif;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 /* ─── Semantic utility classes ─── */
 .bg-card    { background-color: var(--card-bg);    }
 .bg-surface { background-color: var(--surface);    }

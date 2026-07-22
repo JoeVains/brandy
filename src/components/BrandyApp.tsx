@@ -647,7 +647,7 @@ export default function BrandyApp() {
 
         {/* Dark mode toggle */}
         <button onClick={toggle}
-          className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
           title={dark ? 'Mode clair' : 'Mode sombre'}>
           {dark ? <Sun size={15} /> : <Moon size={15} />}
         </button>
