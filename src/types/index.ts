@@ -14,6 +14,7 @@ export interface Section {
   name: string;
   parentId: string | null;
   order: number;
+  emoji?: string;
 }
 
 // Module item sub-types

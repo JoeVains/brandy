@@ -174,14 +174,14 @@ function SectionNode({
         <div className={`flex items-center gap-0.5 ${editing ? 'flex' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} onClick={e => e.stopPropagation()}>
           {editing ? (
             <>
-              <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Check size={11} /></button>
-              <button onClick={() => setEditing(false)} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><X size={11} /></button>
+              <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}><Check size={11} /></button>
+              <button onClick={() => setEditing(false)} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}><X size={11} /></button>
             </>
           ) : (
             <>
-              <button onClick={() => setShowAddChild(!showAddChild)} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Plus size={11} /></button>
-              <button onClick={() => { setEditing(true); setEditName(section.name); }} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Pencil size={11} /></button>
-              <button onClick={deleteSection} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-200'}><Trash2 size={11} /></button>
+              <button onClick={() => setShowAddChild(!showAddChild)} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}><Plus size={11} /></button>
+              <button onClick={() => { setEditing(true); setEditName(section.name); }} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}><Pencil size={11} /></button>
+              <button onClick={deleteSection} className={isActive ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}><Trash2 size={11} /></button>
             </>
           )}
         </div>
@@ -214,7 +214,7 @@ function SectionNode({
         <button
           key={h.id}
           onClick={() => onScrollToHeading(h.id)}
-          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors text-left"
+          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-800 transition-colors text-left"
           style={{ paddingLeft: `${8 + (depth + 1) * 14 + 8}px` }}
         >
           <Hash size={10} className="flex-shrink-0 opacity-50" />

@@ -9,6 +9,7 @@ import HomeView from './HomeView';
 import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy, DatabaseBackup } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import BackupsPanel from './BackupsPanel';
+import EmojiPicker from './EmojiPicker';
 import SearchModal from './SearchModal';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -113,6 +114,89 @@ function EditPopover({ brand, anchorRect, onSave, onDelete, onClose }: EditPopov
           title="Supprimer la marque"
         >
           <Trash2 size={14} />
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+interface SectionEditPopoverProps {
+  section: Section;
+  anchorRect: DOMRect;
+  onSaveEmoji: (emoji: string) => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+}
+
+function SectionEditPopover({ section, anchorRect, onSaveEmoji, onDuplicate, onDelete, onClose }: SectionEditPopoverProps) {
+  const [emoji, setEmoji] = useState(section.emoji ?? '');
+  const [showPicker, setShowPicker] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (showPicker) return; // let EmojiPicker's own outside-click handle it
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose, showPicker]);
+
+  const style = {
+    position: 'fixed' as const,
+    top: anchorRect.bottom + 6,
+    left: anchorRect.left,
+    zIndex: 9999,
+    width: 220,
+  };
+
+  function choose(newEmoji: string) {
+    setEmoji(newEmoji);
+    onSaveEmoji(newEmoji);
+  }
+
+  return createPortal(
+    <div ref={ref} style={style} className="bg-card rounded-xl shadow-xl border p-3" onClick={e => e.stopPropagation()}>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5">Emoji de la rubrique</p>
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          ref={emojiBtnRef}
+          onClick={() => setShowPicker(true)}
+          className="flex-1 px-2.5 py-1.5 rounded-lg border text-lg text-center outline-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          {emoji || <span className="text-gray-300 dark:text-gray-600">🎨</span>}
+        </button>
+        {emoji && (
+          <button onClick={() => choose('')} className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Retirer l'emoji">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+      {showPicker && emojiBtnRef.current && (
+        <EmojiPicker
+          anchorRect={emojiBtnRef.current.getBoundingClientRect()}
+          onSelect={choose}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => { onDuplicate(); onClose(); }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs border text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <Copy size={12} /> Dupliquer
+        </button>
+        <button
+          onClick={() => { onDelete(); onClose(); }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs border text-red-500 hover:bg-red-50 transition-colors"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <Trash2 size={12} /> Supprimer
         </button>
       </div>
     </div>,
@@ -286,6 +370,8 @@ export default function BrandyApp() {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
   const [editingAnchorRect, setEditingAnchorRect] = useState<DOMRect | null>(null);
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSectionAnchorRect, setEditingSectionAnchorRect] = useState<DOMRect | null>(null);
   const [view, setView] = useState<'home' | 'brand'>('home');
   const [dragId, setDragId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -351,6 +437,29 @@ export default function BrandyApp() {
     setBrands(prev => prev.map(b => b.id === id ? { ...b, name, color } : b));
     setEditingBrandId(null);
     setEditingAnchorRect(null);
+  }
+
+  async function updateSectionEmoji(id: string, emoji: string) {
+    await fetch(`/api/sections/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ emoji: emoji || null }),
+    });
+    setSections(prev => prev.map(s => s.id === id ? { ...s, emoji: emoji || undefined } : s));
+  }
+
+  async function duplicateSection(id: string) {
+    await fetch(`/api/sections/${id}/duplicate`, { method: 'POST' });
+    const all = await fetch('/api/sections').then(r => r.json());
+    setSections(all);
+  }
+
+  async function deleteSectionFromGrid(section: Section) {
+    if (!confirm(`Supprimer "${section.name}" et tout son contenu ?`)) return;
+    await fetch(`/api/sections/${section.id}`, { method: 'DELETE' });
+    const all = await fetch('/api/sections').then(r => r.json());
+    setSections(all);
+    if (activeSectionId === section.id) setActiveSectionId(section.parentId);
   }
 
   async function enableShare(id: string) {
@@ -638,15 +747,15 @@ export default function BrandyApp() {
                           {sorted.map(section => {
                             const childCount = brandSections.filter(s => s.parentId === section.id).length;
                             return (
-                              <button
+                              <div
                                 key={section.id}
                                 onClick={() => setActiveSectionId(section.id)}
-                                className="flex items-center gap-3 p-4 border rounded-xl bg-card text-left hover:shadow-md transition-all"
+                                className="group relative flex items-center gap-3 p-4 border rounded-xl bg-card text-left hover:shadow-md transition-all cursor-pointer"
                                 style={{ borderColor: 'var(--border)' }}
                               >
-                                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
-                                  style={{ background: activeBrand.color }}>
-                                  {section.name.charAt(0).toUpperCase()}
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${section.emoji ? 'text-lg' : 'text-white'}`}
+                                  style={{ background: section.emoji ? 'var(--background)' : activeBrand.color }}>
+                                  {section.emoji || section.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{section.name}</p>
@@ -656,7 +765,24 @@ export default function BrandyApp() {
                                     </p>
                                   )}
                                 </div>
-                              </button>
+                                <button
+                                  onClick={e => { e.stopPropagation(); setEditingSectionId(section.id); setEditingSectionAnchorRect(e.currentTarget.getBoundingClientRect()); }}
+                                  className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                                  title="Éditer la rubrique"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                {editingSectionId === section.id && editingSectionAnchorRect && (
+                                  <SectionEditPopover
+                                    section={section}
+                                    anchorRect={editingSectionAnchorRect}
+                                    onSaveEmoji={emoji => updateSectionEmoji(section.id, emoji)}
+                                    onDuplicate={() => duplicateSection(section.id)}
+                                    onDelete={() => deleteSectionFromGrid(section)}
+                                    onClose={() => { setEditingSectionId(null); setEditingSectionAnchorRect(null); }}
+                                  />
+                                )}
+                              </div>
                             );
                           })}
                         </div>
