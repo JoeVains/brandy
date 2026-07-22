@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Brand, Section } from '@/types';
-import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X, Link } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X, Link, LogOut } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
@@ -179,6 +179,11 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             style={{ background: 'var(--accent)' }}
           >
             <Plus size={15} /> Nouvelle marque
+          </button>
+          <button onClick={async () => { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }}
+            className="p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+            title="Déconnexion">
+            <LogOut size={15} />
           </button>
         </div>
       </header>

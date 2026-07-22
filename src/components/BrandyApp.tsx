@@ -6,7 +6,7 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy, DatabaseBackup } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy, DatabaseBackup, LogOut } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import BackupsPanel from './BackupsPanel';
 import EmojiPicker from './EmojiPicker';
@@ -664,6 +664,13 @@ export default function BrandyApp() {
           className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           title="Sauvegardes">
           <DatabaseBackup size={15} />
+        </button>
+
+        {/* Logout button */}
+        <button onClick={async () => { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }}
+          className="flex-shrink-0 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+          title="Déconnexion">
+          <LogOut size={15} />
         </button>
       </header>
 
