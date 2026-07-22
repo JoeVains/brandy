@@ -38,6 +38,9 @@ export default function EmojiPicker({ anchorRect, onSelect, onClose }: Props) {
   const [query, setQuery] = useState('');
   const [activeGroup, setActiveGroup] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const scrollingToTab = useRef(false);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -48,10 +51,38 @@ export default function EmojiPicker({ anchorRect, onSelect, onClose }: Props) {
   }, [onClose]);
 
   const q = query.trim().toLowerCase();
-  const shown = useMemo(() => {
-    if (!q) return GROUPS[activeGroup].emojis;
-    return ALL_EMOJIS.filter(e => e.name.includes(q));
-  }, [q, activeGroup]);
+  const results = useMemo(() => (q ? ALL_EMOJIS.filter(e => e.name.includes(q)) : null), [q]);
+
+  // Sync active tab with scroll position (continuous scroll through all categories)
+  useEffect(() => {
+    if (q) return;
+    const container = scrollRef.current;
+    if (!container) return;
+
+    function onScroll() {
+      if (scrollingToTab.current) return;
+      const containerTop = container!.getBoundingClientRect().top;
+      let current = 0;
+      sectionRefs.current.forEach((el, i) => {
+        if (!el) return;
+        // A section becomes "current" once it has scrolled past the sticky header threshold
+        if (el.getBoundingClientRect().top - containerTop <= 24) current = i;
+      });
+      setActiveGroup(current);
+    }
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [q]);
+
+  function goToGroup(i: number) {
+    setActiveGroup(i);
+    const el = sectionRefs.current[i];
+    const container = scrollRef.current;
+    if (!el || !container) return;
+    scrollingToTab.current = true;
+    container.scrollTop = el.offsetTop - container.offsetTop;
+    setTimeout(() => { scrollingToTab.current = false; }, 150);
+  }
 
   const style = {
     position: 'fixed' as const,
@@ -80,7 +111,7 @@ export default function EmojiPicker({ anchorRect, onSelect, onClose }: Props) {
           {GROUPS.map((g, i) => (
             <button
               key={g.name}
-              onClick={() => setActiveGroup(i)}
+              onClick={() => goToGroup(i)}
               title={g.label}
               className={`flex-shrink-0 w-7 h-7 flex items-center justify-center text-sm rounded-lg transition-colors ${activeGroup === i ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
@@ -90,20 +121,42 @@ export default function EmojiPicker({ anchorRect, onSelect, onClose }: Props) {
         </div>
       )}
 
-      <div className="grid grid-cols-7 gap-0.5 p-2 h-56 overflow-y-auto content-start">
-        {shown.length === 0 ? (
-          <p className="col-span-7 text-center text-xs text-gray-400 dark:text-gray-500 py-6">Aucun résultat</p>
-        ) : shown.map(e => (
-          <button
-            key={e.emoji}
-            onClick={() => { onSelect(e.emoji); onClose(); }}
-            className="w-8 h-8 flex items-center justify-center text-lg rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
-            title={e.name}
-          >
-            {e.emoji}
-          </button>
-        ))}
-      </div>
+      {results ? (
+        <div className="grid grid-cols-7 gap-0.5 p-2 h-56 overflow-y-auto content-start">
+          {results.length === 0 ? (
+            <p className="col-span-7 text-center text-xs text-gray-400 dark:text-gray-500 py-6">Aucun résultat</p>
+          ) : results.map(e => (
+            <button
+              key={e.emoji}
+              onClick={() => { onSelect(e.emoji); onClose(); }}
+              className="w-8 h-8 flex items-center justify-center text-lg rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+              title={e.name}
+            >
+              {e.emoji}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div ref={scrollRef} className="h-56 overflow-y-auto">
+          {GROUPS.map((g, i) => (
+            <div key={g.name} ref={el => { sectionRefs.current[i] = el; }}>
+              <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 sticky top-0 bg-card">{g.label}</p>
+              <div className="grid grid-cols-7 gap-0.5 px-2 pb-1">
+                {g.emojis.map(e => (
+                  <button
+                    key={e.emoji}
+                    onClick={() => { onSelect(e.emoji); onClose(); }}
+                    className="w-8 h-8 flex items-center justify-center text-lg rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                    title={e.name}
+                  >
+                    {e.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>,
     document.body
   );
