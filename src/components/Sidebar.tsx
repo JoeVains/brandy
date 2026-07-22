@@ -214,8 +214,8 @@ function SectionNode({
         <button
           key={h.id}
           onClick={() => onScrollToHeading(h.id)}
-          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-800 transition-colors text-left"
-          style={{ paddingLeft: `${8 + (depth + 1) * 14 + 8}px` }}
+          className="w-full flex items-center gap-1.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-[var(--section-hover)] transition-colors text-left"
+          style={{ paddingLeft: `${8 + (depth + 1) * 14 + 8}px`, '--section-hover': `${brandColor}26` } as React.CSSProperties}
         >
           <Hash size={10} className="flex-shrink-0 opacity-50" />
           <span className="truncate">{h.content || h.title || 'Sans titre'}</span>
@@ -339,8 +339,8 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
       <div className="p-3 flex-1">
         {/* All assets */}
         <button
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${!activeSectionId ? 'text-white' : 'text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-          style={!activeSectionId ? { background: brand.color } : {}}
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${!activeSectionId ? 'text-white' : 'text-gray-600 dark:text-gray-200 hover:bg-[var(--section-hover)]'}`}
+          style={!activeSectionId ? { background: brand.color } : { '--section-hover': `${brand.color}26` } as React.CSSProperties}
           onClick={() => onSelectSection(null)}
         >
           <LayoutGrid size={13} />
