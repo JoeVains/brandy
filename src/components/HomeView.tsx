@@ -32,6 +32,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [editHexInput, setEditHexInput] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -136,6 +137,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     setEditName(brand.name);
     setEditColor(brand.color);
     setEditHexInput(brand.color.replace('#', ''));
+    setEditDescription(brand.description ?? '');
   }
 
   async function saveBrand(id: string) {
@@ -143,7 +145,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     const res = await fetch(`/api/brands/${id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: editName.trim(), color: editColor }),
+      body: JSON.stringify({ name: editName.trim(), color: editColor, description: editDescription.trim() || null }),
     });
     const updated = await res.json();
     onBrandsChange(brands.map(b => b.id === id ? updated : b));
@@ -407,6 +409,16 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                         onChange={e => setEditName(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') saveBrand(brand.id); if (e.key === 'Escape') setEditingId(null); }}
                       />
+                      <textarea
+                        className="w-full text-xs outline-none border rounded-lg px-2 py-1.5 resize-none placeholder-gray-300 dark:placeholder-gray-600"
+                        style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                        rows={2}
+                        maxLength={160}
+                        placeholder="Brève description de la marque…"
+                        value={editDescription}
+                        onChange={e => setEditDescription(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Escape') setEditingId(null); }}
+                      />
                       <div className="flex gap-1.5 flex-wrap">
                         {BRAND_COLORS.map(c => (
                           <button key={c}
@@ -452,6 +464,9 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       <p className="text-xs text-gray-400 dark:text-gray-500">
                         {sectionCount} rubrique{sectionCount !== 1 ? 's' : ''} · Créée le {formatDate(brand.createdAt)}
                       </p>
+                      {brand.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{brand.description}</p>
+                      )}
                     </div>
                   )}
 

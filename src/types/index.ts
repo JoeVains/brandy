@@ -6,6 +6,7 @@ export interface Brand {
   headerImage?: string;
   logoImage?: string;
   shareToken?: string;
+  description?: string;
 }
 
 export interface Section {
