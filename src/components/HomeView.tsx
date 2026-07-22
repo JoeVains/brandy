@@ -244,7 +244,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           <div className="flex flex-col items-center justify-center py-32 gap-4 text-gray-400 dark:text-gray-500">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-bold" style={{ background: 'var(--border)', color: 'white' }}>B</div>
             <p className="text-sm">Aucune marque pour l'instant.</p>
-            <button onClick={() => setShowNew(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium" style={{ background: 'var(--accent)' }}>
+            <button onClick={() => setShowNew(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer" style={{ background: 'var(--accent)' }}>
               <Plus size={15} /> Créer ma première marque
             </button>
           </div>
