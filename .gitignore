@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 data/
 public/uploads/
+
+# Local Netlify folder
+.netlify
+deno.lock
