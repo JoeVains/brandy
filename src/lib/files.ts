@@ -3,7 +3,7 @@ import { getStore } from '@netlify/blobs';
 const STORE_NAME = 'brandy-files';
 
 function store() {
-  return getStore(STORE_NAME);
+  return getStore({ name: STORE_NAME, consistency: 'strong' });
 }
 
 export async function saveFile(filename: string, data: ArrayBuffer, contentType: string): Promise<void> {

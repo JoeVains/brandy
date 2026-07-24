@@ -21,7 +21,7 @@ const KEY = 'history';
 const MAX = 200;
 
 function store() {
-  return getStore(STORE_NAME);
+  return getStore({ name: STORE_NAME, consistency: 'strong' });
 }
 
 async function read(): Promise<HistoryEntry[]> {

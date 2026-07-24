@@ -10,7 +10,7 @@ const BACKUP_INTERVAL_MS = 3600_000;
 const BACKUP_RETENTION_MS = 5 * 86400_000;
 
 function store() {
-  return getStore(STORE_NAME);
+  return getStore({ name: STORE_NAME, consistency: 'strong' });
 }
 
 async function readJson<T>(key: string, fallback: T): Promise<T> {
