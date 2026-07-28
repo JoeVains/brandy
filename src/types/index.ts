@@ -96,6 +96,8 @@ export interface Module {
   type: ModuleType;
   title: string;
   order: number;
+  // layout: side-by-side (2 columns) when paired with an adjacent 'half' module
+  layoutWidth?: 'full' | 'half';
   // shared description (heading, typography, attachments)
   description?: string;
   // colors

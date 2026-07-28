@@ -370,6 +370,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
   const [insertAfterIdx, setInsertAfterIdx] = useState<number | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragOverSide, setDragOverSide] = useState<'left' | 'right' | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollRafRef = useRef<number | null>(null);
 
@@ -533,12 +534,20 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
   }
   function onDragOver(e: React.DragEvent, id: string) {
     e.preventDefault();
-    if (id !== dragId) setDragOverId(id);
+    if (id === dragId) { setDragOverId(null); setDragOverSide(null); return; }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    setDragOverId(id);
+    setDragOverSide(ratio < 0.25 ? 'left' : ratio > 0.75 ? 'right' : null);
   }
-  function onDragLeave() { setDragOverId(null); }
+  function onDragLeave() { setDragOverId(null); setDragOverSide(null); }
 
   async function onDrop(targetId: string) {
-    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return; }
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); setDragOverSide(null); return; }
+    if (dragOverSide) {
+      await placeSideBySide(dragId, targetId, dragOverSide);
+      return;
+    }
     const reordered = [...modules];
     const fromIdx = reordered.findIndex(m => m.id === dragId);
     const toIdx = reordered.findIndex(m => m.id === targetId);
@@ -547,6 +556,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
     setModules(reordered);
     setDragId(null);
     setDragOverId(null);
+    setDragOverSide(null);
     await fetch('/api/modules/reorder', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -557,8 +567,48 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
     }
   }
 
+  async function placeSideBySide(draggedId: string, targetId: string, side: 'left' | 'right') {
+    const reordered = [...modules];
+    const fromIdx = reordered.findIndex(m => m.id === draggedId);
+    const [item] = reordered.splice(fromIdx, 1);
+    const targetIdx = reordered.findIndex(m => m.id === targetId);
+    reordered.splice(side === 'left' ? targetIdx : targetIdx + 1, 0, item);
+    const updated = reordered.map(m => (m.id === draggedId || m.id === targetId) ? { ...m, layoutWidth: 'half' as const } : m);
+    setModules(updated);
+    setDragId(null);
+    setDragOverId(null);
+    setDragOverSide(null);
+    await fetch('/api/modules/reorder', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sectionId: section.id, ids: updated.map(m => m.id) }),
+    });
+    // Sequential on purpose: the PATCH endpoint reads-modifies-writes the whole
+    // modules list, so two concurrent PATCHes here would race and drop one write.
+    for (const id of [draggedId, targetId]) {
+      await fetch(`/api/modules/${id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ layoutWidth: 'half' }),
+      });
+    }
+  }
+
   if (loading) {
     return <div className="p-8 text-sm text-gray-400 dark:text-gray-400">Chargement...</div>;
+  }
+
+  // Group consecutive 'half' modules into side-by-side pairs; everything else stays full-width.
+  const moduleRows: Module[][] = [];
+  for (let i = 0; i < modules.length; i++) {
+    const current = modules[i];
+    const next = modules[i + 1];
+    if (current.layoutWidth === 'half' && next?.layoutWidth === 'half') {
+      moduleRows.push([current, next]);
+      i++;
+    } else {
+      moduleRows.push([current]);
+    }
   }
 
   return (
@@ -590,44 +640,59 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
           <InsertSeparator
             color={brand.color}
             onClick={() => { setInsertAfterIdx(-1); setShowPicker(true); }}
-            isDropTarget={!!dragId && dragOverId === modules[0]?.id && dragId !== modules[0]?.id}
+            isDropTarget={!!dragId && dragOverId === modules[0]?.id && !dragOverSide && dragId !== modules[0]?.id}
           />
 
-          {modules.map((module, idx) => (
-            <React.Fragment key={module.id}>
-              <div
-                data-module-id={module.id}
-                onDragOver={e => onDragOver(e, module.id)}
-                onDragLeave={onDragLeave}
-                onDrop={() => onDrop(module.id)}
-                onDragEnd={() => { setDragId(null); setDragOverId(null); onModuleDragEnd?.(); }}
-              >
-                <ModuleCard
-                  module={module}
-                  brandColor={brand.color}
-                  sections={sections}
-                  currentSectionId={section.id}
-                  onUpdate={updateModule}
-                  onDelete={() => deleteModule(module.id)}
-                  onDuplicate={() => duplicateModule(module)}
-                  onMoveTo={targetId => moveModuleTo(module, targetId)}
-                  onCopyTo={targetId => copyModuleTo(module, targetId)}
-                  isDragging={dragId === module.id}
-                  defaultEditing={newModuleId === module.id}
-                  dragHandleProps={{
-                    draggable: true,
-                    onDragStart: (e: React.DragEvent) => onDragStart(e, module),
-                  }}
-                />
-              </div>
+          {moduleRows.map(row => {
+            const lastIdx = modules.findIndex(m => m.id === row[row.length - 1].id);
+            return (
+              <React.Fragment key={row[0].id}>
+                <div className={row.length === 2 ? 'grid grid-cols-2 gap-3 items-start' : ''}>
+                  {row.map(module => (
+                    <div
+                      key={module.id}
+                      data-module-id={module.id}
+                      className="relative"
+                      onDragOver={e => onDragOver(e, module.id)}
+                      onDragLeave={onDragLeave}
+                      onDrop={() => onDrop(module.id)}
+                      onDragEnd={() => { setDragId(null); setDragOverId(null); setDragOverSide(null); onModuleDragEnd?.(); }}
+                    >
+                      {dragId && dragId !== module.id && dragOverId === module.id && dragOverSide === 'left' && (
+                        <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brand.color }} />
+                      )}
+                      {dragId && dragId !== module.id && dragOverId === module.id && dragOverSide === 'right' && (
+                        <div className="absolute -right-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brand.color }} />
+                      )}
+                      <ModuleCard
+                        module={module}
+                        brandColor={brand.color}
+                        sections={sections}
+                        currentSectionId={section.id}
+                        onUpdate={updateModule}
+                        onDelete={() => deleteModule(module.id)}
+                        onDuplicate={() => duplicateModule(module)}
+                        onMoveTo={targetId => moveModuleTo(module, targetId)}
+                        onCopyTo={targetId => copyModuleTo(module, targetId)}
+                        isDragging={dragId === module.id}
+                        defaultEditing={newModuleId === module.id}
+                        dragHandleProps={{
+                          draggable: true,
+                          onDragStart: (e: React.DragEvent) => onDragStart(e, module),
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
 
-              <InsertSeparator
-                color={brand.color}
-                onClick={() => { setInsertAfterIdx(idx); setShowPicker(true); }}
-                isDropTarget={!!dragId && dragOverId === modules[idx + 1]?.id && dragId !== modules[idx + 1]?.id}
-              />
-            </React.Fragment>
-          ))}
+                <InsertSeparator
+                  color={brand.color}
+                  onClick={() => { setInsertAfterIdx(lastIdx); setShowPicker(true); }}
+                  isDropTarget={!!dragId && dragOverId === modules[lastIdx + 1]?.id && !dragOverSide && dragId !== modules[lastIdx + 1]?.id}
+                />
+              </React.Fragment>
+            );
+          })}
         </div>
 
         {/* Add module — only shown when page has modules */}
