@@ -527,7 +527,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
             >
               {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
-                <div className="absolute -left-4 top-0 bottom-0 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                <div className="absolute -left-4 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
               )}
               <DropSwatch item={item} brandColor={brandColor}
                 onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
@@ -542,7 +542,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
             >
               {dragOverIdx === items.length && (
-                <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
               )}
             </div>
           )}
@@ -611,7 +611,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
             >
               {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
-                <div className="absolute left-2 right-2 -top-0.5 h-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                <div className="absolute left-2 right-2 -top-0.5 h-0.5 rounded-full" style={{ background: brandColor }} />
               )}
               <ListSwatch item={item} brandColor={brandColor}
                 onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
@@ -626,7 +626,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
             >
               {dragOverIdx === items.length && (
-                <div className="absolute left-2 right-2 top-0 h-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+                <div className="absolute left-2 right-2 top-0 h-0.5 rounded-full" style={{ background: brandColor }} />
               )}
             </div>
           )}
@@ -696,7 +696,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
             style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
           >
             {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
-              <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
             )}
             <ColorSwatch item={item} brandColor={brandColor}
               onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
@@ -711,7 +711,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
             onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
           >
             {dragOverIdx === items.length && (
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: brandColor }} />
             )}
           </div>
         )}

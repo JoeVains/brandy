@@ -3,6 +3,7 @@
 import { Brand, Section, Module, ColorItem } from '@/types';
 import { useEffect } from 'react';
 import { contrastRatio } from '@/lib/colorUtils';
+import { textModuleToHtml } from '@/lib/textContent';
 
 interface Props {
   brand: Brand;
@@ -43,7 +44,8 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
       <div style={{ padding: '14px 16px' }}>
 
         {module.type === 'text' && (
-          <p style={{ fontSize: 12, color: '#374151', margin: 0, whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{module.content}</p>
+          <div style={{ fontSize: 12, color: '#374151', margin: 0, lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: textModuleToHtml(module.content) }} />
         )}
 
         {module.type === 'colors' && (
