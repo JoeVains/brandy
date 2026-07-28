@@ -462,6 +462,66 @@ export default function BrandyApp() {
     if (activeSectionId === section.id) setActiveSectionId(section.parentId);
   }
 
+  function renderSectionsGrid(parentId: string | null, showEmptyState = false) {
+    if (!activeBrand) return null;
+    const children = brandSections.filter(s => s.parentId === parentId);
+    const sorted = children.sort((a, b) => a.order - b.order);
+    if (sorted.length === 0) {
+      if (!showEmptyState) return null;
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400 dark:text-gray-500">
+          <FolderOpen size={36} />
+          <p className="text-sm">Aucune rubrique. Créez-en une dans la sidebar.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {sorted.map(section => {
+          const childCount = brandSections.filter(s => s.parentId === section.id).length;
+          return (
+            <div
+              key={section.id}
+              onClick={() => setActiveSectionId(section.id)}
+              className="group relative flex items-center gap-3 p-4 border rounded-xl bg-card text-left hover:shadow-md transition-all cursor-pointer"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${section.emoji ? 'text-lg' : 'text-white'}`}
+                style={{ background: section.emoji ? 'var(--background)' : activeBrand.color }}>
+                {section.emoji || section.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{section.name}</p>
+                {childCount > 0 && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    {childCount} sous-rubrique{childCount > 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={e => { e.stopPropagation(); setEditingSectionId(section.id); setEditingSectionAnchorRect(e.currentTarget.getBoundingClientRect()); }}
+                className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                title="Éditer la rubrique"
+              >
+                <Pencil size={13} />
+              </button>
+              {editingSectionId === section.id && editingSectionAnchorRect && (
+                <SectionEditPopover
+                  section={section}
+                  anchorRect={editingSectionAnchorRect}
+                  onSaveEmoji={emoji => updateSectionEmoji(section.id, emoji)}
+                  onDuplicate={() => duplicateSection(section.id)}
+                  onDelete={() => deleteSectionFromGrid(section)}
+                  onClose={() => { setEditingSectionId(null); setEditingSectionAnchorRect(null); }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   async function enableShare(id: string) {
     const res = await fetch(`/api/brands/${id}/share`, { method: 'POST' });
     const updated = await res.json();
@@ -721,7 +781,7 @@ export default function BrandyApp() {
             />
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Content below the header */}
-              {activeSection && brandSections.filter(s => s.parentId === activeSection.id).length === 0 ? (
+              {activeSection ? (
                 <PageView
                   key={pageViewKey}
                   brand={activeBrand}
@@ -730,75 +790,16 @@ export default function BrandyApp() {
                   onModuleDragStart={setDraggingModule}
                   onModuleDragEnd={() => setDraggingModule(null)}
                   brandHeader={<BrandHeader brand={activeBrand} onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))} />}
+                  subsections={renderSectionsGrid(activeSection.id)}
                 />
               ) : (
                 <div className="flex-1 overflow-y-auto">
                   <BrandHeader brand={activeBrand} onUpdate={updated => setBrands(prev => prev.map(b => b.id === updated.id ? updated : b))} />
                   <div className="max-w-4xl mx-auto px-8 py-8">
                     <div className="pb-2 border-b mb-6" style={{ borderColor: 'var(--border)' }}>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        {activeSection ? activeSection.name : 'Rubriques'}
-                      </h1>
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Rubriques</h1>
                     </div>
-                    {(() => {
-                      const children = activeSection
-                        ? brandSections.filter(s => s.parentId === activeSection.id)
-                        : brandSections.filter(s => s.parentId === null);
-                      const sorted = children.sort((a, b) => a.order - b.order);
-                      if (sorted.length === 0) {
-                        return (
-                          <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400 dark:text-gray-500">
-                            <FolderOpen size={36} />
-                            <p className="text-sm">Aucune rubrique. Créez-en une dans la sidebar.</p>
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          {sorted.map(section => {
-                            const childCount = brandSections.filter(s => s.parentId === section.id).length;
-                            return (
-                              <div
-                                key={section.id}
-                                onClick={() => setActiveSectionId(section.id)}
-                                className="group relative flex items-center gap-3 p-4 border rounded-xl bg-card text-left hover:shadow-md transition-all cursor-pointer"
-                                style={{ borderColor: 'var(--border)' }}
-                              >
-                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${section.emoji ? 'text-lg' : 'text-white'}`}
-                                  style={{ background: section.emoji ? 'var(--background)' : activeBrand.color }}>
-                                  {section.emoji || section.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{section.name}</p>
-                                  {childCount > 0 && (
-                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                      {childCount} sous-rubrique{childCount > 1 ? 's' : ''}
-                                    </p>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={e => { e.stopPropagation(); setEditingSectionId(section.id); setEditingSectionAnchorRect(e.currentTarget.getBoundingClientRect()); }}
-                                  className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                                  title="Éditer la rubrique"
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                                {editingSectionId === section.id && editingSectionAnchorRect && (
-                                  <SectionEditPopover
-                                    section={section}
-                                    anchorRect={editingSectionAnchorRect}
-                                    onSaveEmoji={emoji => updateSectionEmoji(section.id, emoji)}
-                                    onDuplicate={() => duplicateSection(section.id)}
-                                    onDelete={() => deleteSectionFromGrid(section)}
-                                    onClose={() => { setEditingSectionId(null); setEditingSectionAnchorRect(null); }}
-                                  />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
+                    {renderSectionsGrid(null, true)}
                   </div>
                 </div>
               )}

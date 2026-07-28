@@ -26,6 +26,7 @@ interface Props {
   onModuleDragStart?: (module: Module) => void;
   onModuleDragEnd?: () => void;
   brandHeader?: React.ReactNode;
+  subsections?: React.ReactNode;
 }
 
 const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
@@ -361,7 +362,7 @@ function InsertSeparator({ color, onClick, isDropTarget }: { color: string; onCl
   );
 }
 
-export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd, brandHeader }: Props) {
+export default function PageView({ brand, section, sections, onModuleDragStart, onModuleDragEnd, brandHeader, subsections }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
   const [newModuleId, setNewModuleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -568,6 +569,9 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
         <div className="pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{section.name}</h1>
         </div>
+
+        {/* Sous-rubriques */}
+        {subsections && <div>{subsections}</div>}
 
         {/* Modules */}
         {modules.length === 0 && !showPicker && (
