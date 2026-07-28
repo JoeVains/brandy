@@ -29,7 +29,10 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
     return (
       <div style={{ marginBottom: 8 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', margin: 0 }}>{module.content || module.title}</p>
-        {module.description && <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>{module.description}</p>}
+        {module.description && (
+          <div style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}
+            dangerouslySetInnerHTML={{ __html: textModuleToHtml(module.description) }} />
+        )}
       </div>
     );
   }

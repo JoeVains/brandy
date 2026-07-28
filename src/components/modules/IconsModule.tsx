@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { Module } from '@/types';
 import { Plus, Trash2, Download, Check, X, Search } from 'lucide-react';
+import ModuleDescription from './ModuleDescription';
 
 interface Props {
   module: Module;
@@ -20,25 +21,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [descDraft, setDescDraft] = useState(module.iconDescription ?? '');
-  const [descFocused, setDescFocused] = useState(false);
-  const prevEditing = useRef(isEditing);
   const items = module.iconItems ?? [];
   const filtered = search.trim() ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : items;
-
-  useEffect(() => {
-    if (prevEditing.current && !isEditing) {
-      const trimmed = descDraft.trim();
-      if (trimmed !== (module.iconDescription ?? '')) {
-        fetch(`/api/modules/${module.id}`, {
-          method: 'PATCH',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ iconDescription: trimmed }),
-        }).then(r => r.json()).then(onUpdate);
-      }
-    }
-    prevEditing.current = isEditing;
-  }, [isEditing]);
 
   async function uploadIcons(files: FileList) {
     let updated = module;
@@ -134,22 +118,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   return (
     <div>
       {/* Description */}
-      {isEditing ? (
-        <textarea
-          className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
-          style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
-          rows={2}
-          placeholder="Ajouter une description…"
-          value={descDraft}
-          onChange={e => setDescDraft(e.target.value)}
-          onFocus={() => setDescFocused(true)}
-          onBlur={() => setDescFocused(false)}
-          onDragStart={e => e.stopPropagation()}
-          onMouseDown={e => e.stopPropagation()}
-        />
-      ) : module.iconDescription ? (
-        <p className="text-sm text-muted mb-4">{module.iconDescription}</p>
-      ) : null}
+      <ModuleDescription
+        moduleId={module.id}
+        brandId={module.brandId}
+        field="iconDescription"
+        value={module.iconDescription}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, iconDescription: desc })}
+      />
 
       {/* Search */}
       {items.length > 0 && (

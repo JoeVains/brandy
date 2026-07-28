@@ -354,6 +354,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const descriptionBlock = (
     <ModuleDescription
       moduleId={module.id}
+        brandId={module.brandId}
       value={module.description}
       isEditing={isEditing}
       onUpdate={desc => onUpdate({ ...module, description: desc })}

@@ -42,6 +42,7 @@ export default function HeadingModule({ module, onUpdate, isEditing }: Props) {
       )}
       <ModuleDescription
         moduleId={module.id}
+        brandId={module.brandId}
         value={module.description}
         isEditing={isEditing}
         onUpdate={desc => onUpdate({ ...module, description: desc })}

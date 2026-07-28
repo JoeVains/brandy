@@ -55,6 +55,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
     <div>
       <ModuleDescription
         moduleId={module.id}
+        brandId={module.brandId}
         value={module.description}
         isEditing={isEditing}
         onUpdate={desc => onUpdate({ ...module, description: desc })}

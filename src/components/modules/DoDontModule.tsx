@@ -283,6 +283,7 @@ export default function DoDontModule({ module, brandColor, onUpdate, isEditing }
       )}
       <ModuleDescription
         moduleId={module.id}
+        brandId={module.brandId}
         value={module.description}
         isEditing={isEditing}
         onUpdate={desc => onUpdate({ ...module, description: desc })}

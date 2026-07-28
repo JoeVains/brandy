@@ -72,6 +72,7 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
     <div>
       <ModuleDescription
         moduleId={module.id}
+        brandId={module.brandId}
         value={module.description}
         isEditing={isEditing}
         onUpdate={desc => onUpdate({ ...module, description: desc })}

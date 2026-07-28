@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Module, ColorItem } from '@/types';
 import { suggestColorName } from '@/lib/colorNames';
 import { hexToRgb, rgbToHsl } from '@/lib/colorUtils';
 import { Plus, Trash2, Check, X, Pencil, Copy, Download } from 'lucide-react';
 import { randomUUID } from 'crypto';
+import ModuleDescription from './ModuleDescription';
 
 interface Props {
   module: Module;
@@ -368,21 +369,8 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
 
   const items = module.colorItems ?? [];
   const colorMode = module.colorMode ?? 'cards';
-  const [descDraft, setDescDraft] = useState(module.colorDescription ?? '');
-  const [descFocused, setDescFocused] = useState(false);
-  const prevEditing = useRef(isEditing);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (prevEditing.current && !isEditing) {
-      const trimmed = descDraft.trim();
-      if (trimmed !== (module.colorDescription ?? '')) {
-        patch({ colorDescription: trimmed });
-      }
-    }
-    prevEditing.current = isEditing;
-  }, [isEditing]);
 
   async function patch(data: object) {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -498,22 +486,14 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
   if (colorMode === 'drops') {
     return (
       <div>
-        {isEditing ? (
-          <textarea
-            className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
-            style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
-            rows={2}
-            placeholder="Ajouter une description…"
-            value={descDraft}
-            onChange={e => setDescDraft(e.target.value)}
-            onFocus={() => setDescFocused(true)}
-            onBlur={() => setDescFocused(false)}
-            onDragStart={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-          />
-        ) : module.colorDescription ? (
-          <p className="text-sm text-muted mb-4">{module.colorDescription}</p>
-        ) : null}
+        <ModuleDescription
+          moduleId={module.id}
+          brandId={module.brandId}
+          field="colorDescription"
+          value={module.colorDescription}
+          isEditing={isEditing}
+          onUpdate={desc => onUpdate({ ...module, colorDescription: desc })}
+        />
         <ExportButtons />
         {isEditing && <ModeToggle />}
         <div className="flex flex-wrap gap-8">
@@ -582,22 +562,14 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
   if (colorMode === 'list') {
     return (
       <div>
-        {isEditing ? (
-          <textarea
-            className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
-            style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
-            rows={2}
-            placeholder="Ajouter une description…"
-            value={descDraft}
-            onChange={e => setDescDraft(e.target.value)}
-            onFocus={() => setDescFocused(true)}
-            onBlur={() => setDescFocused(false)}
-            onDragStart={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-          />
-        ) : module.colorDescription ? (
-          <p className="text-sm text-muted mb-4">{module.colorDescription}</p>
-        ) : null}
+        <ModuleDescription
+          moduleId={module.id}
+          brandId={module.brandId}
+          field="colorDescription"
+          value={module.colorDescription}
+          isEditing={isEditing}
+          onUpdate={desc => onUpdate({ ...module, colorDescription: desc })}
+        />
         <ExportButtons />
         {isEditing && <ModeToggle />}
         <div className="space-y-1">
@@ -668,22 +640,14 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
   return (
     <div>
       <ExportButtons />
-      {isEditing ? (
-        <textarea
-          className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
-          style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
-          rows={2}
-          placeholder="Ajouter une description…"
-          value={descDraft}
-          onChange={e => setDescDraft(e.target.value)}
-          onFocus={() => setDescFocused(true)}
-          onBlur={() => setDescFocused(false)}
-          onDragStart={e => e.stopPropagation()}
-          onMouseDown={e => e.stopPropagation()}
+      <ModuleDescription
+          moduleId={module.id}
+          brandId={module.brandId}
+          field="colorDescription"
+          value={module.colorDescription}
+          isEditing={isEditing}
+          onUpdate={desc => onUpdate({ ...module, colorDescription: desc })}
         />
-      ) : module.colorDescription ? (
-        <p className="text-sm text-muted mb-4">{module.colorDescription}</p>
-      ) : null}
       {isEditing && <ModeToggle />}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>
         {items.map((item, idx) => (

@@ -617,6 +617,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
   const Description = (
     <ModuleDescription
       moduleId={module.id}
+        brandId={module.brandId}
       value={module.description}
       isEditing={isEditing}
       onUpdate={desc => onUpdate({ ...module, description: desc })}
