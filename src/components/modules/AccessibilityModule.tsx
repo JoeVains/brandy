@@ -66,7 +66,7 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
   const seen = new Map<string, ColorItem>();
   (source ? [source] : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
   const colors = [...seen.values()];
-  const sourceLabel = source ? (source.title || 'Couleurs') : 'Toutes les couleurs de la marque';
+  const sourceLabel = source ? (source.title || 'Couleurs') : 'Toutes les couleurs';
 
   return (
     <div>
@@ -98,7 +98,7 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
                   <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                     <Palette size={14} />
                   </span>
-                  <span className="flex-1 text-left">Toutes les couleurs de la marque</span>
+                  <span className="flex-1 text-left">Toutes les couleurs</span>
                   {!module.accessibilitySourceModuleId && <Check size={13} className="flex-shrink-0" style={{ color: 'var(--accent)' }} />}
                 </button>
 
