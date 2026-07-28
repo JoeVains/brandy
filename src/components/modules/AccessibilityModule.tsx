@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Module, ColorItem } from '@/types';
 import { contrastRatio } from '@/lib/colorUtils';
+import { Palette, Check, ChevronDown } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -22,6 +23,19 @@ function ratioLevel(ratio: number): { label: string; color: string } {
 export default function AccessibilityModule({ module, onUpdate, isEditing }: Props) {
   const [colorModules, setColorModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sourceMenuOpen, setSourceMenuOpen] = useState(false);
+  const sourceMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sourceMenuOpen) return;
+    function handler(e: MouseEvent) {
+      if (sourceMenuRef.current && !sourceMenuRef.current.contains(e.target as Node)) {
+        setSourceMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sourceMenuOpen]);
 
   useEffect(() => {
     fetch(`/api/modules?brandId=${module.brandId}`)
@@ -52,6 +66,7 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
   const seen = new Map<string, ColorItem>();
   (source ? [source] : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
   const colors = [...seen.values()];
+  const sourceLabel = source ? (source.title || 'Couleurs') : 'Toutes les couleurs de la marque';
 
   return (
     <div>
@@ -62,20 +77,49 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
         onUpdate={desc => onUpdate({ ...module, description: desc })}
       />
 
-      {isEditing && colorModules.length > 1 && (
+      {isEditing && colorModules.length > 0 && (
         <div className="flex items-center gap-2 mb-4">
           <label className="text-xs text-gray-500 dark:text-gray-400">Couleurs de référence :</label>
-          <select
-            className="text-xs border rounded-lg px-2 py-1 outline-none bg-transparent"
-            style={{ borderColor: 'var(--border)' }}
-            value={module.accessibilitySourceModuleId ?? ''}
-            onChange={e => setSource(e.target.value)}
-          >
-            <option value="">Toutes les couleurs de la marque</option>
-            {colorModules.map(m => (
-              <option key={m.id} value={m.id}>{m.title || 'Couleurs'}</option>
-            ))}
-          </select>
+          <div className="relative" ref={sourceMenuRef}>
+            <button
+              onClick={() => setSourceMenuOpen(o => !o)}
+              className="flex items-center gap-2 text-xs border rounded-lg pl-2.5 pr-2 py-1.5 outline-none text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              {sourceLabel}
+              <ChevronDown size={12} className="text-gray-400 dark:text-gray-500" />
+            </button>
+            {sourceMenuOpen && (
+              <div className="absolute left-0 top-full mt-2 rounded-2xl border shadow-xl z-50 py-2 min-w-[220px] overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
+                <button
+                  onClick={() => { setSource(''); setSourceMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    <Palette size={14} />
+                  </span>
+                  <span className="flex-1 text-left">Toutes les couleurs de la marque</span>
+                  {!module.accessibilitySourceModuleId && <Check size={13} className="flex-shrink-0" style={{ color: 'var(--accent)' }} />}
+                </button>
+
+                <div className="h-px mx-3 my-1.5" style={{ background: 'var(--border)' }} />
+
+                {colorModules.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => { setSource(m.id); setSourceMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                      <Palette size={14} />
+                    </span>
+                    <span className="flex-1 text-left truncate">{m.title || 'Couleurs'}</span>
+                    {module.accessibilitySourceModuleId === m.id && <Check size={13} className="flex-shrink-0" style={{ color: 'var(--accent)' }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
