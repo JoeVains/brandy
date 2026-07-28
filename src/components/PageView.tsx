@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, ModuleType, Section, Brand } from '@/types';
-import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight, Paintbrush } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight, Paintbrush, Columns2 } from 'lucide-react';
 import ColorsModule from './modules/ColorsModule';
 import TypographyModule from './modules/TypographyModule';
 import TextModule from './modules/TextModule';
@@ -146,6 +146,19 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             )}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {isEditing && module.layoutWidth === 'half' && (
+              <button
+                onClick={async () => {
+                  const res = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ layoutWidth: null }) });
+                  onUpdate(await res.json());
+                }}
+                className="p-1.5 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Repasser en pleine largeur"
+                style={{ color: brandColor }}
+              >
+                <Columns2 size={14} />
+              </button>
+            )}
             {isEditing && (
               <div className="relative" ref={bgPaletteRef}>
                 <button
