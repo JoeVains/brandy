@@ -99,7 +99,7 @@ export interface Module {
   // shared description (heading, typography, attachments)
   description?: string;
   // colors
-  colorMode?: 'cards' | 'drops';
+  colorMode?: 'cards' | 'drops' | 'list';
   colorDescription?: string;
   colorItems?: ColorItem[];
   // typography
@@ -123,7 +123,7 @@ export interface Module {
   spacingBase?: number;
   spacingSteps?: number[];
   // gradients
-  gradientMode?: 'cards' | 'drops';
+  gradientMode?: 'cards' | 'drops' | 'list';
   gradientItems?: GradientItem[];
   // video
   videoMode?: 'embed' | 'upload';

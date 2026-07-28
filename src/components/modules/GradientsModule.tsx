@@ -122,7 +122,7 @@ function gradientToCss(type: string, angle: number, stops: GradientStop[]): stri
     : `linear-gradient(${angle}deg, ${s})`;
 }
 
-function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEditing, onDragStart, drops }: {
+function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEditing, onDragStart, drops, list }: {
   item: GradientItem;
   brandColor: string;
   onSave: (updated: GradientItem) => void;
@@ -131,6 +131,7 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
   isEditing?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   drops?: boolean;
+  list?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -280,6 +281,38 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
     );
   }
 
+  if (list) {
+    return (
+      <div className="flex items-center gap-3 py-2 px-2 rounded-lg group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+        <div className="w-10 h-10 rounded-lg flex-shrink-0 transition-transform duration-200 hover:scale-105"
+          style={{ background: savedCss, cursor: isEditing ? 'grab' : 'default' }}
+          draggable={isEditing} onDragStart={onDragStart} />
+        <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+          <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate flex-shrink-0 w-32">{item.name}</p>
+          <button onClick={copy}
+            className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex-1 justify-end min-w-0">
+            <span className="font-mono text-[10px] truncate">{copied ? '✓ copié' : savedCss}</span>
+            <Copy size={9} className="flex-shrink-0 opacity-0 group-hover:opacity-50" />
+          </button>
+        </div>
+        {isEditing && (
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <button onClick={() => setEditing(true)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <Pencil size={12} />
+            </button>
+            <button onClick={onDuplicate} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <Copy size={12} />
+            </button>
+            <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500">
+              <Trash2 size={12} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (drops) {
     return (
       <div className="flex flex-col items-center gap-2 group">
@@ -353,7 +386,7 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
   const items = module.gradientItems ?? [];
   const gradientMode = module.gradientMode ?? 'cards';
 
-  async function setMode(newMode: 'cards' | 'drops') {
+  async function setMode(newMode: 'cards' | 'drops' | 'list') {
     const res = await fetch(`/api/modules/${module.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -373,6 +406,11 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
         className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
         style={gradientMode === 'drops' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
         Drops
+      </button>
+      <button onClick={() => setMode('list')}
+        className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+        style={gradientMode === 'list' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
+        List
       </button>
     </div>
   );
@@ -450,6 +488,16 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
     const reordered = [...items];
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(dragIdx < idx ? idx - 1 : idx, 0, moved);
+    setDragIdx(null);
+    setDragOverIdx(null);
+    await patch(reordered);
+  }
+
+  async function onDropAtEnd() {
+    if (dragIdx === null || dragIdx === items.length - 1) { setDragIdx(null); setDragOverIdx(null); return; }
+    const reordered = [...items];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.push(moved);
     setDragIdx(null);
     setDragOverIdx(null);
     await patch(reordered);
@@ -623,6 +671,55 @@ export default function GradientsModule({ module, brandColor, onUpdate, isEditin
           )}
         </div>
         {AddForm && <div className="mt-6 max-w-xs">{AddForm}</div>}
+      </div>
+    );
+  }
+
+  if (gradientMode === 'list') {
+    return (
+      <div>
+        {Description}
+        {Toolbar}
+        <div className="space-y-1">
+          {items.map((item, idx) => (
+            <div key={item.id}
+              data-item-id={item.id}
+              onDragOver={e => onDragOver(e, idx)}
+              onDrop={() => onDrop(idx)}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+              className="transition-opacity relative"
+              style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
+            >
+              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                <div className="absolute left-2 right-2 -top-0.5 h-0.5 rounded-full" style={{ background: brandColor }} />
+              )}
+              <GradientSwatch item={item} brandColor={brandColor}
+                onSave={updateItem} onDelete={() => deleteItem(item.id)} onDuplicate={() => duplicateItem(item.id)} isEditing={isEditing}
+                onDragStart={e => onDragStart(e, idx)} list />
+            </div>
+          ))}
+          {isEditing && dragIdx !== null && (
+            <div
+              className="relative min-h-[8px]"
+              onDragOver={e => { e.preventDefault(); setDragOverIdx(items.length); }}
+              onDrop={onDropAtEnd}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+            >
+              {dragOverIdx === items.length && (
+                <div className="absolute left-2 right-2 top-0 h-0.5 rounded-full" style={{ background: brandColor }} />
+              )}
+            </div>
+          )}
+          {isEditing && !showAdd && (
+            <button onClick={() => setShowAdd(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+              style={{ borderColor: 'var(--border)' }}>
+              <Plus size={16} />
+              <span className="text-xs">Ajouter un dégradé</span>
+            </button>
+          )}
+        </div>
+        {AddForm && <div className="mt-4 max-w-xs">{AddForm}</div>}
       </div>
     );
   }

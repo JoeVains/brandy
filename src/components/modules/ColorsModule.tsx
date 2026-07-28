@@ -246,6 +246,119 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   );
 }
 
+function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
+  item: ColorItem;
+  brandColor: string;
+  onSave: (updated: ColorItem) => void;
+  onDelete: () => void;
+  isEditing?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(item.name);
+  const [hexInput, setHexInput] = useState(item.value);
+  const [colorValue, setColorValue] = useState(item.value);
+  const [nameTouched, setNameTouched] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const rgb = hexToRgb(item.value);
+  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
+
+  function applyHex(hex: string) {
+    const full = hex.startsWith('#') ? hex : '#' + hex;
+    setHexInput(full);
+    if (full.replace('#', '').length === 6) {
+      setColorValue(full);
+      if (!nameTouched) setName(suggestColorName(full));
+    }
+  }
+
+  function copyText(text: string, key: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 1200);
+  }
+
+  function save() {
+    onSave({ ...item, name, value: colorValue });
+    setEditing(false);
+    setNameTouched(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-start gap-3 p-3 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
+        <div className="w-12 h-12 rounded-lg relative flex-shrink-0" style={{ background: colorValue }}>
+          <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-lg"
+            value={colorValue} onChange={e => applyHex(e.target.value)} />
+        </div>
+        <div className="flex-1 space-y-2 min-w-0">
+          <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+            value={hexInput} onChange={e => applyHex(e.target.value)} placeholder="#000000" />
+          <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+            value={name} onChange={e => { setName(e.target.value); setNameTouched(true); }} placeholder="Nom de la couleur" />
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button onClick={save} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+              <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
+            </button>
+            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }}
+              className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+              <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const rows = [
+    { label: 'HEX', text: item.value.toUpperCase(), key: 'hex' },
+    { label: 'RVB', text: rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '—', key: 'rgb' },
+    { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—', key: 'hsl' },
+  ];
+
+  return (
+    <div className="flex items-center gap-3 py-2 px-2 rounded-lg group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+      <div className="relative flex-shrink-0">
+        <div className="w-10 h-10 rounded-lg transition-transform duration-200 hover:scale-105" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
+          draggable={isEditing}
+          onDragStart={e => {
+            const rowEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
+            if (rowEl) {
+              const rect = rowEl.getBoundingClientRect();
+              e.dataTransfer.setDragImage(rowEl, e.clientX - rect.left, e.clientY - rect.top);
+            }
+            onDragStart?.(e);
+          }} />
+      </div>
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate flex-shrink-0 w-32">{item.name}</p>
+        <div className="flex items-center gap-4 flex-1 justify-end">
+          {rows.map(row => (
+            <button key={row.key} onClick={() => copyText(row.text, row.key)}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
+              <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px]">{row.label}</span>
+              <span className="font-mono whitespace-nowrap">{copied === row.key ? '✓ copié' : row.text}</span>
+              <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
+            </button>
+          ))}
+        </div>
+      </div>
+      {isEditing && (
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <Pencil size={12} />
+          </button>
+          <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500">
+            <Trash2 size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ColorsModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [newHex, setNewHex] = useState('#000000');
@@ -280,7 +393,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
     onUpdate(await res.json());
   }
 
-  async function setMode(newMode: 'cards' | 'drops') {
+  async function setMode(newMode: 'cards' | 'drops' | 'list') {
     await patch({ colorMode: newMode });
   }
 
@@ -374,6 +487,11 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
         style={colorMode === 'drops' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
         Drops
       </button>
+      <button onClick={() => setMode('list')}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+        style={colorMode === 'list' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
+        List
+      </button>
     </div>
   );
 
@@ -454,6 +572,91 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               className="w-28 h-28 border-2 border-dashed rounded-full flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
               style={{ borderColor: 'var(--border)' }}>
               <Plus size={18} />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  if (colorMode === 'list') {
+    return (
+      <div>
+        {isEditing ? (
+          <textarea
+            className="w-full text-sm text-muted resize-none outline-none rounded-lg px-3 py-2 mb-4 transition-colors"
+            style={descFocused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}
+            rows={2}
+            placeholder="Ajouter une description…"
+            value={descDraft}
+            onChange={e => setDescDraft(e.target.value)}
+            onFocus={() => setDescFocused(true)}
+            onBlur={() => setDescFocused(false)}
+            onDragStart={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+          />
+        ) : module.colorDescription ? (
+          <p className="text-sm text-muted mb-4">{module.colorDescription}</p>
+        ) : null}
+        <ExportButtons />
+        {isEditing && <ModeToggle />}
+        <div className="space-y-1">
+          {items.map((item, idx) => (
+            <div key={item.id}
+              data-item-id={item.id}
+              onDragOver={e => onDragOver(e, idx)}
+              onDrop={() => onDrop(idx)}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+              className="transition-opacity relative"
+              style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
+            >
+              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                <div className="absolute left-2 right-2 -top-0.5 h-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              )}
+              <ListSwatch item={item} brandColor={brandColor}
+                onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
+                onDragStart={e => onDragStart(e, idx)} />
+            </div>
+          ))}
+          {isEditing && dragIdx !== null && (
+            <div
+              className="relative min-h-[8px]"
+              onDragOver={e => { e.preventDefault(); setDragOverIdx(items.length); }}
+              onDrop={onDropAtEnd}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+            >
+              {dragOverIdx === items.length && (
+                <div className="absolute left-2 right-2 top-0 h-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              )}
+            </div>
+          )}
+          {isEditing && showAdd ? (
+            <div className="flex items-start gap-3 p-3 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
+              <div className="w-12 h-12 rounded-lg relative flex-shrink-0" style={{ background: newHex }}>
+                <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-lg"
+                  value={newHex} onChange={e => applyNew(e.target.value)} />
+              </div>
+              <div className="flex-1 space-y-2 min-w-0">
+                <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                  value={newHexInput} onChange={e => applyNew(e.target.value)} placeholder="#000000" />
+                <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                  value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button onClick={addColor} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
+                    <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
+                  </button>
+                  <button onClick={() => setShowAdd(false)} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+                    <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : isEditing ? (
+            <button onClick={() => setShowAdd(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+              style={{ borderColor: 'var(--border)' }}>
+              <Plus size={16} />
+              <span className="text-xs">Ajouter une couleur</span>
             </button>
           ) : null}
         </div>
