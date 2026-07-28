@@ -284,8 +284,8 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
   if (list) {
     return (
       <div className="flex items-center gap-3 py-2 px-2 rounded-lg group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
-        <div className="w-10 h-10 rounded-lg flex-shrink-0 transition-transform duration-200 hover:scale-105"
-          style={{ background: savedCss, cursor: isEditing ? 'grab' : 'default' }}
+        <div className="w-10 h-10 rounded-lg border flex-shrink-0 transition-transform duration-200 hover:scale-105"
+          style={{ background: savedCss, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'default' }}
           draggable={isEditing} onDragStart={onDragStart} />
         <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
           <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate flex-shrink-0 w-32">{item.name}</p>
@@ -316,8 +316,8 @@ function GradientSwatch({ item, brandColor, onSave, onDelete, onDuplicate, isEdi
   if (drops) {
     return (
       <div className="flex flex-col items-center gap-2 group">
-        <div className="w-28 h-28 rounded-full relative transition-all duration-200 hover:scale-105 hover:shadow-md"
-          style={{ background: savedCss, cursor: isEditing ? 'grab' : 'default' }}
+        <div className="w-28 h-28 rounded-full border relative transition-all duration-200 hover:scale-105 hover:shadow-md"
+          style={{ background: savedCss, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'default' }}
           draggable={isEditing} onDragStart={onDragStart}>
           {isEditing && (
             <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-full">

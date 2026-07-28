@@ -155,8 +155,8 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
                     return (
                       <td key={col.id}>
                         <div
-                          className="w-24 h-16 rounded-lg flex flex-col items-center justify-center gap-0.5"
-                          style={{ background: row.value, color: col.value }}
+                          className="w-24 h-16 rounded-lg border flex flex-col items-center justify-center gap-0.5"
+                          style={{ background: row.value, color: col.value, borderColor: 'var(--border)' }}
                           title={`${row.name} / ${col.name}`}
                         >
                           <span className="text-xs font-semibold" style={{ color: col.value }}>Aa</span>

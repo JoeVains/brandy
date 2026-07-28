@@ -213,7 +213,7 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
                       const level = ratio !== null ? ratioLevel(ratio) : null;
                       return (
                         <td key={col.id} style={{ textAlign: 'center' }}>
-                          <div style={{ width: 56, height: 40, borderRadius: 6, background: row.value, color: col.value, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 56, height: 40, borderRadius: 6, border: '1px solid #e5e7eb', background: row.value, color: col.value, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <span style={{ fontSize: 10, fontWeight: 700 }}>Aa</span>
                             {ratio !== null && <span style={{ fontSize: 7, fontFamily: 'monospace' }}>{ratio.toFixed(2)}</span>}
                           </div>
