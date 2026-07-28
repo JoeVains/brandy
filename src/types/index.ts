@@ -87,7 +87,7 @@ export interface DoDontItem {
   fit?: 'cover' | 'contain';
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'video' | 'audio' | 'divider';
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'video' | 'audio' | 'divider' | 'accessibility';
 
 export interface Module {
   id: string;
@@ -125,6 +125,8 @@ export interface Module {
   // gradients
   gradientMode?: 'cards' | 'drops' | 'list';
   gradientItems?: GradientItem[];
+  // accessibility
+  accessibilitySourceModuleId?: string;
   // video
   videoMode?: 'embed' | 'upload';
   videoUrl?: string;

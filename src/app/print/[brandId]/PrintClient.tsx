@@ -1,7 +1,8 @@
 'use client';
 
-import { Brand, Section, Module } from '@/types';
+import { Brand, Section, Module, ColorItem } from '@/types';
 import { useEffect } from 'react';
+import { contrastRatio } from '@/lib/colorUtils';
 
 interface Props {
   brand: Brand;
@@ -9,7 +10,14 @@ interface Props {
   modulesMap: Record<string, Module[]>;
 }
 
-function ModulePrint({ module, brandColor }: { module: Module; brandColor: string }) {
+function ratioLevel(ratio: number): { label: string; color: string } {
+  if (ratio >= 7) return { label: 'AAA', color: '#16a34a' };
+  if (ratio >= 4.5) return { label: 'AA', color: '#16a34a' };
+  if (ratio >= 3) return { label: 'AA Large', color: '#d97706' };
+  return { label: 'Échec', color: '#dc2626' };
+}
+
+function ModulePrint({ module, brandColor, colorModules }: { module: Module; brandColor: string; colorModules: Module[] }) {
   const bg = module.backgroundColor ? `${module.backgroundColor}1a` : 'transparent';
 
   if (module.type === 'divider') {
@@ -175,6 +183,50 @@ function ModulePrint({ module, brandColor }: { module: Module; brandColor: strin
             {module.audioTitle || 'Audio'}
           </p>
         )}
+
+        {module.type === 'accessibility' && (() => {
+          const source = module.accessibilitySourceModuleId
+            ? colorModules.find(m => m.id === module.accessibilitySourceModuleId)
+            : null;
+          const seen = new Map<string, ColorItem>();
+          (source ? [source] : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
+          const allColors = [...seen.values()];
+          return allColors.length < 2 ? (
+            <p style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Pas assez de couleurs pour calculer les contrastes.</p>
+          ) : (
+            <table style={{ borderCollapse: 'separate', borderSpacing: 4 }}>
+              <thead>
+                <tr>
+                  <td />
+                  {allColors.map(col => (
+                    <td key={col.id} style={{ fontSize: 8, fontWeight: 600, color: '#6b7280', textAlign: 'center', padding: '0 4px 4px' }}>{col.name}</td>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {allColors.map(row => (
+                  <tr key={row.id}>
+                    <td style={{ fontSize: 8, fontWeight: 600, color: '#6b7280', textAlign: 'right', paddingRight: 6, whiteSpace: 'nowrap' }}>{row.name}</td>
+                    {allColors.map(col => {
+                      if (col.id === row.id) return <td key={col.id} style={{ width: 56, height: 40, borderRadius: 6, background: '#f9fafb' }} />;
+                      const ratio = contrastRatio(row.value, col.value);
+                      const level = ratio !== null ? ratioLevel(ratio) : null;
+                      return (
+                        <td key={col.id} style={{ textAlign: 'center' }}>
+                          <div style={{ width: 56, height: 40, borderRadius: 6, background: row.value, color: col.value, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700 }}>Aa</span>
+                            {ratio !== null && <span style={{ fontSize: 7, fontFamily: 'monospace' }}>{ratio.toFixed(2)}</span>}
+                          </div>
+                          {level && <p style={{ fontSize: 6.5, marginTop: 2, color: level.color, fontWeight: 600 }}>{level.label}</p>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
     </div>
   );
@@ -190,6 +242,8 @@ export default function PrintClient({ brand, sections, modulesMap }: Props) {
     const parent = sections.find(p => p.id === s.parentId);
     depthMap[s.id] = parent ? (depthMap[parent.id] ?? 0) + 1 : 0;
   }
+
+  const colorModules = Object.values(modulesMap).flat().filter(m => m.type === 'colors');
 
   return (
     <div style={{ background: 'white', minHeight: '100vh' }}>
@@ -230,7 +284,7 @@ export default function PrintClient({ brand, sections, modulesMap }: Props) {
             </div>
             <div>
               {modules.map(m => (
-                <ModulePrint key={m.id} module={m} brandColor={brand.color} />
+                <ModulePrint key={m.id} module={m} brandColor={brand.color} colorModules={colorModules} />
               ))}
             </div>
           </div>

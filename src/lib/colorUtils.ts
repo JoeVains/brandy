@@ -24,3 +24,22 @@ export function rgbToHsl(r: number, g: number, b: number): { h: number; s: numbe
   }
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
+
+function channelLuminance(c: number): number {
+  const cn = c / 255;
+  return cn <= 0.03928 ? cn / 12.92 : Math.pow((cn + 0.055) / 1.055, 2.4);
+}
+
+export function relativeLuminance(r: number, g: number, b: number): number {
+  return 0.2126 * channelLuminance(r) + 0.7152 * channelLuminance(g) + 0.0722 * channelLuminance(b);
+}
+
+export function contrastRatio(hex1: string, hex2: string): number | null {
+  const rgb1 = hexToRgb(hex1);
+  const rgb2 = hexToRgb(hex2);
+  if (!rgb1 || !rgb2) return null;
+  const l1 = relativeLuminance(rgb1.r, rgb1.g, rgb1.b);
+  const l2 = relativeLuminance(rgb2.r, rgb2.g, rgb2.b);
+  const [lighter, darker] = l1 >= l2 ? [l1, l2] : [l2, l1];
+  return (lighter + 0.05) / (darker + 0.05);
+}
