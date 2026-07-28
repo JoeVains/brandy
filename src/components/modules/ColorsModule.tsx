@@ -177,7 +177,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   if (editing) {
     return (
       <div className="flex flex-col items-center gap-3 p-4 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
-        <div className="w-20 h-20 rounded-full relative flex-shrink-0" style={{ background: colorValue }}>
+        <div className="w-20 h-20 rounded-full relative flex-shrink-0 border" style={{ background: colorValue, borderColor: 'var(--border)' }}>
           <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
             value={colorValue} onChange={e => applyHex(e.target.value)} />
         </div>
@@ -209,7 +209,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   return (
     <div className="flex flex-col items-center gap-3 text-center group">
       <div className="relative">
-        <div className="w-20 h-20 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
+        <div className="w-20 h-20 rounded-full border transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'default' }}
           draggable={isEditing}
           onDragStart={e => {
             const cardEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
@@ -288,7 +288,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   if (editing) {
     return (
       <div className="flex items-start gap-3 p-3 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
-        <div className="w-12 h-12 rounded-lg relative flex-shrink-0" style={{ background: colorValue }}>
+        <div className="w-12 h-12 rounded-lg relative flex-shrink-0 border" style={{ background: colorValue, borderColor: 'var(--border)' }}>
           <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-lg"
             value={colorValue} onChange={e => applyHex(e.target.value)} />
         </div>
@@ -320,7 +320,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   return (
     <div className="flex items-center gap-3 py-2 px-2 rounded-lg group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
       <div className="relative flex-shrink-0">
-        <div className="w-10 h-10 rounded-lg transition-transform duration-200 hover:scale-105" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
+        <div className="w-10 h-10 rounded-lg border transition-transform duration-200 hover:scale-105" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'default' }}
           draggable={isEditing}
           onDragStart={e => {
             const rowEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
@@ -548,7 +548,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
           )}
           {isEditing && showAdd ? (
             <div className="flex flex-col items-center gap-3 p-4 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
-              <div className="w-20 h-20 rounded-full relative" style={{ background: newHex }}>
+              <div className="w-20 h-20 rounded-full relative border" style={{ background: newHex, borderColor: 'var(--border)' }}>
                 <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
                   value={newHex} onChange={e => applyNew(e.target.value)} />
               </div>
@@ -632,7 +632,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
           )}
           {isEditing && showAdd ? (
             <div className="flex items-start gap-3 p-3 border rounded-xl" style={{ borderColor: 'var(--border)' }}>
-              <div className="w-12 h-12 rounded-lg relative flex-shrink-0" style={{ background: newHex }}>
+              <div className="w-12 h-12 rounded-lg relative flex-shrink-0 border" style={{ background: newHex, borderColor: 'var(--border)' }}>
                 <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-lg"
                   value={newHex} onChange={e => applyNew(e.target.value)} />
               </div>
