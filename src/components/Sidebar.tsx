@@ -171,7 +171,7 @@ function SectionNode({
           <span className="flex-1 truncate">{section.name}</span>
         )}
 
-        <div className={`flex items-center gap-0.5 ${editing ? 'flex' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} onClick={e => e.stopPropagation()}>
+        <div className={`flex items-center gap-1.5 ${editing ? 'flex' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} onClick={e => e.stopPropagation()}>
           {editing ? (
             <>
               <button onClick={renameSection} className={isActive ? 'text-white/80 hover:text-white' : 'text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}><Check size={11} /></button>
