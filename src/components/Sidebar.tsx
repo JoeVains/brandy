@@ -378,7 +378,7 @@ export default function Sidebar({ brand, sections, activeSectionId, onSelectSect
         ) : (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 w-full px-2 py-1.5 mt-1 text-sm text-gray-400 dark:text-gray-300 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 w-full px-2 py-1.5 mt-1 text-sm text-gray-400 dark:text-gray-300 font-medium rounded-lg transition-colors cursor-pointer hover:text-white hover:bg-[var(--accent)]"
           >
             <Plus size={13} /> Ajouter une rubrique
           </button>
