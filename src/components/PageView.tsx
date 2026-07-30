@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, ModuleType, Section, Brand } from '@/types';
-import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight, Paintbrush, Columns2 } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Palette, Type, AlignLeft, Image, Paperclip, Minus, Pencil, Check, X, PenLine, MoreHorizontal, Copy, FolderSymlink, ArrowRight, Paintbrush, Columns2, MousePointerClick } from 'lucide-react';
 import ColorsModule from './modules/ColorsModule';
 import TypographyModule from './modules/TypographyModule';
 import TextModule from './modules/TextModule';
@@ -18,6 +18,7 @@ import GradientsModule from './modules/GradientsModule';
 import VideoModule from './modules/VideoModule';
 import AudioModule from './modules/AudioModule';
 import AccessibilityModule from './modules/AccessibilityModule';
+import ButtonModule from './modules/ButtonModule';
 
 interface Props {
   brand: Brand;
@@ -31,6 +32,7 @@ interface Props {
 
 const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
   { type: 'accessibility', label: 'Accessibilité', icon: <span className="font-bold text-base leading-none">AA</span>, description: 'Vérificateur de contraste WCAG entre les couleurs de la marque' },
+  { type: 'button', label: 'Bouton', icon: <MousePointerClick size={18} />, description: 'Bouton d\'action avec couleur et lien personnalisés' },
   { type: 'audio', label: 'Audio', icon: <span className="font-bold text-base leading-none">♪</span>, description: 'Embed SoundCloud / Spotify ou upload d\'un fichier audio' },
   { type: 'colors', label: 'Couleurs', icon: <Palette size={18} />, description: 'Nuancier de couleurs avec valeurs HEX, RVB et TSL' },
   { type: 'gradients', label: 'Dégradés', icon: <span className="font-bold text-base leading-none">◑</span>, description: 'Palette de dégradés CSS linéaires et radiaux' },
@@ -314,6 +316,7 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
         {module.type === 'video' && <VideoModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'audio' && <AudioModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'accessibility' && <AccessibilityModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
+        {module.type === 'button' && <ButtonModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'divider' && (
           <div className="flex items-center gap-3">
             <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500">

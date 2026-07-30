@@ -94,7 +94,14 @@ export interface DoDontItem {
   fit?: 'cover' | 'contain';
 }
 
-export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'video' | 'audio' | 'divider' | 'accessibility';
+export interface ButtonItem {
+  id: string;
+  label: string;
+  url: string;
+  color: string;
+}
+
+export type ModuleType = 'colors' | 'typography' | 'text' | 'heading' | 'image' | 'attachments' | 'icons' | 'spacing' | 'dodont' | 'gradients' | 'video' | 'audio' | 'divider' | 'accessibility' | 'button';
 
 export interface Module {
   id: string;
@@ -156,6 +163,9 @@ export interface Module {
   doDontLayout?: 'stacked' | 'sidebyside';
   doItems?: DoDontItem[];
   dontItems?: DoDontItem[];
+  // button
+  buttonDescription?: string;
+  buttonItems?: ButtonItem[];
   backgroundColor?: string;
   createdAt: string;
 }

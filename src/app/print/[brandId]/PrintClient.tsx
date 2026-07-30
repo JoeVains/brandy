@@ -189,6 +189,16 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
           </p>
         )}
 
+        {module.type === 'button' && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {(module.buttonItems ?? []).map(item => (
+              <span key={item.id} style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: item.color || brandColor, color: 'white', fontSize: 12, fontWeight: 600 }}>
+                {item.label}
+              </span>
+            ))}
+          </div>
+        )}
+
         {module.type === 'accessibility' && (() => {
           const source = module.accessibilitySourceModuleId
             ? colorModules.find(m => m.id === module.accessibilitySourceModuleId)
