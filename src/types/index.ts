@@ -26,10 +26,14 @@ export interface Section {
 }
 
 // Module item sub-types
+export type ColorFormat = 'hex' | 'rgb' | 'hsl' | 'cmyk' | 'pantone';
+
 export interface ColorItem {
   id: string;
   name: string;
   value: string;
+  cmyk?: string;
+  pantone?: string;
 }
 
 export interface FontVariant {
@@ -118,6 +122,7 @@ export interface Module {
   colorMode?: 'cards' | 'drops' | 'list';
   colorDescription?: string;
   colorItems?: ColorItem[];
+  colorFormats?: ColorFormat[];
   // typography
   fontItems?: FontItem[];
   typographyPreviewText?: string;

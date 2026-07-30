@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Module, ColorItem } from '@/types';
+import { Module, ColorItem, ColorFormat } from '@/types';
 import { suggestColorName } from '@/lib/colorNames';
 import { hexToRgb, rgbToHsl } from '@/lib/colorUtils';
 import { Plus, Trash2, Check, X, Pencil, Copy, Download } from 'lucide-react';
@@ -15,23 +15,70 @@ interface Props {
   isEditing?: boolean;
 }
 
-function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
+const FORMAT_OPTIONS: { key: ColorFormat; label: string }[] = [
+  { key: 'hex', label: 'Hexadécimal' },
+  { key: 'rgb', label: 'RVB' },
+  { key: 'hsl', label: 'TSL' },
+  { key: 'cmyk', label: 'CMJN' },
+  { key: 'pantone', label: 'Pantone' },
+];
+
+function buildRows(item: ColorItem, formats: ColorFormat[]) {
+  const rgb = hexToRgb(item.value);
+  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
+  const all: Record<ColorFormat, { label: string; text: string }> = {
+    hex: { label: 'HEX', text: item.value.toUpperCase() },
+    rgb: { label: 'RVB', text: rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '—' },
+    hsl: { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—' },
+    cmyk: { label: 'CMJN', text: item.cmyk || '—' },
+    pantone: { label: 'Pantone', text: item.pantone || '—' },
+  };
+  return formats.map(key => ({ key, ...all[key] }));
+}
+
+function FormatMenu({ formats, onToggle, onClose }: {
+  formats: ColorFormat[];
+  onToggle: (key: ColorFormat) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 z-30" onClick={e => { e.stopPropagation(); onClose(); }} />
+      <div
+        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-40 w-44 p-2 rounded-xl border shadow-lg bg-white dark:bg-gray-900 space-y-0.5"
+        style={{ borderColor: 'var(--border)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {FORMAT_OPTIONS.map(opt => (
+          <label key={opt.key} className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200">
+            <input type="checkbox" checked={formats.includes(opt.key)} onChange={() => onToggle(opt.key)} />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart, formats, onToggleFormat }: {
   item: ColorItem;
   brandColor: string;
   onSave: (updated: ColorItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  formats: ColorFormat[];
+  onToggleFormat: (key: ColorFormat) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
   const [hexInput, setHexInput] = useState(item.value);
   const [colorValue, setColorValue] = useState(item.value);
+  const [cmyk, setCmyk] = useState(item.cmyk ?? '');
+  const [pantone, setPantone] = useState(item.pantone ?? '');
   const [nameTouched, setNameTouched] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
-
-  const rgb = hexToRgb(colorValue);
-  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
+  const [showMenu, setShowMenu] = useState(false);
 
   function applyHex(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
@@ -49,7 +96,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
   }
 
   function save() {
-    onSave({ ...item, name, value: colorValue });
+    onSave({ ...item, name, value: colorValue, cmyk: cmyk.trim() || undefined, pantone: pantone.trim() || undefined });
     setEditing(false);
     setNameTouched(false);
   }
@@ -80,11 +127,19 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
             onChange={e => { setName(e.target.value); setNameTouched(true); }}
             placeholder="Nom de la couleur"
           />
+          {formats.includes('cmyk') && (
+            <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+              value={cmyk} onChange={e => setCmyk(e.target.value)} placeholder="CMJN (ex. 0, 20, 90, 0)" />
+          )}
+          {formats.includes('pantone') && (
+            <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+              value={pantone} onChange={e => setPantone(e.target.value)} placeholder="Pantone (ex. 137 C)" />
+          )}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button onClick={save} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
               <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
             </button>
-            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
+            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); setCmyk(item.cmyk ?? ''); setPantone(item.pantone ?? ''); }} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
               <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
             </button>
           </div>
@@ -94,9 +149,10 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
   }
 
   return (
-    <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'default' }}
+    <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md relative" style={{ borderColor: 'var(--border)' }}>
+      <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'pointer' }}
         draggable={isEditing}
+        onClick={() => setShowMenu(v => !v)}
         onDragStart={e => {
           const cardEl = (e.currentTarget as HTMLElement).parentElement;
           if (cardEl) {
@@ -107,26 +163,23 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
         }}>
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-            <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
+            <button onClick={e => { e.stopPropagation(); setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setCmyk(item.cmyk ?? ''); setPantone(item.pantone ?? ''); setNameTouched(false); }}
               className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
               <Pencil size={12} />
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500">
+            <button onClick={e => { e.stopPropagation(); onDelete(); }} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500">
               <Trash2 size={12} />
             </button>
           </div>
         )}
+        {showMenu && <FormatMenu formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
       <div className="p-3 bg-white dark:bg-gray-900 space-y-1">
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
-        {[
-          { label: 'HEX', text: item.value.toUpperCase(), key: 'hex' },
-          { label: 'RVB', text: rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '—', key: 'rgb' },
-          { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—', key: 'hsl' },
-        ].map(row => (
+        {buildRows(item, formats).map(row => (
           <button key={row.key} onClick={() => copyText(row.text, row.key)}
             className="w-full flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
-            <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] w-7 flex-shrink-0 text-left">{row.label}</span>
+            <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] w-12 flex-shrink-0 text-left">{row.label}</span>
             <span className="font-mono text-left flex-1 whitespace-nowrap overflow-hidden">{copied === row.key ? '✓ copié' : row.text}</span>
             <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
           </button>
@@ -136,23 +189,25 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
   );
 }
 
-function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
+function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart, formats, onToggleFormat }: {
   item: ColorItem;
   brandColor: string;
   onSave: (updated: ColorItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  formats: ColorFormat[];
+  onToggleFormat: (key: ColorFormat) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
   const [hexInput, setHexInput] = useState(item.value);
   const [colorValue, setColorValue] = useState(item.value);
+  const [cmyk, setCmyk] = useState(item.cmyk ?? '');
+  const [pantone, setPantone] = useState(item.pantone ?? '');
   const [nameTouched, setNameTouched] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
-
-  const rgb = hexToRgb(item.value);
-  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
+  const [showMenu, setShowMenu] = useState(false);
 
   function applyHex(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
@@ -170,7 +225,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   }
 
   function save() {
-    onSave({ ...item, name, value: colorValue });
+    onSave({ ...item, name, value: colorValue, cmyk: cmyk.trim() || undefined, pantone: pantone.trim() || undefined });
     setEditing(false);
     setNameTouched(false);
   }
@@ -187,11 +242,19 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             value={hexInput} onChange={e => applyHex(e.target.value)} placeholder="#000000" />
           <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
             value={name} onChange={e => { setName(e.target.value); setNameTouched(true); }} placeholder="Nom de la couleur" />
+          {formats.includes('cmyk') && (
+            <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+              value={cmyk} onChange={e => setCmyk(e.target.value)} placeholder="CMJN (ex. 0, 20, 90, 0)" />
+          )}
+          {formats.includes('pantone') && (
+            <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+              value={pantone} onChange={e => setPantone(e.target.value)} placeholder="Pantone (ex. 137 C)" />
+          )}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button onClick={save} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
               <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
             </button>
-            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }}
+            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); setCmyk(item.cmyk ?? ''); setPantone(item.pantone ?? ''); }}
               className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
               <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
             </button>
@@ -201,17 +264,12 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
     );
   }
 
-  const rows = [
-    { label: 'HEX', text: item.value.toUpperCase(), key: 'hex' },
-    { label: 'RVB', text: rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '—', key: 'rgb' },
-    { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—', key: 'hsl' },
-  ];
-
   return (
     <div className="flex flex-col items-center gap-3 text-center group">
       <div className="relative">
-        <div className="w-20 h-20 rounded-full border transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'default' }}
+        <div className="w-20 h-20 rounded-full border transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'pointer' }}
           draggable={isEditing}
+          onClick={() => setShowMenu(v => !v)}
           onDragStart={e => {
             const cardEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
             if (cardEl) {
@@ -222,19 +280,20 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
           }} />
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/20">
-            <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
+            <button onClick={e => { e.stopPropagation(); setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setCmyk(item.cmyk ?? ''); setPantone(item.pantone ?? ''); setNameTouched(false); }}
               className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
               <Pencil size={12} />
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500">
+            <button onClick={e => { e.stopPropagation(); onDelete(); }} className="p-1.5 rounded-full bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500">
               <Trash2 size={12} />
             </button>
           </div>
         )}
+        {showMenu && <FormatMenu formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
       <div className="space-y-1">
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 text-center">{item.name}</p>
-        {rows.map(row => (
+        {buildRows(item, formats).map(row => (
           <button key={row.key} onClick={() => copyText(row.text, row.key)}
             className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
             <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px]">{row.label}</span>
@@ -247,23 +306,25 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   );
 }
 
-function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart }: {
+function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart, formats, onToggleFormat }: {
   item: ColorItem;
   brandColor: string;
   onSave: (updated: ColorItem) => void;
   onDelete: () => void;
   isEditing?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  formats: ColorFormat[];
+  onToggleFormat: (key: ColorFormat) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
   const [hexInput, setHexInput] = useState(item.value);
   const [colorValue, setColorValue] = useState(item.value);
+  const [cmyk, setCmyk] = useState(item.cmyk ?? '');
+  const [pantone, setPantone] = useState(item.pantone ?? '');
   const [nameTouched, setNameTouched] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
-
-  const rgb = hexToRgb(item.value);
-  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
+  const [showMenu, setShowMenu] = useState(false);
 
   function applyHex(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
@@ -281,7 +342,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   }
 
   function save() {
-    onSave({ ...item, name, value: colorValue });
+    onSave({ ...item, name, value: colorValue, cmyk: cmyk.trim() || undefined, pantone: pantone.trim() || undefined });
     setEditing(false);
     setNameTouched(false);
   }
@@ -298,11 +359,19 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             value={hexInput} onChange={e => applyHex(e.target.value)} placeholder="#000000" />
           <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
             value={name} onChange={e => { setName(e.target.value); setNameTouched(true); }} placeholder="Nom de la couleur" />
+          {formats.includes('cmyk') && (
+            <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+              value={cmyk} onChange={e => setCmyk(e.target.value)} placeholder="CMJN (ex. 0, 20, 90, 0)" />
+          )}
+          {formats.includes('pantone') && (
+            <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+              value={pantone} onChange={e => setPantone(e.target.value)} placeholder="Pantone (ex. 137 C)" />
+          )}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button onClick={save} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
               <Check size={11} className="flex-shrink-0" /> <span className="truncate">Sauvegarder</span>
             </button>
-            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); }}
+            <button onClick={() => { setEditing(false); setHexInput(item.value); setColorValue(item.value); setName(item.name); setCmyk(item.cmyk ?? ''); setPantone(item.pantone ?? ''); }}
               className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs border min-w-0" style={{ borderColor: 'var(--border)' }}>
               <X size={11} className="flex-shrink-0" /> <span className="truncate">Annuler</span>
             </button>
@@ -312,17 +381,12 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
     );
   }
 
-  const rows = [
-    { label: 'HEX', text: item.value.toUpperCase(), key: 'hex' },
-    { label: 'RVB', text: rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '—', key: 'rgb' },
-    { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—', key: 'hsl' },
-  ];
-
   return (
     <div className="flex items-center gap-3 py-2 px-2 rounded-lg group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
       <div className="relative flex-shrink-0">
-        <div className="w-10 h-10 rounded-lg border transition-transform duration-200 hover:scale-105" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'default' }}
+        <div className="w-10 h-10 rounded-lg border transition-transform duration-200 hover:scale-105" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'pointer' }}
           draggable={isEditing}
+          onClick={() => setShowMenu(v => !v)}
           onDragStart={e => {
             const rowEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
             if (rowEl) {
@@ -331,11 +395,12 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             }
             onDragStart?.(e);
           }} />
+        {showMenu && <FormatMenu formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
       <div className="flex-1 min-w-0 flex items-center flex-wrap justify-between gap-x-4 gap-y-1">
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate max-w-[45%]">{item.name}</p>
         <div className="flex items-center gap-3 flex-wrap justify-end min-w-0">
-          {rows.map(row => (
+          {buildRows(item, formats).map(row => (
             <button key={row.key} onClick={() => copyText(row.text, row.key)}
               className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row min-w-0">
               <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] flex-shrink-0">{row.label}</span>
@@ -347,7 +412,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
       </div>
       {isEditing && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-          <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setNameTouched(false); }}
+          <button onClick={() => { setEditing(true); setHexInput(item.value); setColorValue(item.value); setName(item.name); setCmyk(item.cmyk ?? ''); setPantone(item.pantone ?? ''); setNameTouched(false); }}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
             <Pencil size={12} />
           </button>
@@ -366,9 +431,12 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
   const [newHexInput, setNewHexInput] = useState('#000000');
   const [newName, setNewName] = useState(suggestColorName('#000000'));
   const [newNameTouched, setNewNameTouched] = useState(false);
+  const [newCmyk, setNewCmyk] = useState('');
+  const [newPantone, setNewPantone] = useState('');
 
   const items = module.colorItems ?? [];
   const colorMode = module.colorMode ?? 'cards';
+  const formats = module.colorFormats ?? ['hex', 'rgb', 'hsl'];
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
@@ -385,6 +453,11 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
     await patch({ colorMode: newMode });
   }
 
+  async function toggleFormat(key: ColorFormat) {
+    const next = formats.includes(key) ? formats.filter(f => f !== key) : [...formats, key];
+    await patch({ colorFormats: FORMAT_OPTIONS.map(o => o.key).filter(k => next.includes(k)) });
+  }
+
   function applyNew(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
     setNewHexInput(full);
@@ -396,12 +469,20 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
 
   async function addColor() {
     if (!newName.trim()) return;
-    const item: ColorItem = { id: crypto.randomUUID(), name: newName.trim(), value: newHex };
+    const item: ColorItem = {
+      id: crypto.randomUUID(),
+      name: newName.trim(),
+      value: newHex,
+      cmyk: newCmyk.trim() || undefined,
+      pantone: newPantone.trim() || undefined,
+    };
     await patch({ colorItems: [...items, item] });
     setNewHex('#000000');
     setNewHexInput('#000000');
     setNewName(suggestColorName('#000000'));
     setNewNameTouched(false);
+    setNewCmyk('');
+    setNewPantone('');
     setShowAdd(false);
   }
 
@@ -511,7 +592,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               )}
               <DropSwatch item={item} brandColor={brandColor}
                 onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
-                onDragStart={e => onDragStart(e, idx)} />
+                onDragStart={e => onDragStart(e, idx)} formats={formats} onToggleFormat={toggleFormat} />
             </div>
           ))}
           {isEditing && dragIdx !== null && (
@@ -537,6 +618,14 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
                   value={newHexInput} onChange={e => applyNew(e.target.value)} placeholder="#000000" />
                 <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
                   value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
+                {formats.includes('cmyk') && (
+                  <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                    value={newCmyk} onChange={e => setNewCmyk(e.target.value)} placeholder="CMJN (ex. 0, 20, 90, 0)" />
+                )}
+                {formats.includes('pantone') && (
+                  <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                    value={newPantone} onChange={e => setNewPantone(e.target.value)} placeholder="Pantone (ex. 137 C)" />
+                )}
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button onClick={addColor} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
                     <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
@@ -587,7 +676,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
               )}
               <ListSwatch item={item} brandColor={brandColor}
                 onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
-                onDragStart={e => onDragStart(e, idx)} />
+                onDragStart={e => onDragStart(e, idx)} formats={formats} onToggleFormat={toggleFormat} />
             </div>
           ))}
           {isEditing && dragIdx !== null && (
@@ -613,6 +702,14 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
                   value={newHexInput} onChange={e => applyNew(e.target.value)} placeholder="#000000" />
                 <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
                   value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
+                {formats.includes('cmyk') && (
+                  <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                    value={newCmyk} onChange={e => setNewCmyk(e.target.value)} placeholder="CMJN (ex. 0, 20, 90, 0)" />
+                )}
+                {formats.includes('pantone') && (
+                  <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                    value={newPantone} onChange={e => setNewPantone(e.target.value)} placeholder="Pantone (ex. 137 C)" />
+                )}
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button onClick={addColor} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
                     <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
@@ -664,7 +761,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
             )}
             <ColorSwatch item={item} brandColor={brandColor}
               onSave={updateItem} onDelete={() => deleteItem(item.id)} isEditing={isEditing}
-              onDragStart={e => onDragStart(e, idx)} />
+              onDragStart={e => onDragStart(e, idx)} formats={formats} onToggleFormat={toggleFormat} />
           </div>
         ))}
         {isEditing && dragIdx !== null && (
@@ -691,6 +788,14 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
                 value={newHexInput} onChange={e => applyNew(e.target.value)} placeholder="#000000" />
               <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
                 value={newName} onChange={e => { setNewName(e.target.value); setNewNameTouched(true); }} placeholder="Nom" />
+              {formats.includes('cmyk') && (
+                <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                  value={newCmyk} onChange={e => setNewCmyk(e.target.value)} placeholder="CMJN (ex. 0, 20, 90, 0)" />
+              )}
+              {formats.includes('pantone') && (
+                <input className="w-full border rounded-lg px-2 py-1 text-xs outline-none" style={{ borderColor: 'var(--border)' }}
+                  value={newPantone} onChange={e => setNewPantone(e.target.value)} placeholder="Pantone (ex. 137 C)" />
+              )}
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button onClick={addColor} className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-xs text-white min-w-0" style={{ background: brandColor }}>
                   <Check size={11} className="flex-shrink-0" /> <span className="truncate">Ajouter</span>
