@@ -46,11 +46,24 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
       });
   }, [module.brandId]);
 
-  async function setSource(sourceId: string) {
+  const sourceIds = module.accessibilitySourceModuleIds
+    ?? (module.accessibilitySourceModuleId ? [module.accessibilitySourceModuleId] : []);
+
+  async function toggleSource(id: string) {
+    const next = sourceIds.includes(id) ? sourceIds.filter(i => i !== id) : [...sourceIds, id];
     const res = await fetch(`/api/modules/${module.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ accessibilitySourceModuleId: sourceId || null }),
+      body: JSON.stringify({ accessibilitySourceModuleIds: next, accessibilitySourceModuleId: null }),
+    });
+    onUpdate(await res.json());
+  }
+
+  async function clearSources() {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ accessibilitySourceModuleIds: [], accessibilitySourceModuleId: null }),
     });
     onUpdate(await res.json());
   }
@@ -59,14 +72,16 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
     return <div className="text-sm text-gray-400 dark:text-gray-400">Chargement…</div>;
   }
 
-  const source = module.accessibilitySourceModuleId
-    ? colorModules.find(m => m.id === module.accessibilitySourceModuleId)
-    : null;
+  const sources = colorModules.filter(m => sourceIds.includes(m.id));
 
   const seen = new Map<string, ColorItem>();
-  (source ? [source] : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
+  (sources.length > 0 ? sources : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
   const colors = [...seen.values()];
-  const sourceLabel = source ? (source.title || 'Couleurs') : 'Toutes les couleurs';
+  const sourceLabel = sources.length === 0
+    ? 'Toutes les couleurs'
+    : sources.length === 1
+      ? (sources[0].title || 'Couleurs')
+      : `${sources.length} modules`;
 
   return (
     <div>
@@ -93,14 +108,14 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
             {sourceMenuOpen && (
               <div className="absolute left-0 top-full mt-2 rounded-2xl border shadow-xl z-50 py-2 min-w-[220px] overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
                 <button
-                  onClick={() => { setSource(''); setSourceMenuOpen(false); }}
+                  onClick={clearSources}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                     <Palette size={14} />
                   </span>
                   <span className="flex-1 text-left">Toutes les couleurs</span>
-                  {!module.accessibilitySourceModuleId && <Check size={13} className="flex-shrink-0" style={{ color: 'var(--accent)' }} />}
+                  {sourceIds.length === 0 && <Check size={13} className="flex-shrink-0" style={{ color: 'var(--accent)' }} />}
                 </button>
 
                 <div className="h-px mx-3 my-1.5" style={{ background: 'var(--border)' }} />
@@ -108,14 +123,14 @@ export default function AccessibilityModule({ module, onUpdate, isEditing }: Pro
                 {colorModules.map(m => (
                   <button
                     key={m.id}
-                    onClick={() => { setSource(m.id); setSourceMenuOpen(false); }}
+                    onClick={() => toggleSource(m.id)}
                     className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
+                    <input type="checkbox" readOnly checked={sourceIds.includes(m.id)} className="flex-shrink-0" />
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                       <Palette size={14} />
                     </span>
                     <span className="flex-1 text-left truncate">{m.title || 'Couleurs'}</span>
-                    {module.accessibilitySourceModuleId === m.id && <Check size={13} className="flex-shrink-0" style={{ color: 'var(--accent)' }} />}
                   </button>
                 ))}
               </div>

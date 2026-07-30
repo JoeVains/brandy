@@ -148,6 +148,7 @@ export interface Module {
   gradientItems?: GradientItem[];
   // accessibility
   accessibilitySourceModuleId?: string;
+  accessibilitySourceModuleIds?: string[];
   // video
   videoMode?: 'embed' | 'upload';
   videoUrl?: string;

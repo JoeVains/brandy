@@ -200,11 +200,11 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
         )}
 
         {module.type === 'accessibility' && (() => {
-          const source = module.accessibilitySourceModuleId
-            ? colorModules.find(m => m.id === module.accessibilitySourceModuleId)
-            : null;
+          const sourceIds = module.accessibilitySourceModuleIds
+            ?? (module.accessibilitySourceModuleId ? [module.accessibilitySourceModuleId] : []);
+          const sources = colorModules.filter(m => sourceIds.includes(m.id));
           const seen = new Map<string, ColorItem>();
-          (source ? [source] : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
+          (sources.length > 0 ? sources : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
           const allColors = [...seen.values()];
           return allColors.length < 2 ? (
             <p style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Pas assez de couleurs pour calculer les contrastes.</p>

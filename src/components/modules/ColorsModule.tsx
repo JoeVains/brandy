@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Module, ColorItem, ColorFormat } from '@/types';
 import { suggestColorName } from '@/lib/colorNames';
 import { hexToRgb, rgbToHsl } from '@/lib/colorUtils';
@@ -36,27 +37,36 @@ function buildRows(item: ColorItem, formats: ColorFormat[]) {
   return formats.map(key => ({ key, ...all[key] }));
 }
 
-function FormatMenu({ formats, onToggle, onClose }: {
+function FormatMenu({ anchorRect, formats, onToggle, onClose }: {
+  anchorRect: DOMRect;
   formats: ColorFormat[];
   onToggle: (key: ColorFormat) => void;
   onClose: () => void;
 }) {
-  return (
+  const width = 224;
+  const left = Math.min(
+    Math.max(8, anchorRect.left + anchorRect.width / 2 - width / 2),
+    window.innerWidth - width - 8
+  );
+  const top = Math.min(anchorRect.bottom + 8, window.innerHeight - 8);
+
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-30" onClick={e => { e.stopPropagation(); onClose(); }} />
+      <div className="fixed inset-0 z-[100]" onClick={e => { e.stopPropagation(); onClose(); }} />
       <div
-        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-40 w-44 p-2 rounded-xl border shadow-lg bg-white dark:bg-gray-900 space-y-0.5"
-        style={{ borderColor: 'var(--border)' }}
+        className="fixed z-[101] p-3 rounded-2xl border shadow-2xl bg-white dark:bg-gray-900 space-y-1"
+        style={{ borderColor: 'var(--border)', top, left, width }}
         onClick={e => e.stopPropagation()}
       >
         {FORMAT_OPTIONS.map(opt => (
-          <label key={opt.key} className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200">
+          <label key={opt.key} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200">
             <input type="checkbox" checked={formats.includes(opt.key)} onChange={() => onToggle(opt.key)} />
             {opt.label}
           </label>
         ))}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -79,6 +89,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
   const [nameTouched, setNameTouched] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
 
   function applyHex(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
@@ -152,7 +163,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
     <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md relative" style={{ borderColor: 'var(--border)' }}>
       <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'pointer' }}
         draggable={isEditing}
-        onClick={() => setShowMenu(v => !v)}
+        onClick={e => { setMenuAnchor(e.currentTarget.getBoundingClientRect()); setShowMenu(v => !v); }}
         onDragStart={e => {
           const cardEl = (e.currentTarget as HTMLElement).parentElement;
           if (cardEl) {
@@ -172,7 +183,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
             </button>
           </div>
         )}
-        {showMenu && <FormatMenu formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
+        {showMenu && menuAnchor && <FormatMenu anchorRect={menuAnchor} formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
       <div className="p-3 bg-white dark:bg-gray-900 space-y-1">
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
@@ -208,6 +219,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   const [nameTouched, setNameTouched] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
 
   function applyHex(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
@@ -269,7 +281,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
       <div className="relative">
         <div className="w-20 h-20 rounded-full border transition-all duration-200 hover:scale-110 hover:shadow-md" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'pointer' }}
           draggable={isEditing}
-          onClick={() => setShowMenu(v => !v)}
+          onClick={e => { setMenuAnchor(e.currentTarget.getBoundingClientRect()); setShowMenu(v => !v); }}
           onDragStart={e => {
             const cardEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
             if (cardEl) {
@@ -289,7 +301,7 @@ function DropSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             </button>
           </div>
         )}
-        {showMenu && <FormatMenu formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
+        {showMenu && menuAnchor && <FormatMenu anchorRect={menuAnchor} formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
       <div className="space-y-1">
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 text-center">{item.name}</p>
@@ -325,6 +337,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
   const [nameTouched, setNameTouched] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
 
   function applyHex(hex: string) {
     const full = hex.startsWith('#') ? hex : '#' + hex;
@@ -386,7 +399,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
       <div className="relative flex-shrink-0">
         <div className="w-10 h-10 rounded-lg border transition-transform duration-200 hover:scale-105" style={{ background: item.value, borderColor: 'var(--border)', cursor: isEditing ? 'grab' : 'pointer' }}
           draggable={isEditing}
-          onClick={() => setShowMenu(v => !v)}
+          onClick={e => { setMenuAnchor(e.currentTarget.getBoundingClientRect()); setShowMenu(v => !v); }}
           onDragStart={e => {
             const rowEl = (e.currentTarget as HTMLElement).parentElement?.parentElement;
             if (rowEl) {
@@ -395,7 +408,7 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             }
             onDragStart?.(e);
           }} />
-        {showMenu && <FormatMenu formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
+        {showMenu && menuAnchor && <FormatMenu anchorRect={menuAnchor} formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
       <div className="flex-1 min-w-0 flex items-center flex-wrap justify-between gap-x-4 gap-y-1">
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate max-w-[45%]">{item.name}</p>
