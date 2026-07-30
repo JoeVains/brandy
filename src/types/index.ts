@@ -166,6 +166,7 @@ export interface Module {
   // button
   buttonDescription?: string;
   buttonItems?: ButtonItem[];
+  buttonAlign?: 'left' | 'center' | 'right';
   backgroundColor?: string;
   createdAt: string;
 }

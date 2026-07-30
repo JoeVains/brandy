@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Module, ButtonItem } from '@/types';
-import { Check, X, Pencil, Trash2, Plus, ExternalLink, GripVertical } from 'lucide-react';
+import { Check, X, Pencil, Trash2, Plus, ExternalLink, GripVertical, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -22,6 +22,12 @@ function normalizeUrl(url: string): string {
   if (!trimmed) return '';
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
+
+const ALIGN_TO_JUSTIFY: Record<'left' | 'center' | 'right', string> = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+};
 
 function ButtonForm({ initial, brandColor, onSave, onCancel }: {
   initial: { label: string; url: string; color: string };
@@ -104,33 +110,38 @@ function ButtonForm({ initial, brandColor, onSave, onCancel }: {
 
 export default function ButtonModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const items = module.buttonItems ?? [];
+  const align = module.buttonAlign ?? 'left';
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  async function patch(buttonItems: ButtonItem[]) {
+  async function patch(data: Partial<Module>) {
     const res = await fetch(`/api/modules/${module.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ buttonItems }),
+      body: JSON.stringify(data),
     });
     onUpdate(await res.json());
   }
 
+  function setAlign(value: 'left' | 'center' | 'right') {
+    patch({ buttonAlign: value });
+  }
+
   function addButton(v: { label: string; url: string; color: string }) {
     const item: ButtonItem = { id: crypto.randomUUID(), ...v };
-    patch([...items, item]);
+    patch({ buttonItems: [...items, item] });
     setShowAdd(false);
   }
 
   function updateButton(id: string, v: { label: string; url: string; color: string }) {
-    patch(items.map(i => i.id === id ? { ...i, ...v } : i));
+    patch({ buttonItems: items.map(i => i.id === id ? { ...i, ...v } : i) });
     setEditingId(null);
   }
 
   function deleteButton(id: string) {
-    patch(items.filter(i => i.id !== id));
+    patch({ buttonItems: items.filter(i => i.id !== id) });
   }
 
   function onDragStart(e: React.DragEvent, idx: number) {
@@ -150,7 +161,7 @@ export default function ButtonModule({ module, brandColor, onUpdate, isEditing }
     reordered.splice(dragIdx < idx ? idx - 1 : idx, 0, moved);
     setDragIdx(null);
     setDragOverIdx(null);
-    await patch(reordered);
+    await patch({ buttonItems: reordered });
   }
 
   return (
@@ -168,7 +179,7 @@ export default function ButtonModule({ module, brandColor, onUpdate, isEditing }
         items.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 italic">Aucun bouton</p>
         ) : (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3" style={{ justifyContent: ALIGN_TO_JUSTIFY[align] }}>
             {items.map(item => (
               item.url ? (
                 <a
@@ -196,6 +207,29 @@ export default function ButtonModule({ module, brandColor, onUpdate, isEditing }
         )
       ) : (
         <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400">Alignement :</label>
+            <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
+              <button onClick={() => setAlign('left')}
+                className="p-1.5 rounded-md transition-colors"
+                title="Aligné à gauche"
+                style={align === 'left' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
+                <AlignLeft size={13} />
+              </button>
+              <button onClick={() => setAlign('center')}
+                className="p-1.5 rounded-md transition-colors"
+                title="Centré"
+                style={align === 'center' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
+                <AlignCenter size={13} />
+              </button>
+              <button onClick={() => setAlign('right')}
+                className="p-1.5 rounded-md transition-colors"
+                title="Aligné à droite"
+                style={align === 'right' ? { background: 'var(--card-bg)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,.12)' } : { color: '#6b7280' }}>
+                <AlignRight size={13} />
+              </button>
+            </div>
+          </div>
           {items.map((item, idx) => (
             <div key={item.id} className="relative">
               {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
