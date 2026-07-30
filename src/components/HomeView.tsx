@@ -84,7 +84,7 @@ function BrandCard({
       )}
       <div
         className={`group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col min-h-[220px] ${isEditingThis ? '' : 'hover:scale-[1.02] hover:shadow-lg'}`}
-        style={{ borderColor: 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
+        style={{ borderColor: 'var(--border)', opacity: isDragging ? 0.4 : 1, WebkitUserDrag: 'element' } as React.CSSProperties}
         draggable
         onDragStart={onDragStart}
         onDragOver={onDragOver}
@@ -95,10 +95,17 @@ function BrandCard({
       >
         {/* Header band with action buttons */}
         <div className="h-24 flex items-center justify-center relative group/header" style={
-          brand.headerImage
-            ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : { background: isEditingThis ? editColor : brand.color }
+          brand.headerImage ? undefined : { background: isEditingThis ? editColor : brand.color }
         }>
+          {brand.headerImage && (
+            <img
+              src={`/uploads/${brand.headerImage}`}
+              alt=""
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+              style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
+            />
+          )}
           {isEditingThis && !showHeaderUrl && (
             <div className="absolute bottom-3 right-3 flex gap-1.5" onClick={e => e.stopPropagation()}>
               {headerUploading
@@ -162,7 +169,7 @@ function BrandCard({
               {logoUploading && isEditingThis
                 ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 : brand.logoImage
-                  ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
+                  ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" draggable={false} />
                   : <span className="text-white text-2xl font-bold">{initial}</span>
               }
             </div>
