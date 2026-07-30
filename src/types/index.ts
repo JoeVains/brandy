@@ -7,6 +7,13 @@ export interface Brand {
   logoImage?: string;
   shareToken?: string;
   description?: string;
+  categoryId?: string | null;
+}
+
+export interface BrandCategory {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface Section {

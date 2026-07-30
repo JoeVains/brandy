@@ -1,8 +1,8 @@
 import { getStore } from '@netlify/blobs';
-import { Brand, Section, Asset, Module } from '@/types';
+import { Brand, BrandCategory, Section, Asset, Module } from '@/types';
 
 const STORE_NAME = 'brandy';
-const COLLECTIONS = ['brands', 'sections', 'assets', 'modules'] as const;
+const COLLECTIONS = ['brands', 'brandCategories', 'sections', 'assets', 'modules'] as const;
 type Collection = (typeof COLLECTIONS)[number];
 
 // Backup au plus une fois par heure, conservées 5 jours.
@@ -62,6 +62,10 @@ export const db = {
   brands: {
     all: () => readJson<Brand[]>('brands', []),
     save: (brands: Brand[]) => save('brands', brands),
+  },
+  brandCategories: {
+    all: () => readJson<BrandCategory[]>('brandCategories', []),
+    save: (categories: BrandCategory[]) => save('brandCategories', categories),
   },
   sections: {
     all: () => readJson<Section[]>('sections', []),
