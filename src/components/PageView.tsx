@@ -480,18 +480,7 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ ...rest, title: rest.title ? `${rest.title} (copie)` : '' }),
     });
-    const created = await res.json();
-    const patch = await fetch(`/api/modules/${created.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        colorItems: rest.colorItems,
-        fontItems: rest.fontItems,
-        content: rest.content,
-        attachmentItems: rest.attachmentItems,
-      }),
-    });
-    const full = await patch.json();
+    const full = await res.json();
     // Insert right after the original
     setModules(prev => {
       const idx = prev.findIndex(m => m.id === module.id);
@@ -518,21 +507,10 @@ export default function PageView({ brand, section, sections, onModuleDragStart, 
 
   async function copyModuleTo(module: Module, targetSectionId: string) {
     const { id, createdAt, order, sectionId, ...rest } = module;
-    const res = await fetch('/api/modules', {
+    await fetch('/api/modules', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ ...rest, sectionId: targetSectionId }),
-    });
-    const created = await res.json();
-    await fetch(`/api/modules/${created.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        colorItems: rest.colorItems,
-        fontItems: rest.fontItems,
-        content: rest.content,
-        attachmentItems: rest.attachmentItems,
-      }),
     });
   }
 

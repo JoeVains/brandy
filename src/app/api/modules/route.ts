@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   const order = sectionModules.length > 0 ? Math.max(...sectionModules.map(m => m.order)) + 1 : 0;
 
   const module: Module = {
+    ...body,
     id: randomUUID(),
     sectionId,
     brandId,
@@ -31,11 +32,11 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  if (type === 'colors') module.colorItems = [];
-  if (type === 'typography') module.fontItems = [];
-  if (type === 'attachments') module.attachmentItems = [];
-  if (type === 'text') module.content = '';
-  if (type === 'icons') module.iconItems = [];
+  if (type === 'colors' && !module.colorItems) module.colorItems = [];
+  if (type === 'typography' && !module.fontItems) module.fontItems = [];
+  if (type === 'attachments' && !module.attachmentItems) module.attachmentItems = [];
+  if (type === 'text' && module.content === undefined) module.content = '';
+  if (type === 'icons' && !module.iconItems) module.iconItems = [];
 
   await db.modules.save([...all, module]);
 
