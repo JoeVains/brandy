@@ -639,15 +639,15 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
   // — Cards mode —
   return (
     <div>
-      <ExportButtons />
       <ModuleDescription
-          moduleId={module.id}
-          brandId={module.brandId}
-          field="colorDescription"
-          value={module.colorDescription}
-          isEditing={isEditing}
-          onUpdate={desc => onUpdate({ ...module, colorDescription: desc })}
-        />
+        moduleId={module.id}
+        brandId={module.brandId}
+        field="colorDescription"
+        value={module.colorDescription}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, colorDescription: desc })}
+      />
+      <ExportButtons />
       {isEditing && <ModeToggle />}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))' }}>
         {items.map((item, idx) => (
