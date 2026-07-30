@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Brand, BrandCategory, Section } from '@/types';
-import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X, Link, LogOut, GripVertical, FolderPlus } from 'lucide-react';
+import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X, Link, LogOut, GripVertical, FolderPlus, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
@@ -335,10 +335,26 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [dragCategoryId, setDragCategoryId] = useState<string | null>(null);
   const [dragOverCategoryId, setDragOverCategoryId] = useState<string | null>(null);
   const [dropZoneCategoryId, setDropZoneCategoryId] = useState<string | null | 'none'>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch('/api/brand-categories').then(r => r.json()).then(setCategories);
   }, []);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('brandy-collapsed-categories');
+      if (stored) setCollapsedCategories(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  function toggleCategoryCollapsed(key: string) {
+    setCollapsedCategories(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('brandy-collapsed-categories', JSON.stringify(next));
+      return next;
+    });
+  }
 
   async function createCategory() {
     if (!newCategoryName.trim()) return;
@@ -854,7 +870,20 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                       </div>
                     ) : (
                       <>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{category.name}</h2>
+                        <button
+                          onClick={() => toggleCategoryCollapsed(category.id)}
+                          className="p-0.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-transform flex-shrink-0"
+                          style={{ transform: collapsedCategories[category.id] ? 'rotate(-90deg)' : 'none' }}
+                          title={collapsedCategories[category.id] ? 'Développer' : 'Réduire'}
+                        >
+                          <ChevronDown size={16} />
+                        </button>
+                        <h2
+                          className="text-lg font-bold text-gray-900 dark:text-gray-100 cursor-pointer select-none"
+                          onClick={() => toggleCategoryCollapsed(category.id)}
+                        >
+                          {category.name}
+                        </h2>
                         <span className="text-xs text-gray-400 dark:text-gray-500">{groupBrands.length}</span>
                         <button
                           onClick={() => startEditCategory(category)}
@@ -871,12 +900,25 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                   </div>
                 ) : categories.length > 0 ? (
                   <div className="flex items-center gap-2 mb-3 pl-3 border-l-4" style={{ borderColor: 'var(--border)' }}>
-                    <h2 className="text-lg font-bold text-gray-400 dark:text-gray-500">Sans catégorie</h2>
+                    <button
+                      onClick={() => toggleCategoryCollapsed('uncategorized')}
+                      className="p-0.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-transform flex-shrink-0"
+                      style={{ transform: collapsedCategories['uncategorized'] ? 'rotate(-90deg)' : 'none' }}
+                      title={collapsedCategories['uncategorized'] ? 'Développer' : 'Réduire'}
+                    >
+                      <ChevronDown size={16} />
+                    </button>
+                    <h2
+                      className="text-lg font-bold text-gray-400 dark:text-gray-500 cursor-pointer select-none"
+                      onClick={() => toggleCategoryCollapsed('uncategorized')}
+                    >
+                      Sans catégorie
+                    </h2>
                     <span className="text-xs text-gray-400 dark:text-gray-500">{groupBrands.length}</span>
                   </div>
                 ) : null}
 
-                {renderBrandGrid(groupBrands, category?.id ?? null)}
+                {!collapsedCategories[category?.id ?? 'uncategorized'] && renderBrandGrid(groupBrands, category?.id ?? null)}
               </div>
             ))}
 
