@@ -98,13 +98,19 @@ function BrandCard({
           brand.headerImage ? undefined : { background: isEditingThis ? editColor : brand.color }
         }>
           {brand.headerImage && (
-            <img
-              src={`/uploads/${brand.headerImage}`}
-              alt=""
-              draggable={false}
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-              style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
-            />
+            <>
+              <img
+                src={`/uploads/${brand.headerImage}`}
+                alt=""
+                draggable={false}
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
+              />
+              {/* Transparent capture layer: ensures the pointer always hits a plain, non-image
+                  element here, so Safari/WebKit never engages its native "drag this image out"
+                  gesture — the drag is left entirely to the card's own draggable ancestor. */}
+              <div className="absolute inset-0" />
+            </>
           )}
           {isEditingThis && !showHeaderUrl && (
             <div className="absolute bottom-3 right-3 flex gap-1.5" onClick={e => e.stopPropagation()}>
