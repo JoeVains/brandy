@@ -332,14 +332,14 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
             onDragStart?.(e);
           }} />
       </div>
-      <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
-        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate flex-shrink-0 w-32">{item.name}</p>
-        <div className="flex items-center gap-4 flex-1 justify-end">
+      <div className="flex-1 min-w-0 flex items-center flex-wrap justify-between gap-x-4 gap-y-1">
+        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate max-w-[45%]">{item.name}</p>
+        <div className="flex items-center gap-3 flex-wrap justify-end min-w-0">
           {rows.map(row => (
             <button key={row.key} onClick={() => copyText(row.text, row.key)}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
-              <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px]">{row.label}</span>
-              <span className="font-mono whitespace-nowrap">{copied === row.key ? '✓ copié' : row.text}</span>
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row min-w-0">
+              <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] flex-shrink-0">{row.label}</span>
+              <span className="font-mono truncate">{copied === row.key ? '✓ copié' : row.text}</span>
               <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
             </button>
           ))}
