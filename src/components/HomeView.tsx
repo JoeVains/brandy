@@ -39,7 +39,11 @@ interface BrandCardProps {
   headerUploading: boolean;
   showHeaderUrl: boolean;
   headerUrlInput: string;
-  onDragPointerDown: (e: React.PointerEvent) => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
   onOpen: () => void;
   onStartEdit: (e: React.MouseEvent) => void;
   onDuplicate: () => void;
@@ -63,7 +67,7 @@ function BrandCard({
   brand, sectionCount, isDragging, indicatorOnLeft, indicatorOnRight, indicatorColor,
   editingId, editName, editColor, editHexInput, editDescription, duplicating,
   logoUploading, headerUploading, showHeaderUrl, headerUrlInput,
-  onDragPointerDown, onOpen, onStartEdit, onDuplicate, onDelete,
+  onDragStart, onDragOver, onDragLeave, onDrop, onDragEnd, onOpen, onStartEdit, onDuplicate, onDelete,
   onCancelEdit, onSaveEdit, setEditName, setEditColor, setEditHexInput, setEditDescription,
   setShowHeaderUrl, setHeaderUrlInput, uploadHeaderFromUrl, removeHeader, removeLogo, logoInputRef, headerInputRef,
 }: BrandCardProps) {
@@ -81,29 +85,20 @@ function BrandCard({
       <div
         className={`group bg-card border rounded-2xl overflow-hidden transition-all duration-200 cursor-grab active:cursor-grabbing flex flex-col min-h-[220px] ${isEditingThis ? '' : 'hover:scale-[1.02] hover:shadow-lg'}`}
         style={{ borderColor: 'var(--border)', opacity: isDragging ? 0.4 : 1 }}
-        data-brand-drop-id={brand.id}
-        onPointerDown={onDragPointerDown}
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        onDragEnd={onDragEnd}
         onClick={onOpen}
       >
         {/* Header band with action buttons */}
         <div className="h-24 flex items-center justify-center relative group/header" style={
-          brand.headerImage ? undefined : { background: isEditingThis ? editColor : brand.color }
+          brand.headerImage
+            ? { backgroundImage: `url(/uploads/${brand.headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { background: isEditingThis ? editColor : brand.color }
         }>
-          {brand.headerImage && (
-            <>
-              <img
-                src={`/uploads/${brand.headerImage}`}
-                alt=""
-                draggable={false}
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-                style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
-              />
-              {/* Transparent capture layer: ensures the pointer always hits a plain, non-image
-                  element here, so the browser never engages its native "drag this image out"
-                  gesture — reordering uses its own pointer-based drag, not native HTML5 DnD. */}
-              <div className="absolute inset-0" />
-            </>
-          )}
           {isEditingThis && !showHeaderUrl && (
             <div className="absolute bottom-3 right-3 flex gap-1.5" onClick={e => e.stopPropagation()}>
               {headerUploading
@@ -167,7 +162,7 @@ function BrandCard({
               {logoUploading && isEditingThis
                 ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 : brand.logoImage
-                  ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" draggable={false} />
+                  ? <img src={`/uploads/${brand.logoImage}`} alt="logo" className="w-full h-full object-contain p-3" />
                   : <span className="text-white text-2xl font-bold">{initial}</span>
               }
             </div>
@@ -320,8 +315,6 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
   const [editHexInput, setEditHexInput] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const dragTrackRef = useRef<{ id: string; active: boolean } | null>(null);
-  const justDraggedRef = useRef(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [headerUploading, setHeaderUploading] = useState(false);
   const [headerUrlInput, setHeaderUrlInput] = useState('');
@@ -527,67 +520,6 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
     });
   }
 
-  // Custom pointer-based drag for brand cards (not native HTML5 DnD): some browsers hijack
-  // native drag over an element painting a raster image (Safari/Chrome "drag this image out"),
-  // which made reordering unreliable whenever a card had a header image. Tracking the pointer
-  // ourselves and locating the drop target via elementFromPoint sidesteps that entirely.
-  function onBrandPointerDown(e: React.PointerEvent, brandId: string) {
-    if (e.button !== 0) return;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const track = { id: brandId, active: false };
-    dragTrackRef.current = track;
-
-    function targetsAt(x: number, y: number) {
-      const el = document.elementFromPoint(x, y) as HTMLElement | null;
-      const brandTarget = el?.closest('[data-brand-drop-id]') as HTMLElement | null;
-      const zoneTarget = el?.closest('[data-category-zone-id]') as HTMLElement | null;
-      return { brandTarget, zoneTarget };
-    }
-
-    function onMove(ev: PointerEvent) {
-      if (dragTrackRef.current !== track) return;
-      if (!track.active) {
-        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
-        track.active = true;
-        setDragId(track.id);
-      }
-      const { brandTarget, zoneTarget } = targetsAt(ev.clientX, ev.clientY);
-      if (brandTarget && brandTarget.dataset.brandDropId !== track.id) {
-        setDragOverId(brandTarget.dataset.brandDropId!);
-        setDropZoneCategoryId(null);
-      } else if (zoneTarget) {
-        setDropZoneCategoryId(zoneTarget.dataset.categoryZoneId as string);
-        setDragOverId(null);
-      } else {
-        setDragOverId(null);
-        setDropZoneCategoryId(null);
-      }
-    }
-
-    function onUp(ev: PointerEvent) {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      if (dragTrackRef.current === track) dragTrackRef.current = null;
-      if (track.active) {
-        justDraggedRef.current = true;
-        const { brandTarget, zoneTarget } = targetsAt(ev.clientX, ev.clientY);
-        if (brandTarget && brandTarget.dataset.brandDropId !== track.id) {
-          reorder(track.id, brandTarget.dataset.brandDropId!);
-        } else if (zoneTarget) {
-          const raw = zoneTarget.dataset.categoryZoneId!;
-          moveBrandToCategory(track.id, raw === 'none' ? null : raw);
-        }
-      }
-      setDragId(null);
-      setDragOverId(null);
-      setDropZoneCategoryId(null);
-    }
-
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  }
-
   async function duplicateBrand(id: string) {
     setDuplicating(id);
     const res = await fetch(`/api/brands/${id}/duplicate`, { method: 'POST' });
@@ -666,8 +598,12 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               headerUploading={headerUploading}
               showHeaderUrl={showHeaderUrl}
               headerUrlInput={headerUrlInput}
-              onDragPointerDown={e => onBrandPointerDown(e, brand.id)}
-              onOpen={() => { if (justDraggedRef.current) { justDraggedRef.current = false; return; } onOpenBrand(brand.id); }}
+              onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragId(brand.id); }}
+              onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverId(brand.id); }}
+              onDragLeave={() => setDragOverId(null)}
+              onDrop={e => { e.preventDefault(); e.stopPropagation(); if (dragId) reorder(dragId, brand.id); setDragId(null); setDragOverId(null); setDropZoneCategoryId(null); }}
+              onDragEnd={() => { setDragId(null); setDragOverId(null); setDropZoneCategoryId(null); }}
+              onOpen={() => onOpenBrand(brand.id)}
               onStartEdit={e => startEdit(brand, e)}
               onDuplicate={() => duplicateBrand(brand.id)}
               onDelete={() => deleteBrand(brand.id)}
@@ -695,7 +631,9 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             style={dropZoneCategoryId === (categoryId ?? 'none')
               ? { borderColor: 'var(--accent)', color: 'var(--accent)', background: 'var(--accent-subtle)' }
               : { borderColor: 'var(--border)', color: '#9ca3af' }}
-            data-category-zone-id={categoryId ?? 'none'}
+            onDragOver={e => { e.preventDefault(); setDropZoneCategoryId(categoryId ?? 'none'); }}
+            onDragLeave={() => setDropZoneCategoryId(null)}
+            onDrop={e => { e.preventDefault(); e.stopPropagation(); if (dragId) moveBrandToCategory(dragId, categoryId); setDragId(null); setDragOverId(null); setDropZoneCategoryId(null); }}
           >
             Déposer ici
           </div>
@@ -872,6 +810,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
               <div
                 key={category?.id ?? 'uncategorized'}
                 className="relative"
+                onDragOver={e => { if (dragId) { e.preventDefault(); setDropZoneCategoryId(category?.id ?? 'none'); } }}
               >
                 {category ? (
                   <div
