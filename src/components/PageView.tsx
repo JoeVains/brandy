@@ -9,7 +9,7 @@ import TypographyModule from './modules/TypographyModule';
 import TextModule from './modules/TextModule';
 import ImageModule from './modules/ImageModule';
 import AttachmentsModule from './modules/AttachmentsModule';
-import DividerModule from './modules/DividerModule';
+import DividerModule, { DividerLine, DividerControls } from './modules/DividerModule';
 import HeadingModule from './modules/HeadingModule';
 import IconsModule from './modules/IconsModule';
 import SpacingModule from './modules/SpacingModule';
@@ -110,12 +110,44 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
     return s?.name ?? id;
   }
 
+  if (module.type === 'divider') {
+    return (
+      <div ref={cardRef} className={`py-2 transition-opacity ${isDragging ? 'opacity-50' : ''}`}>
+        <div className="flex items-center gap-3">
+          <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 flex-shrink-0 flex items-center">
+            <GripVertical size={16} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <DividerLine module={module} />
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={() => setIsEditing(e => !e)}
+              className={`p-1.5 rounded-lg transition-colors ${isEditing ? '' : 'hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              title={isEditing ? 'Terminé' : 'Éditer'}
+              style={isEditing ? { background: brandColor, color: 'white' } : { color: '#9ca3af' }}
+            >
+              {isEditing ? <Check size={14} /> : <PenLine size={14} />}
+            </button>
+            <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500">
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+        {isEditing && (
+          <div className="pl-7 pt-3">
+            <DividerControls module={module} onUpdate={onUpdate} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div ref={cardRef} className={`border rounded-2xl transition-shadow ${isDragging ? 'shadow-xl opacity-50' : 'shadow-sm'}`}
       style={{ borderColor: 'var(--border)', background: module.backgroundColor ? `${module.backgroundColor}1a` : 'var(--card-bg)', ...(isEditing ? { outline: `2px solid ${brandColor}` } : {}) }}>
       {/* Module header */}
-      {module.type !== 'divider' && (
-        <div className="flex items-center gap-3 px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex items-center gap-3 px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
           <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 flex-shrink-0">
             <GripVertical size={16} />
           </div>
@@ -299,10 +331,9 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
             </div>
           </div>
         </div>
-      )}
 
       {/* Module content */}
-      <div className={module.type === 'divider' ? 'px-5 py-4' : 'p-5'}>
+      <div className="p-5">
         {module.type === 'colors' && <ColorsModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'typography' && <TypographyModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'heading' && <HeadingModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
@@ -317,17 +348,6 @@ function ModuleCard({ module, brandColor, sections, currentSectionId, onUpdate, 
         {module.type === 'audio' && <AudioModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'accessibility' && <AccessibilityModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
         {module.type === 'button' && <ButtonModule module={module} brandColor={brandColor} onUpdate={onUpdate} isEditing={isEditing} />}
-        {module.type === 'divider' && (
-          <div className="flex items-center gap-3">
-            <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500">
-              <GripVertical size={16} />
-            </div>
-            <DividerModule />
-            <button onClick={onDelete} className="text-gray-300 dark:text-gray-600 hover:text-red-500 flex-shrink-0">
-              <Trash2 size={14} />
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

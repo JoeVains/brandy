@@ -22,7 +22,8 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
   const bg = module.backgroundColor ? `${module.backgroundColor}1a` : 'transparent';
 
   if (module.type === 'divider') {
-    return <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '8px 0' }} />;
+    const thickness = module.dividerThickness ?? 1;
+    return <div style={{ height: thickness, background: module.dividerColor ?? '#e5e7eb', borderRadius: thickness > 2 ? thickness / 2 : 0, margin: '8px 0' }} />;
   }
 
   if (module.type === 'heading') {

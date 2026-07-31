@@ -21,11 +21,7 @@ const noop = () => {};
 
 function ModuleView({ module, brandColor }: { module: Module; brandColor: string }) {
   if (module.type === 'divider') {
-    return (
-      <div className="border rounded-2xl px-5 py-4" style={{ borderColor: 'var(--border)' }}>
-        <DividerModule />
-      </div>
-    );
+    return <DividerModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />;
   }
   return (
     <div className="border rounded-2xl" style={{ borderColor: 'var(--border)', background: module.backgroundColor ? `${module.backgroundColor}1a` : 'var(--card-bg)' }}>

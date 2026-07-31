@@ -173,6 +173,9 @@ export interface Module {
   buttonDescription?: string;
   buttonItems?: ButtonItem[];
   buttonAlign?: 'left' | 'center' | 'right';
+  // divider
+  dividerThickness?: number;
+  dividerColor?: string;
   backgroundColor?: string;
   createdAt: string;
 }
