@@ -14,7 +14,7 @@ interface Props {
 
 const TEXT_COLORS = ['#111827', '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280'];
 
-type FormatKey = 'bold' | 'italic' | 'underline' | 'strikeThrough' | 'superscript' | 'subscript';
+type FormatKey = 'bold' | 'italic' | 'underline' | 'strikeThrough' | 'superscript' | 'subscript' | 'uppercase';
 
 function ToolbarButton({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title: string; children: React.ReactNode }) {
   return (
@@ -37,7 +37,7 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
   const [linkMenuOpen, setLinkMenuOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [activeFormats, setActiveFormats] = useState<Record<FormatKey, boolean>>({
-    bold: false, italic: false, underline: false, strikeThrough: false, superscript: false, subscript: false,
+    bold: false, italic: false, underline: false, strikeThrough: false, superscript: false, subscript: false, uppercase: false,
   });
   const [brandColors, setBrandColors] = useState<ColorItem[]>([]);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -67,6 +67,7 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || !editorRef.current?.contains(sel.anchorNode)) return;
       savedRange.current = sel.getRangeAt(0).cloneRange();
+      const anchorEl = sel.anchorNode?.nodeType === 3 ? sel.anchorNode.parentElement : (sel.anchorNode as HTMLElement | null);
       setActiveFormats({
         bold: document.queryCommandState('bold'),
         italic: document.queryCommandState('italic'),
@@ -74,6 +75,7 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
         strikeThrough: document.queryCommandState('strikeThrough'),
         superscript: document.queryCommandState('superscript'),
         subscript: document.queryCommandState('subscript'),
+        uppercase: anchorEl ? getComputedStyle(anchorEl).textTransform === 'uppercase' : false,
       });
     }
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -102,6 +104,24 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
   function exec(command: string, value?: string) {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
+  }
+
+  function toggleUppercase() {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const anchorEl = sel.anchorNode?.nodeType === 3 ? sel.anchorNode.parentElement : (sel.anchorNode as HTMLElement | null);
+    const isUppercase = anchorEl ? getComputedStyle(anchorEl).textTransform === 'uppercase' : false;
+    const contents = range.extractContents();
+    const wrapper = document.createElement('span');
+    wrapper.style.textTransform = isUppercase ? 'none' : 'uppercase';
+    wrapper.appendChild(contents);
+    range.insertNode(wrapper);
+    const newRange = document.createRange();
+    newRange.selectNodeContents(wrapper);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
   }
 
   function applyColor(color: string) {
@@ -149,6 +169,8 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
             <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
             <ToolbarButton title="Exposant" active={activeFormats.superscript} onClick={() => exec('superscript')}><Superscript size={14} /></ToolbarButton>
             <ToolbarButton title="Indice" active={activeFormats.subscript} onClick={() => exec('subscript')}><Subscript size={14} /></ToolbarButton>
+            <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
+            <ToolbarButton title="Majuscules" active={activeFormats.uppercase} onClick={toggleUppercase}><span className="text-xs font-bold leading-none px-0.5">AA</span></ToolbarButton>
             <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
             <div className="relative" ref={colorMenuRef}>
               <ToolbarButton title="Couleur du texte" onClick={() => setColorMenuOpen(o => !o)}>
