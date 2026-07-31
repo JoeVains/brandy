@@ -32,7 +32,7 @@ function buildRows(item: ColorItem, formats: ColorFormat[]) {
     rgb: { label: 'RVB', text: rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '—' },
     hsl: { label: 'TSL', text: hsl ? `${hsl.h}°, ${hsl.s}%, ${hsl.l}%` : '—' },
     cmyk: { label: 'CMJN', text: item.cmyk || '—' },
-    pantone: { label: 'Pantone', text: item.pantone || '—' },
+    pantone: { label: 'PANT', text: item.pantone || '—' },
   };
   return formats.map(key => ({ key, ...all[key] }));
 }
@@ -115,7 +115,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
   if (editing) {
     return (
       <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-        <div className="h-24 relative" style={{ background: colorValue }}>
+        <div className="h-24 relative" style={{ background: colorValue, borderBottom: '1px solid var(--border)' }}>
           <input
             type="color"
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -161,7 +161,7 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
 
   return (
     <div className="border rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] hover:shadow-md relative" style={{ borderColor: 'var(--border)' }}>
-      <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'pointer' }}
+      <div className="h-24 relative" style={{ background: item.value, cursor: isEditing ? 'grab' : 'pointer', borderBottom: '1px solid var(--border)' }}
         draggable={isEditing}
         onClick={e => { setMenuAnchor(e.currentTarget.getBoundingClientRect()); setShowMenu(v => !v); }}
         onDragStart={e => {
@@ -189,10 +189,10 @@ function ColorSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStar
         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
         {buildRows(item, formats).map(row => (
           <button key={row.key} onClick={() => copyText(row.text, row.key)}
-            className="w-full flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
-            <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] w-12 flex-shrink-0 text-left">{row.label}</span>
-            <span className="font-mono text-left flex-1 whitespace-nowrap overflow-hidden">{copied === row.key ? '✓ copié' : row.text}</span>
-            <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0" />
+            className="w-full flex items-start gap-2 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row">
+            <span className="font-mono text-gray-400 dark:text-gray-500 text-[10px] w-9 flex-shrink-0 text-left pt-0.5">{row.label}</span>
+            <span className="font-mono text-left text-[11px] leading-snug flex-1 min-w-0 break-words">{copied === row.key ? '✓ copié' : row.text}</span>
+            <Copy size={9} className="opacity-0 group-hover/row:opacity-50 flex-shrink-0 mt-0.5" />
           </button>
         ))}
       </div>
@@ -792,7 +792,7 @@ export default function ColorsModule({ module, brandColor, onUpdate, isEditing }
 
         {isEditing && showAdd ? (
           <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            <div className="h-24 relative" style={{ background: newHex }}>
+            <div className="h-24 relative" style={{ background: newHex, borderBottom: '1px solid var(--border)' }}>
               <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 value={newHex} onChange={e => applyNew(e.target.value)} />
             </div>
