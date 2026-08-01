@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Module, ColorItem } from '@/types';
 import { textModuleToHtml } from '@/lib/textContent';
-import { Bold, Italic, Underline, Strikethrough, Superscript, Subscript, Link2, Palette, Eraser } from 'lucide-react';
+import { Bold, Italic, Underline, Strikethrough, Superscript, Subscript, Link2, Palette, Eraser, Undo2 } from 'lucide-react';
 
 interface Props {
   moduleId: string;
@@ -177,6 +177,13 @@ export default function ModuleDescription({ moduleId, brandId, value, isEditing,
     setLinkMenuOpen(false);
   }
 
+  function cancel() {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = textModuleToHtml(value);
+      pendingHtml.current = editorRef.current.innerHTML;
+    }
+  }
+
   if (isEditing) {
     return (
       <div className="mb-4 rounded-lg transition-colors" style={focused ? { background: '#f9fafb', border: '1px solid var(--border)' } : { background: 'transparent', border: '1px solid transparent' }}>
@@ -257,6 +264,8 @@ export default function ModuleDescription({ moduleId, brandId, value, isEditing,
           </div>
           <div className="w-px h-4 mx-0.5" style={{ background: 'var(--border)' }} />
           <ToolbarButton title="Effacer la mise en forme" onClick={() => exec('removeFormat')}><Eraser size={12} /></ToolbarButton>
+          <div className="w-px h-4 mx-0.5" style={{ background: 'var(--border)' }} />
+          <ToolbarButton title="Annuler les modifications" onClick={cancel}><Undo2 size={12} /></ToolbarButton>
         </div>
         <div
           ref={editorRef}
