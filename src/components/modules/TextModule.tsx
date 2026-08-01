@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Module, ColorItem } from '@/types';
 import { textModuleToHtml } from '@/lib/textContent';
-import { Check, X, Pencil, Bold, Italic, Underline, Strikethrough, Superscript, Subscript, Link2, Palette, Eraser } from 'lucide-react';
+import { X, Bold, Italic, Underline, Strikethrough, Superscript, Subscript, Link2, Palette, Eraser } from 'lucide-react';
 
 interface Props {
   module: Module;
@@ -32,7 +32,6 @@ function ToolbarButton({ active, onClick, title, children }: { active?: boolean;
 }
 
 export default function TextModule({ module, brandColor, onUpdate, isEditing: isEditMode }: Props) {
-  const [editing, setEditing] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [linkMenuOpen, setLinkMenuOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
@@ -44,6 +43,8 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
   const savedRange = useRef<Range | null>(null);
   const colorMenuRef = useRef<HTMLDivElement>(null);
   const linkMenuRef = useRef<HTMLDivElement>(null);
+  const prevEditing = useRef(isEditMode);
+  const pendingHtml = useRef('');
 
   useEffect(() => {
     fetch(`/api/modules?brandId=${module.brandId}`)
@@ -56,13 +57,28 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
   }, [module.brandId]);
 
   useEffect(() => {
-    if (editing && editorRef.current) {
+    if (isEditMode && editorRef.current) {
       editorRef.current.innerHTML = textModuleToHtml(module.content);
+      pendingHtml.current = editorRef.current.innerHTML;
     }
-  }, [editing]);
+  }, [isEditMode]);
 
   useEffect(() => {
-    if (!editing) return;
+    if (prevEditing.current && !isEditMode) {
+      const html = pendingHtml.current.trim();
+      if (html !== textModuleToHtml(module.content).trim()) {
+        fetch(`/api/modules/${module.id}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ content: html }),
+        }).then(r => r.json()).then(onUpdate);
+      }
+    }
+    prevEditing.current = isEditMode;
+  }, [isEditMode]);
+
+  useEffect(() => {
+    if (!isEditMode) return;
     function handleSelectionChange() {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || !editorRef.current?.contains(sel.anchorNode)) return;
@@ -80,7 +96,7 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
     }
     document.addEventListener('selectionchange', handleSelectionChange);
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, [editing]);
+  }, [isEditMode]);
 
   useEffect(() => {
     if (!colorMenuOpen && !linkMenuOpen) return;
@@ -101,9 +117,14 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
     }
   }
 
+  function syncPendingHtml() {
+    if (editorRef.current) pendingHtml.current = editorRef.current.innerHTML;
+  }
+
   function exec(command: string, value?: string) {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
+    syncPendingHtml();
   }
 
   function toggleUppercase() {
@@ -122,11 +143,13 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
     newRange.selectNodeContents(wrapper);
     sel.removeAllRanges();
     sel.addRange(newRange);
+    syncPendingHtml();
   }
 
   function applyColor(color: string) {
     restoreSelection();
     document.execCommand('foreColor', false, color);
+    syncPendingHtml();
     setColorMenuOpen(false);
   }
 
@@ -135,6 +158,7 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
     if (linkUrl.trim()) {
       const url = /^https?:\/\//i.test(linkUrl.trim()) ? linkUrl.trim() : `https://${linkUrl.trim()}`;
       document.execCommand('createLink', false, url);
+      syncPendingHtml();
     }
     setLinkMenuOpen(false);
     setLinkUrl('');
@@ -143,21 +167,18 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
   function removeLink() {
     restoreSelection();
     document.execCommand('unlink');
+    syncPendingHtml();
     setLinkMenuOpen(false);
   }
 
-  async function save() {
-    const content = editorRef.current?.innerHTML ?? '';
-    const res = await fetch(`/api/modules/${module.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-    onUpdate(await res.json());
-    setEditing(false);
+  function cancel() {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = textModuleToHtml(module.content);
+      pendingHtml.current = editorRef.current.innerHTML;
+    }
   }
 
-  if (editing) {
+  if (isEditMode) {
     return (
       <div className="space-y-2">
         <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
@@ -245,13 +266,11 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
             suppressContentEditableWarning
             className="w-full px-4 py-3 text-sm outline-none min-h-[120px] [&_a]:underline [&_a]:text-blue-600"
             data-placeholder="Saisissez votre texte ici..."
+            onInput={e => { pendingHtml.current = (e.target as HTMLDivElement).innerHTML; }}
           />
         </div>
         <div className="flex gap-2">
-          <button onClick={save} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white" style={{ background: brandColor }}>
-            <Check size={13} /> Sauvegarder
-          </button>
-          <button onClick={() => setEditing(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border" style={{ borderColor: 'var(--border)' }}>
+          <button onClick={cancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border" style={{ borderColor: 'var(--border)' }}>
             <X size={13} /> Annuler
           </button>
         </div>
@@ -268,12 +287,6 @@ export default function TextModule({ module, brandColor, onUpdate, isEditing: is
         />
       ) : (
         <span className="text-sm text-gray-400 dark:text-gray-500 italic">Aucun texte</span>
-      )}
-      {isEditMode && (
-        <button onClick={() => setEditing(true)}
-          className="mt-2 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 transition-colors">
-          <Pencil size={11} /> Modifier le texte
-        </button>
       )}
     </div>
   );
