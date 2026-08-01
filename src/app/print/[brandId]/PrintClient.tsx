@@ -204,8 +204,13 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
           const sourceIds = module.accessibilitySourceModuleIds
             ?? (module.accessibilitySourceModuleId ? [module.accessibilitySourceModuleId] : []);
           const sources = colorModules.filter(m => sourceIds.includes(m.id));
+          const isCustomMode = module.accessibilitySource === 'custom';
           const seen = new Map<string, ColorItem>();
-          (sources.length > 0 ? sources : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
+          if (isCustomMode) {
+            (module.accessibilityCustomColors ?? []).forEach(item => seen.set(item.id, item));
+          } else {
+            (sources.length > 0 ? sources : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
+          }
           const allColors = [...seen.values()];
           return allColors.length < 2 ? (
             <p style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Pas assez de couleurs pour calculer les contrastes.</p>

@@ -149,6 +149,8 @@ export interface Module {
   // accessibility
   accessibilitySourceModuleId?: string;
   accessibilitySourceModuleIds?: string[];
+  accessibilityCustomColors?: ColorItem[];
+  accessibilitySource?: 'modules' | 'custom';
   // video
   videoMode?: 'embed' | 'upload';
   videoUrl?: string;
