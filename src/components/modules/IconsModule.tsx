@@ -1,9 +1,74 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Module } from '@/types';
+import { createPortal } from 'react-dom';
+import { Module, IconItem } from '@/types';
 import { Plus, Trash2, Download, Check, X, Search } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  return `${(bytes / 1024).toFixed(1)} Ko`;
+}
+
+function IconInspector({ item, onClose, onDownload, onDelete, isEditing }: {
+  item: IconItem;
+  onClose: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+  isEditing?: boolean;
+}) {
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed top-0 right-0 bottom-0 z-50 w-80 bg-card shadow-2xl flex flex-col border-l"
+        style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
+          style={{ borderColor: 'var(--border)' }}>
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{item.name}</h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 flex-shrink-0">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="w-full aspect-square rounded-xl border flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/uploads/${item.filename}`} alt={item.name} className="w-full h-full object-contain" />
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-gray-400 dark:text-gray-500">Nom</span>
+              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[60%]">{item.name}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-gray-400 dark:text-gray-500">Fichier</span>
+              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[60%]">{item.filename}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-gray-400 dark:text-gray-500">Taille</span>
+              <span className="text-gray-700 dark:text-gray-300">{formatSize(item.size)}</span>
+            </div>
+            <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-gray-400 dark:text-gray-500">Format</span>
+              <span className="text-gray-700 dark:text-gray-300">SVG</span>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={onDownload} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
+              <Download size={12} /> Télécharger
+            </button>
+            {isEditing && (
+              <button onClick={onDelete} className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                <Trash2 size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
 
 interface Props {
   module: Module;
@@ -16,6 +81,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   const inputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [inspectedId, setInspectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -209,7 +275,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               )}
               {/* Card */}
               <div
-                onClick={() => toggleSelect(item.id)}
+                onClick={() => setInspectedId(item.id)}
                 className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer transition-all"
                 style={{
                   borderColor: isSelected ? brandColor : 'var(--border)',
@@ -220,8 +286,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/uploads/${item.filename}`} alt={item.name} className="w-full h-full object-contain" />
 
-                {/* Selection checkmark */}
-                <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
+                {/* Selection checkbox */}
+                <div
+                  onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
+                  className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
                   style={{ background: isSelected ? brandColor : 'var(--card-bg)', borderColor: isSelected ? brandColor : '#d1d5db' }}>
                   {isSelected && <Check size={10} color="white" strokeWidth={3} />}
                 </div>
@@ -296,6 +364,20 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
 
       <input ref={inputRef} type="file" accept=".svg" multiple className="hidden"
         onChange={e => e.target.files && uploadIcons(e.target.files)} />
+
+      {inspectedId && (() => {
+        const item = items.find(i => i.id === inspectedId);
+        if (!item) return null;
+        return (
+          <IconInspector
+            item={item}
+            isEditing={isEditing}
+            onClose={() => setInspectedId(null)}
+            onDownload={() => downloadSingle(item.filename, item.name)}
+            onDelete={() => { deleteIcon(item.id); setInspectedId(null); }}
+          />
+        );
+      })()}
     </div>
   );
 }
