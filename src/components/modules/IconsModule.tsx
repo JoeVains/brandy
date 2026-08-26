@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Module, IconItem } from '@/types';
+import { Module, IconItem, ColorItem } from '@/types';
 import { Plus, Trash2, Download, Check, X, Search } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
@@ -11,13 +11,106 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} Ko`;
 }
 
-function IconInspector({ item, onClose, onDownload, onDelete, isEditing }: {
+function recolorSvg(svgText: string, color: string): string {
+  return svgText
+    .replace(/(fill|stroke)="(?!none")[^"]*"/gi, `$1="${color}"`)
+    .replace(/(fill|stroke):\s*(?!none)[^;"]+/gi, `$1:${color}`);
+}
+
+async function downloadPng(filename: string, name: string, size: number, color: string | null) {
+  let src = `/uploads/${filename}`;
+  let objectUrl: string | null = null;
+  if (color) {
+    const svgText = await fetch(src).then(r => r.text());
+    const blob = new Blob([recolorSvg(svgText, color)], { type: 'image/svg+xml' });
+    objectUrl = URL.createObjectURL(blob);
+    src = objectUrl;
+  }
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Impossible de charger le SVG'));
+    img.src = src;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  if (!ctx) return;
+  ctx.drawImage(img, 0, 0, size, size);
+  const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}-${size}.png`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function IconInspector({ item, brandId, onClose, onDelete, isEditing }: {
   item: IconItem;
+  brandId: string;
   onClose: () => void;
-  onDownload: () => void;
   onDelete: () => void;
   isEditing?: boolean;
 }) {
+  const [pngSize, setPngSize] = useState(512);
+  const [pngColor, setPngColor] = useState<string | null>(null);
+  const [exportingPng, setExportingPng] = useState(false);
+  const [brandColors, setBrandColors] = useState<ColorItem[]>([]);
+  const [svgText, setSvgText] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/modules?brandId=${brandId}`)
+      .then(r => r.json())
+      .then((modules: Module[]) => {
+        const seen = new Map<string, ColorItem>();
+        modules.filter(m => m.type === 'colors').flatMap(m => m.colorItems ?? []).forEach(c => seen.set(c.id, c));
+        setBrandColors([...seen.values()]);
+      });
+  }, [brandId]);
+
+  useEffect(() => {
+    setSvgText(null);
+    fetch(`/uploads/${item.filename}`).then(r => r.text()).then(setSvgText);
+  }, [item.filename]);
+
+  useEffect(() => {
+    if (!pngColor || !svgText) { setPreviewUrl(null); return; }
+    const blob = new Blob([recolorSvg(svgText, pngColor)], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [svgText, pngColor]);
+
+  async function handleDownloadPng() {
+    setExportingPng(true);
+    try {
+      await downloadPng(item.filename, item.name, pngSize, pngColor);
+    } finally {
+      setExportingPng(false);
+    }
+  }
+
+  function handleDownloadSvg() {
+    if (pngColor && svgText) {
+      const blob = new Blob([recolorSvg(svgText, pngColor)], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${item.name}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const a = document.createElement('a');
+      a.href = `/uploads/${item.filename}`;
+      a.download = `${item.name}.svg`;
+      a.click();
+    }
+  }
+
   return createPortal(
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
@@ -33,7 +126,7 @@ function IconInspector({ item, onClose, onDownload, onDelete, isEditing }: {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div className="w-full aspect-square rounded-xl border flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/uploads/${item.filename}`} alt={item.name} className="w-full h-full object-contain" />
+            <img src={previewUrl ?? `/uploads/${item.filename}`} alt={item.name} className="w-full h-full object-contain" />
           </div>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -54,14 +147,68 @@ function IconInspector({ item, onClose, onDownload, onDelete, isEditing }: {
             </div>
           </div>
           <div className="flex gap-2 pt-2">
-            <button onClick={onDownload} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
-              <Download size={12} /> Télécharger
+            <button onClick={handleDownloadSvg} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
+              <Download size={12} /> Télécharger (SVG)
             </button>
             {isEditing && (
               <button onClick={onDelete} className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" style={{ borderColor: 'var(--border)' }}>
                 <Trash2 size={12} />
               </button>
             )}
+          </div>
+
+          <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Exporter en PNG</p>
+
+            {brandColors.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                <button
+                  onClick={() => setPngColor(null)}
+                  title="Couleur d'origine"
+                  className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-transform hover:scale-110"
+                  style={{
+                    borderColor: pngColor === null ? 'var(--accent)' : 'var(--border)',
+                    background: 'repeating-conic-gradient(#d1d5db 0% 25%, white 0% 50%) 50% / 8px 8px',
+                  }}
+                >
+                  {pngColor === null && <Check size={10} className="text-gray-700" strokeWidth={3} />}
+                </button>
+                {brandColors.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setPngColor(c.value)}
+                    title={c.name || c.value}
+                    className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-transform hover:scale-110"
+                    style={{ background: c.value, borderColor: pngColor === c.value ? 'var(--accent)' : 'var(--border)' }}
+                  >
+                    {pngColor === c.value && <Check size={10} color="white" strokeWidth={3} />}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="number"
+                  min={1}
+                  max={4096}
+                  value={pngSize}
+                  onChange={e => setPngSize(Math.max(1, Math.min(4096, Number(e.target.value) || 0)))}
+                  className="w-full pl-3 pr-9 py-1.5 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">px</span>
+              </div>
+              <button
+                onClick={handleDownloadPng}
+                disabled={exportingPng || !pngSize}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white transition-colors disabled:opacity-50 flex-shrink-0"
+                style={{ background: 'var(--accent)' }}
+              >
+                <Download size={12} /> {exportingPng ? 'Export…' : 'PNG'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -371,9 +518,9 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         return (
           <IconInspector
             item={item}
+            brandId={module.brandId}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
-            onDownload={() => downloadSingle(item.filename, item.name)}
             onDelete={() => { deleteIcon(item.id); setInspectedId(null); }}
           />
         );
