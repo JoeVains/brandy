@@ -55,7 +55,7 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
   isEditing?: boolean;
 }) {
   const [rasterSize, setRasterSize] = useState(512);
-  const [rasterFormat, setRasterFormat] = useState<RasterFormat>('png');
+  const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
   const [color, setColor] = useState<string | null>(null);
   const [exportingRaster, setExportingRaster] = useState(false);
   const [brandColors, setBrandColors] = useState<ColorItem[]>([]);
@@ -85,7 +85,7 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
     return () => URL.revokeObjectURL(url);
   }, [svgText, color]);
 
-  async function handleDownloadRaster() {
+  async function handleDownloadRaster(rasterFormat: RasterFormat) {
     setExportingRaster(true);
     try {
       await downloadRaster(item.filename, item.name, rasterSize, color, rasterFormat);
@@ -184,57 +184,60 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
-            <button onClick={handleDownloadSvg} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
-              <Download size={12} /> SVG
-            </button>
-            <button onClick={handleDownloadPdf} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
-              <Download size={12} /> PDF
-            </button>
-            {isEditing && (
-              <button onClick={onDelete} className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" style={{ borderColor: 'var(--border)' }}>
-                <Trash2 size={12} />
-              </button>
-            )}
-          </div>
-
           <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Exporter en image</p>
-            <div className="flex gap-1.5 mb-2">
-              {(['png', 'webp'] as RasterFormat[]).map(f => (
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Format</p>
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {([
+                { key: 'svg' as const, label: 'SVG' },
+                { key: 'pdf' as const, label: 'PDF' },
+                { key: 'png' as const, label: 'PNG' },
+                { key: 'webp' as const, label: 'WEBP' },
+              ]).map(f => (
                 <button
-                  key={f}
-                  onClick={() => setRasterFormat(f)}
-                  className="px-2.5 py-1 rounded-lg text-xs uppercase transition-colors"
-                  style={rasterFormat === f
-                    ? { background: 'var(--accent)', color: 'white' }
-                    : { border: '1px solid var(--border)', color: '#6b7280' }}
+                  key={f.key}
+                  onClick={() => setFormat(f.key)}
+                  className="flex items-center justify-center px-2 py-1.5 rounded-lg border text-xs transition-colors"
+                  style={format === f.key
+                    ? { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'white' }
+                    : { borderColor: 'var(--border)', color: '#6b7280' }}
                 >
-                  {f}
+                  {f.label}
                 </button>
               ))}
             </div>
+
+            <div className="relative mb-2">
+              <input
+                type="number"
+                min={1}
+                max={4096}
+                value={rasterSize}
+                disabled={format !== 'png' && format !== 'webp'}
+                onChange={e => setRasterSize(Math.max(1, Math.min(4096, Number(e.target.value) || 0)))}
+                className="w-full pl-3 pr-9 py-1.5 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ borderColor: 'var(--border)' }}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">px</span>
+            </div>
+
             <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="number"
-                  min={1}
-                  max={4096}
-                  value={rasterSize}
-                  onChange={e => setRasterSize(Math.max(1, Math.min(4096, Number(e.target.value) || 0)))}
-                  className="w-full pl-3 pr-9 py-1.5 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600"
-                  style={{ borderColor: 'var(--border)' }}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">px</span>
-              </div>
               <button
-                onClick={handleDownloadRaster}
-                disabled={exportingRaster || !rasterSize}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white transition-colors disabled:opacity-50 flex-shrink-0"
+                onClick={() => {
+                  if (format === 'svg') handleDownloadSvg();
+                  else if (format === 'pdf') handleDownloadPdf();
+                  else handleDownloadRaster(format);
+                }}
+                disabled={exportingRaster || ((format === 'png' || format === 'webp') && !rasterSize)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white transition-colors disabled:opacity-50"
                 style={{ background: 'var(--accent)' }}
               >
-                <Download size={12} /> {exportingRaster ? 'Export…' : rasterFormat.toUpperCase()}
+                <Download size={12} /> {exportingRaster ? 'Export…' : 'Télécharger'}
               </button>
+              {isEditing && (
+                <button onClick={onDelete} className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                  <Trash2 size={12} />
+                </button>
+              )}
             </div>
           </div>
         </div>
