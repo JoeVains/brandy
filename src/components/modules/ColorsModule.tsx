@@ -410,9 +410,9 @@ function ListSwatch({ item, brandColor, onSave, onDelete, isEditing, onDragStart
           }} />
         {showMenu && menuAnchor && <FormatMenu anchorRect={menuAnchor} formats={formats} onToggle={onToggleFormat} onClose={() => setShowMenu(false)} />}
       </div>
-      <div className="flex-1 min-w-0 flex items-center gap-4">
-        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate flex-shrink-0 max-w-[40%]">{item.name}</p>
-        <div className="flex items-center gap-3 flex-1 min-w-0 justify-end overflow-x-auto">
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
+        <div className="flex items-center gap-3 flex-wrap">
           {buildRows(item, formats).map(row => (
             <button key={row.key} onClick={() => copyText(row.text, row.key)}
               className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white dark:text-gray-200 group/row flex-shrink-0">
