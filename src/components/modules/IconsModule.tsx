@@ -61,6 +61,29 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
   const [brandColors, setBrandColors] = useState<ColorItem[]>([]);
   const [svgText, setSvgText] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    function handlePointerDown(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (panelRef.current?.contains(target)) return;
+      if (target.closest('[data-icon-card]')) return;
+      handleClose();
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, []);
+
+  function handleClose() {
+    setVisible(false);
+    setTimeout(onClose, 200);
+  }
 
   useEffect(() => {
     fetch(`/api/modules?brandId=${brandId}`)
@@ -121,13 +144,19 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
 
   return createPortal(
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="fixed top-0 right-0 bottom-0 z-50 w-80 bg-card shadow-2xl flex flex-col border-l"
-        style={{ borderColor: 'var(--border)' }}>
+      <div
+        className="fixed inset-0 z-40 pointer-events-none transition-opacity duration-200"
+        style={{ opacity: visible ? 1 : 0 }}
+      />
+      <div
+        ref={panelRef}
+        className="fixed top-0 right-0 bottom-0 z-50 w-80 bg-card shadow-2xl flex flex-col border-l transition-transform duration-200 ease-out"
+        style={{ borderColor: 'var(--border)', transform: visible ? 'translateX(0)' : 'translateX(100%)' }}
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
           style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{item.name}</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 flex-shrink-0">
+          <button onClick={handleClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 flex-shrink-0">
             <X size={14} />
           </button>
         </div>
@@ -453,6 +482,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               {/* Card */}
               <div
                 onClick={() => setInspectedId(item.id)}
+                data-icon-card
                 className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer transition-all"
                 style={{
                   borderColor: isSelected ? brandColor : 'var(--border)',
