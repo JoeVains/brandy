@@ -61,8 +61,8 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
                 ) : (
                   <div style={{ width: 80, height: 56, borderRadius: 8, background: item.value, border: '1px solid #e5e7eb' }} />
                 )}
-                <span style={{ fontSize: 10, color: '#374151', fontWeight: 600 }}>{item.name || item.value}</span>
-                <span style={{ fontSize: 9, color: '#9ca3af', fontFamily: 'monospace' }}>{item.value}</span>
+                <span style={{ fontSize: 10, color: '#374151', fontWeight: 600 }}>{item.name || item.value.toLowerCase()}</span>
+                <span style={{ fontSize: 9, color: '#9ca3af', fontFamily: 'monospace' }}>{item.value.toLowerCase()}</span>
               </div>
             ))}
           </div>
