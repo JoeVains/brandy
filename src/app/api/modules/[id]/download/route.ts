@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getFile } from '@/lib/files';
+import { recolorSvg } from '@/lib/svg';
 import JSZip from 'jszip';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -28,9 +29,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // Icons
     const items = (module.iconItems ?? []).filter(i => !selectedIds || selectedIds.has(i.id));
     if (items.length === 0) return NextResponse.json({ error: 'No icons' }, { status: 400 });
+    const colorParam = req.nextUrl.searchParams.get('color');
+    const color = colorParam && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorParam) ? colorParam : null;
     for (const item of items) {
       const file = await getFile(item.filename);
-      if (file) zip.file(`${item.name}.svg`, file.data);
+      if (!file) continue;
+      zip.file(`${item.name}.svg`, color ? recolorSvg(new TextDecoder().decode(file.data), color) : file.data);
     }
   }
 

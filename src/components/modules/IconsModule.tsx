@@ -9,6 +9,37 @@ import { recolorSvg } from '@/lib/svg';
 
 type RasterFormat = 'png' | 'webp';
 
+// Accepte "e52323", "#E52323", "#f00" ; renvoie "#rrggbb"/"#rgb" ou null si invalide.
+function normalizeHex(input: string): string | null {
+  const v = input.trim().replace(/^#/, '');
+  return /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) ? `#${v.toLowerCase()}` : null;
+}
+
+const svgCache = new Map<string, Promise<string>>();
+function fetchSvg(filename: string): Promise<string> {
+  let p = svgCache.get(filename);
+  if (!p) {
+    p = fetch(`/uploads/${filename}`).then(r => r.text());
+    svgCache.set(filename, p);
+  }
+  return p;
+}
+
+// Miniature d'icône, recolorée côté client quand une couleur est fournie.
+function TintedImg({ filename, alt, color }: { filename: string; alt: string; color: string | null }) {
+  const [src, setSrc] = useState(`/uploads/${filename}`);
+  useEffect(() => {
+    if (!color) { setSrc(`/uploads/${filename}`); return; }
+    let cancelled = false;
+    fetchSvg(filename).then(text => {
+      if (!cancelled) setSrc(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(recolorSvg(text, color))}`);
+    });
+    return () => { cancelled = true; };
+  }, [filename, color]);
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} className="w-full h-full object-contain" />;
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   return `${(bytes / 1024).toFixed(1)} Ko`;
@@ -293,6 +324,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [tintInput, setTintInput] = useState('');
+  const tint = normalizeHex(tintInput);
   const items = module.iconItems ?? [];
   const filtered = search.trim() ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : items;
 
@@ -363,10 +396,11 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
 
   async function downloadZip(ids?: string[]) {
     setDownloading(true);
-    const url = ids?.length
-      ? `/api/modules/${module.id}/download?ids=${ids.join(',')}`
-      : `/api/modules/${module.id}/download`;
-    const res = await fetch(url);
+    const params = new URLSearchParams();
+    if (ids?.length) params.set('ids', ids.join(','));
+    if (tint) params.set('color', tint);
+    const qs = params.toString();
+    const res = await fetch(`/api/modules/${module.id}/download${qs ? `?${qs}` : ''}`);
     const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -422,6 +456,31 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
       {items.length > 0 && (
         <div className="flex items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-2">
+            <div className="relative">
+              <span
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded border pointer-events-none"
+                style={{
+                  borderColor: 'var(--border)',
+                  background: tint ?? 'repeating-conic-gradient(#d1d5db 0% 25%, white 0% 50%) 50% / 6px 6px',
+                }}
+              />
+              <input
+                value={tintInput}
+                onChange={e => setTintInput(e.target.value)}
+                placeholder="#000000"
+                maxLength={7}
+                spellCheck={false}
+                title="Couleur des icônes (hexadécimal)"
+                className="w-28 pl-8 pr-6 py-1.5 text-xs font-mono rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600"
+                style={{ borderColor: tintInput && !tint ? '#ef4444' : 'var(--border)' }}
+              />
+              {tintInput && (
+                <button onClick={() => setTintInput('')} title="Couleurs d'origine"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
             {hasSelection && (
               <>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
@@ -490,8 +549,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
                   boxShadow: isSelected ? `0 0 0 2px ${brandColor}` : undefined,
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/uploads/${item.filename}`} alt={item.name} className="w-full h-full object-contain" />
+                <TintedImg filename={item.filename} alt={item.name} color={tint} />
 
                 {/* Selection checkbox */}
                 <div
