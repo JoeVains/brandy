@@ -45,36 +45,100 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} Ko`;
 }
 
-async function downloadRaster(filename: string, name: string, size: number, color: string | null, format: RasterFormat) {
+async function renderRaster(filename: string, size: number, color: string | null, format: RasterFormat): Promise<Blob | null> {
   let src = `/uploads/${filename}`;
   let objectUrl: string | null = null;
   if (color) {
-    const svgText = await fetch(src).then(r => r.text());
-    const blob = new Blob([recolorSvg(svgText, color)], { type: 'image/svg+xml' });
-    objectUrl = URL.createObjectURL(blob);
+    const svgText = await fetchSvg(filename);
+    objectUrl = URL.createObjectURL(new Blob([recolorSvg(svgText, color)], { type: 'image/svg+xml' }));
     src = objectUrl;
   }
-  const img = new Image();
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error('Impossible de charger le SVG'));
-    img.src = src;
-  });
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
-  if (!ctx) return;
-  ctx.drawImage(img, 0, 0, size, size);
-  const mimeType = format === 'webp' ? 'image/webp' : 'image/png';
-  const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, mimeType));
-  if (!blob) return;
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Impossible de charger le SVG'));
+      img.src = src;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, size, size);
+    return await new Promise(resolve => canvas.toBlob(resolve, format === 'webp' ? 'image/webp' : 'image/png'));
+  } finally {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function saveBlob(blob: Blob, filename: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${name}-${size}.${format}`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+async function downloadRaster(filename: string, name: string, size: number, color: string | null, format: RasterFormat) {
+  const blob = await renderRaster(filename, size, color, format);
+  if (blob) saveBlob(blob, `${name}-${size}.${format}`);
+}
+
+type BulkFormat = 'svg' | 'pdf' | RasterFormat;
+
+// Choix du format (et de la taille pour PNG/WebP) avant un téléchargement groupé.
+function BulkExportMenu({ label, busy, onClose, onConfirm }: {
+  label: string;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: (format: BulkFormat, size: number) => void;
+}) {
+  const [format, setFormat] = useState<BulkFormat>('svg');
+  const [size, setSize] = useState(512);
+  const ref = useRef<HTMLDivElement>(null);
+  const isRaster = format === 'png' || format === 'webp';
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      const t = e.target as HTMLElement;
+      if (!ref.current?.contains(t) && !t.closest('[data-bulk-trigger]')) onClose();
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [onClose]);
+
+  return (
+    <div ref={ref} className="absolute right-0 top-full mt-1.5 z-30 w-64 rounded-xl border shadow-lg p-3"
+      style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
+      <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">{label}</p>
+      <div className="grid grid-cols-4 gap-1.5 mb-2">
+        {(['svg', 'pdf', 'png', 'webp'] as BulkFormat[]).map(f => (
+          <button key={f} onClick={() => setFormat(f)}
+            className="flex items-center justify-center px-2 py-1.5 rounded-lg border text-xs uppercase transition-colors"
+            style={format === f
+              ? { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'white' }
+              : { borderColor: 'var(--border)', color: '#6b7280' }}>
+            {f}
+          </button>
+        ))}
+      </div>
+      <div className="relative mb-2">
+        <input type="number" min={1} max={4096} value={size} disabled={!isRaster}
+          onChange={e => setSize(Math.max(1, Math.min(4096, Number(e.target.value) || 0)))}
+          className="w-full pl-3 pr-9 py-1.5 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ borderColor: 'var(--border)' }} />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">px</span>
+      </div>
+      <button onClick={() => onConfirm(format, size)} disabled={busy || (isRaster && !size)}
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white transition-colors disabled:opacity-50"
+        style={{ background: 'var(--accent)' }}>
+        <Download size={12} /> {busy ? 'Génération…' : 'Télécharger (.zip)'}
+      </button>
+    </div>
+  );
 }
 
 function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }: {
@@ -317,6 +381,7 @@ interface Props {
 export default function IconsModule({ module, brandColor, onUpdate, isEditing }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [exportMenu, setExportMenu] = useState<'all' | 'selection' | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [inspectedId, setInspectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -394,20 +459,33 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
     a.click();
   }
 
-  async function downloadZip(ids?: string[]) {
+  async function downloadZip(format: BulkFormat, size: number, ids?: string[]) {
     setDownloading(true);
-    const params = new URLSearchParams();
-    if (ids?.length) params.set('ids', ids.join(','));
-    if (tint) params.set('color', tint);
-    const qs = params.toString();
-    const res = await fetch(`/api/modules/${module.id}/download${qs ? `?${qs}` : ''}`);
-    const blob = await res.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${module.title || 'icons'}.zip`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    setDownloading(false);
+    try {
+      const zipName = `${module.title || 'icons'}.zip`;
+      if (format === 'png' || format === 'webp') {
+        // Rastérisation côté client (canvas), puis zip dans le navigateur.
+        const { default: JSZip } = await import('jszip');
+        const zip = new JSZip();
+        for (const item of items.filter(i => !ids?.length || ids.includes(i.id))) {
+          const blob = await renderRaster(item.filename, size, tint, format);
+          if (blob) zip.file(`${item.name}-${size}.${format}`, blob);
+        }
+        saveBlob(await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }), zipName);
+      } else {
+        const params = new URLSearchParams({ format });
+        if (ids?.length) params.set('ids', ids.join(','));
+        if (tint) params.set('color', tint);
+        const res = await fetch(`/api/modules/${module.id}/download?${params}`);
+        if (!res.ok) throw new Error(`Téléchargement impossible (${res.status})`);
+        saveBlob(await res.blob(), zipName);
+      }
+      setExportMenu(null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDownloading(false);
+    }
   }
 
   if (items.length === 0 && !isEditing) {
@@ -491,10 +569,11 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="relative flex items-center gap-2">
             {hasSelection && (
               <button
-                onClick={() => downloadZip([...selected])}
+                data-bulk-trigger
+                onClick={() => setExportMenu(m => m === 'selection' ? null : 'selection')}
                 disabled={downloading}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-white transition-colors disabled:opacity-50"
                 style={{ background: brandColor }}
@@ -504,7 +583,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               </button>
             )}
             <button
-              onClick={() => downloadZip()}
+              data-bulk-trigger
+              onClick={() => setExportMenu(m => m === 'all' ? null : 'all')}
               disabled={downloading}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
               style={{ borderColor: 'var(--border)' }}
@@ -512,6 +592,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
               <Download size={12} />
               {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
             </button>
+            {exportMenu && (
+              <BulkExportMenu
+                label={exportMenu === 'selection' ? `Sélection (${selected.size} icône${selected.size > 1 ? 's' : ''})` : `Toutes les icônes (${items.length})`}
+                busy={downloading}
+                onClose={() => setExportMenu(null)}
+                onConfirm={(format, size) => downloadZip(format, size, exportMenu === 'selection' ? [...selected] : undefined)}
+              />
+            )}
           </div>
         </div>
       )}

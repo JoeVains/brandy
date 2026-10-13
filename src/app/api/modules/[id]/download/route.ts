@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getFile } from '@/lib/files';
 import { recolorSvg } from '@/lib/svg';
+import { launchBrowser, renderSvgToPdf } from '@/lib/pdfBrowser';
 import JSZip from 'jszip';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -31,10 +32,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (items.length === 0) return NextResponse.json({ error: 'No icons' }, { status: 400 });
     const colorParam = req.nextUrl.searchParams.get('color');
     const color = colorParam && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorParam) ? colorParam : null;
-    for (const item of items) {
-      const file = await getFile(item.filename);
-      if (!file) continue;
-      zip.file(`${item.name}.svg`, color ? recolorSvg(new TextDecoder().decode(file.data), color) : file.data);
+    const asPdf = req.nextUrl.searchParams.get('format') === 'pdf';
+    // Un seul navigateur pour tous les PDF (lancer Chromium par icône serait trop lent).
+    const browser = asPdf ? await launchBrowser() : null;
+    try {
+      const page = browser ? await browser.newPage() : null;
+      for (const item of items) {
+        const file = await getFile(item.filename);
+        if (!file) continue;
+        const svg = new TextDecoder().decode(file.data);
+        const svgOut = color ? recolorSvg(svg, color) : svg;
+        if (page) zip.file(`${item.name}.pdf`, await renderSvgToPdf(page, svgOut));
+        else zip.file(`${item.name}.svg`, color ? svgOut : file.data);
+      }
+    } finally {
+      await browser?.close();
     }
   }
 

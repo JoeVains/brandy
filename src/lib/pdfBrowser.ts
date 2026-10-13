@@ -21,3 +21,18 @@ export async function launchBrowser(): Promise<Browser> {
   const { default: puppeteerFull } = await import('puppeteer');
   return puppeteerFull.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }) as unknown as Promise<Browser>;
 }
+
+// Rend un SVG (inline) en PDF vectoriel carré, sans marges, dans la page fournie.
+export async function renderSvgToPdf(page: import('puppeteer-core').Page, svgText: string): Promise<Uint8Array> {
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+    html, body { margin: 0; padding: 0; }
+    svg { display: block; width: 400px; height: 400px; }
+  </style></head><body>${svgText}</body></html>`;
+  await page.setContent(html, { waitUntil: 'load' });
+  return page.pdf({
+    width: '400px',
+    height: '400px',
+    printBackground: false,
+    margin: { top: 0, bottom: 0, left: 0, right: 0 },
+  });
+}
