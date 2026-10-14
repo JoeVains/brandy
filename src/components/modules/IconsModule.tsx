@@ -86,8 +86,14 @@ function saveBlob(blob: Blob, filename: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
+  a.style.display = 'none';
+  // Chrome/Edge : lien attaché au DOM et URL révoquée avec délai, sinon le téléchargement peut échouer.
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }, 10000);
 }
 
 async function downloadRaster(filename: string, name: string, size: number, color: string | null, format: RasterFormat) {
@@ -510,6 +516,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
       setExportMenu(null);
     } catch (e) {
       console.error(e);
+      alert(e instanceof Error ? e.message : 'Le téléchargement a échoué.');
     } finally {
       setDownloading(false);
     }
