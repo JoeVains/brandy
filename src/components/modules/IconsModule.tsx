@@ -15,6 +15,12 @@ function normalizeHex(input: string): string | null {
   return /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) ? `#${v.toLowerCase()}` : null;
 }
 
+// <input type="color"> n'accepte que #rrggbb.
+function toPickerValue(hex: string | null): string {
+  if (!hex) return '#000000';
+  return hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
+}
+
 function sameColor(a: string | null, b: string): boolean {
   return !!a && a.toLowerCase() === b.toLowerCase();
 }
@@ -286,8 +292,7 @@ function IconInspector({ item, moduleId, brandId, initialColor, onClose, onDelet
               <span className="text-gray-700 dark:text-gray-300">SVG</span>
             </div>
           </div>
-          {brandColors.length > 0 && (
-            <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+          <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Couleur</p>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
@@ -312,9 +317,23 @@ function IconInspector({ item, moduleId, brandId, initialColor, onClose, onDelet
                     {sameColor(color, c.value) && <Check size={10} color="white" strokeWidth={3} />}
                   </button>
                 ))}
+                <label
+                  title="Choisir une couleur"
+                  className="relative w-6 h-6 rounded-full flex-shrink-0 overflow-hidden border-2 cursor-pointer transition-transform hover:scale-110"
+                  style={{
+                    borderColor: color && !brandColors.some(c => sameColor(color, c.value)) ? 'var(--accent)' : 'var(--border)',
+                    background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                  }}
+                >
+                  <input
+                    type="color"
+                    value={toPickerValue(color)}
+                    onChange={e => setColor(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </label>
               </div>
-            </div>
-          )}
+          </div>
 
           <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
             <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Format</p>
@@ -544,12 +563,20 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
           <div className="flex items-center gap-2">
             <div className="relative">
               <span
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded border pointer-events-none"
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded border overflow-hidden"
                 style={{
                   borderColor: 'var(--border)',
                   background: tint ?? 'repeating-conic-gradient(#d1d5db 0% 25%, white 0% 50%) 50% / 6px 6px',
                 }}
-              />
+              >
+                <input
+                  type="color"
+                  value={toPickerValue(tint)}
+                  onChange={e => setTintInput(e.target.value)}
+                  title="Choisir une couleur"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </span>
               <input
                 value={tintInput}
                 onChange={e => setTintInput(e.target.value)}
