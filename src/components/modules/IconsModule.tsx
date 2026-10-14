@@ -15,6 +15,10 @@ function normalizeHex(input: string): string | null {
   return /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) ? `#${v.toLowerCase()}` : null;
 }
 
+function sameColor(a: string | null, b: string): boolean {
+  return !!a && a.toLowerCase() === b.toLowerCase();
+}
+
 const svgCache = new Map<string, Promise<string>>();
 function fetchSvg(filename: string): Promise<string> {
   let p = svgCache.get(filename);
@@ -141,8 +145,9 @@ function BulkExportMenu({ label, busy, onClose, onConfirm }: {
   );
 }
 
-function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }: {
+function IconInspector({ item, moduleId, brandId, initialColor, onClose, onDelete, isEditing }: {
   item: IconItem;
+  initialColor: string | null;
   moduleId: string;
   brandId: string;
   onClose: () => void;
@@ -151,13 +156,16 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
 }) {
   const [rasterSize, setRasterSize] = useState(512);
   const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
-  const [color, setColor] = useState<string | null>(null);
+  const [color, setColor] = useState<string | null>(initialColor);
   const [exportingRaster, setExportingRaster] = useState(false);
   const [brandColors, setBrandColors] = useState<ColorItem[]>([]);
   const [svgText, setSvgText] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // La couleur globale des icônes sert de valeur par défaut (et suit ses changements).
+  useEffect(() => { setColor(initialColor); }, [initialColor]);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true));
@@ -299,9 +307,9 @@ function IconInspector({ item, moduleId, brandId, onClose, onDelete, isEditing }
                     onClick={() => setColor(c.value)}
                     title={c.name || c.value}
                     className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-transform hover:scale-110"
-                    style={{ background: c.value, borderColor: color === c.value ? 'var(--accent)' : 'var(--border)' }}
+                    style={{ background: c.value, borderColor: sameColor(color, c.value) ? 'var(--accent)' : 'var(--border)' }}
                   >
-                    {color === c.value && <Check size={10} color="white" strokeWidth={3} />}
+                    {sameColor(color, c.value) && <Check size={10} color="white" strokeWidth={3} />}
                   </button>
                 ))}
               </div>
@@ -726,6 +734,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             item={item}
             moduleId={module.id}
             brandId={module.brandId}
+            initialColor={tint}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
             onDelete={() => { deleteIcon(item.id); setInspectedId(null); }}
