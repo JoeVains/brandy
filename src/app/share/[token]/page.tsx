@@ -19,7 +19,7 @@ import AudioModule from '@/components/modules/AudioModule';
 
 const noop = () => {};
 
-function ModuleView({ module, brandColor }: { module: Module; brandColor: string }) {
+function ModuleView({ module, brandColor, shareToken }: { module: Module; brandColor: string; shareToken: string }) {
   if (module.type === 'divider') {
     return <DividerModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />;
   }
@@ -37,7 +37,7 @@ function ModuleView({ module, brandColor }: { module: Module; brandColor: string
         {module.type === 'text' && <TextModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'image' && <ImageModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'attachments' && <AttachmentsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
-        {module.type === 'icons' && <IconsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
+        {module.type === 'icons' && <IconsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} shareToken={shareToken} />}
         {module.type === 'spacing' && <SpacingModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'dodont' && <DoDontModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'gradients' && <GradientsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
@@ -149,7 +149,7 @@ export default function SharePage({ params }: { params: Promise<{ token: string 
             <p className="text-sm text-gray-400 dark:text-gray-500 py-12 text-center">Cette rubrique est vide.</p>
           )}
           {sectionModules.map(module => (
-            <ModuleView key={module.id} module={module} brandColor={brand.color} />
+            <ModuleView key={module.id} module={module} brandColor={brand.color} shareToken={token} />
           ))}
         </div>
       </main>

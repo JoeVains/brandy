@@ -157,7 +157,8 @@ function BulkExportMenu({ label, busy, onClose, onConfirm }: {
   );
 }
 
-function IconInspector({ item, moduleId, brandId, initialColor, onClose, onDelete, isEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onClose, onDelete, isEditing }: {
+  shareToken?: string;
   item: IconItem;
   initialColor: string | null;
   moduleId: string;
@@ -201,14 +202,17 @@ function IconInspector({ item, moduleId, brandId, initialColor, onClose, onDelet
   }
 
   useEffect(() => {
-    fetch(`/api/modules?brandId=${brandId}`)
+    // Page partagée : pas d'accès à /api/modules (protégé), on passe par le jeton de partage.
+    const source = shareToken ? `/api/share/${shareToken}` : `/api/modules?brandId=${brandId}`;
+    fetch(source)
       .then(r => r.json())
-      .then((modules: Module[]) => {
+      .then((data: Module[] | { modules: Module[] }) => {
+        const modules = Array.isArray(data) ? data : data.modules;
         const seen = new Map<string, ColorItem>();
         modules.filter(m => m.type === 'colors').flatMap(m => m.colorItems ?? []).forEach(c => seen.set(c.id, c));
         setBrandColors([...seen.values()]);
       });
-  }, [brandId]);
+  }, [brandId, shareToken]);
 
   useEffect(() => {
     setSvgText(null);
@@ -250,7 +254,9 @@ function IconInspector({ item, moduleId, brandId, initialColor, onClose, onDelet
   }
 
   function handleDownloadPdf() {
-    const url = `/api/modules/${moduleId}/icons/${item.id}/pdf${color ? `?color=${encodeURIComponent(color)}` : ''}`;
+    const url = shareToken
+      ? `/api/share/${shareToken}/download?module=${moduleId}&icon=${item.id}${color ? `&color=${encodeURIComponent(color)}` : ''}`
+      : `/api/modules/${moduleId}/icons/${item.id}/pdf${color ? `?color=${encodeURIComponent(color)}` : ''}`;
     const a = document.createElement('a');
     a.href = url;
     a.download = `${item.name}.pdf`;
@@ -409,9 +415,10 @@ interface Props {
   brandColor: string;
   onUpdate: (updated: Module) => void;
   isEditing?: boolean;
+  shareToken?: string;
 }
 
-export default function IconsModule({ module, brandColor, onUpdate, isEditing }: Props) {
+export default function IconsModule({ module, brandColor, onUpdate, isEditing, shareToken }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [exportMenu, setExportMenu] = useState<'all' | 'selection' | null>(null);
@@ -509,7 +516,9 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
         const params = new URLSearchParams({ format });
         if (ids?.length) params.set('ids', ids.join(','));
         if (tint) params.set('color', tint);
-        const res = await fetch(`/api/modules/${module.id}/download?${params}`);
+        const res = await fetch(shareToken
+          ? `/api/share/${shareToken}/download?${new URLSearchParams({ module: module.id })}&${params}`
+          : `/api/modules/${module.id}/download?${params}`);
         if (!res.ok) throw new Error(`Téléchargement impossible (${res.status})`);
         saveBlob(await res.blob(), zipName);
       }
@@ -768,6 +777,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing }:
             item={item}
             moduleId={module.id}
             brandId={module.brandId}
+            shareToken={shareToken}
             initialColor={tint}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
