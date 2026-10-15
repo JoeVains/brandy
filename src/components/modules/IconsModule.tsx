@@ -111,7 +111,7 @@ function BulkExportMenu({ label, busy, onClose, onConfirm }: {
   onConfirm: (format: BulkFormat, size: number) => void;
 }) {
   const [format, setFormat] = useState<BulkFormat>('svg');
-  const [size, setSize] = useState(512);
+  const [size, setSize] = useState(1024);
   const ref = useRef<HTMLDivElement>(null);
   const isRaster = format === 'png' || format === 'webp';
 
@@ -167,7 +167,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onCl
   onDelete: () => void;
   isEditing?: boolean;
 }) {
-  const [rasterSize, setRasterSize] = useState(512);
+  const [rasterSize, setRasterSize] = useState(1024);
   const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
   const [color, setColor] = useState<string | null>(initialColor);
   const [exportingRaster, setExportingRaster] = useState(false);
