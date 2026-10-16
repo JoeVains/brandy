@@ -181,8 +181,9 @@ function useBrandPalettes(brandId: string, shareToken?: string): Palette[] {
 }
 
 // Choix d'un nuancier (si plusieurs) puis de l'une de ses couleurs.
-function PaletteSwatches({ palettes, color, onPick }: { palettes: Palette[]; color: string | null; onPick: (hex: string) => void }) {
-  const [paletteId, setPaletteId] = useState<string | null>(null);
+function PaletteSwatches({ palettes, paletteId, onPaletteChange, color, onPick }: {
+  palettes: Palette[]; paletteId: string | null; onPaletteChange: (id: string) => void; color: string | null; onPick: (hex: string) => void;
+}) {
   if (palettes.length === 0) return null;
   const palette = palettes.find(p => p.id === paletteId) ?? palettes[0];
   return (
@@ -190,7 +191,7 @@ function PaletteSwatches({ palettes, color, onPick }: { palettes: Palette[]; col
       {palettes.length > 1 && (
         <select
           value={palette.id}
-          onChange={e => setPaletteId(e.target.value)}
+          onChange={e => onPaletteChange(e.target.value)}
           title="Nuancier"
           className="w-full mb-2 px-2 py-1 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 dark:border-gray-600"
           style={{ borderColor: 'var(--border)' }}
@@ -215,8 +216,10 @@ function PaletteSwatches({ palettes, color, onPick }: { palettes: Palette[]; col
   );
 }
 
-function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onClose, onDelete, isEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, initialColor, onClose, onDelete, isEditing }: {
   shareToken?: string;
+  paletteId: string | null;
+  onPaletteChange: (id: string) => void;
   item: IconItem;
   initialColor: string | null;
   moduleId: string;
@@ -351,7 +354,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onCl
           </div>
           <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Couleur</p>
-              <PaletteSwatches palettes={palettes} color={color} onPick={setColor} />
+              <PaletteSwatches palettes={palettes} paletteId={paletteId} onPaletteChange={onPaletteChange} color={color} onPick={setColor} />
               <div className="flex items-center gap-1.5 flex-wrap mt-2">
                 <button
                   onClick={() => setColor(null)}
@@ -466,6 +469,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [search, setSearch] = useState('');
   const [tintInput, setTintInput] = useState('');
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // Nuancier choisi : conservé à la fermeture du menu et partagé avec l'inspecteur.
+  const [paletteId, setPaletteId] = useState<string | null>(null);
   const palettes = useBrandPalettes(module.brandId, shareToken);
   const tint = normalizeHex(tintInput);
   const items = module.iconItems ?? [];
@@ -662,7 +667,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                     <div className="fixed inset-0 z-20" onClick={() => setPaletteOpen(false)} />
                     <div className="absolute left-0 top-full mt-1 z-30 w-60 p-3 rounded-xl border shadow-lg bg-white dark:bg-gray-900"
                       style={{ borderColor: 'var(--border)' }}>
-                      <PaletteSwatches palettes={palettes} color={tint} onPick={hex => { setTintInput(hex); setPaletteOpen(false); }} />
+                      <PaletteSwatches palettes={palettes} paletteId={paletteId} onPaletteChange={setPaletteId} color={tint} onPick={hex => { setTintInput(hex); setPaletteOpen(false); }} />
                     </div>
                   </>
                 )}
@@ -836,6 +841,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             moduleId={module.id}
             brandId={module.brandId}
             shareToken={shareToken}
+            paletteId={paletteId}
+            onPaletteChange={setPaletteId}
             initialColor={tint}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
