@@ -35,8 +35,8 @@ function ModuleView({ module, brandColor, shareToken }: { module: Module; brandC
         {module.type === 'typography' && <TypographyModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'heading' && <HeadingModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'text' && <TextModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
-        {module.type === 'image' && <ImageModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
-        {module.type === 'attachments' && <AttachmentsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
+        {module.type === 'image' && <ImageModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} shareToken={shareToken} />}
+        {module.type === 'attachments' && <AttachmentsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} shareToken={shareToken} />}
         {module.type === 'icons' && <IconsModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} shareToken={shareToken} />}
         {module.type === 'spacing' && <SpacingModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}
         {module.type === 'dodont' && <DoDontModule module={module} brandColor={brandColor} onUpdate={noop} isEditing={false} />}

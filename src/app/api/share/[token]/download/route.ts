@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
   if (!brand) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const moduleId = req.nextUrl.searchParams.get('module');
-  const module = (await db.modules.all()).find(m => m.id === moduleId && m.brandId === brand.id && m.type === 'icons');
+  const module = (await db.modules.all()).find(m => m.id === moduleId && m.brandId === brand.id && ['icons', 'image', 'attachments'].includes(m.type));
   if (!module) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const iconId = req.nextUrl.searchParams.get('icon');

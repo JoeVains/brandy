@@ -2,17 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Module, ImageItem, AssetStatus } from '@/types';
+import { Module, ImageItem, IconCategory, AssetStatus } from '@/types';
 import { StatusBadge, StatusSelect, VersionHistory } from '../AssetStatus';
-import { restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
+import CategorySections, { CategorySelect, type CategoryPatch } from '../CategorySections';
+import { categoryFolders } from '@/lib/iconCategories';
+import { isPublished, restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
 import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square, X, Download, ZoomIn, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
+import Select from '../Select';
 
 interface Props {
   module: Module;
   brandColor: string;
   onUpdate: (updated: Module) => void;
   isEditing?: boolean;
+  shareToken?: string;
 }
 
 function downloadAsPng(src: string, filename: string) {
@@ -130,13 +134,14 @@ function Lightbox({ items, index, onNavigate, onClose }: {
   );
 }
 
-export default function ImageModule({ module, brandColor, onUpdate, isEditing }: Props) {
+export default function ImageModule({ module, brandColor, onUpdate, isEditing, shareToken }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
+  const uploadTarget = useRef<string | undefined>(undefined);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const mode = module.imageMode ?? 'single';
@@ -147,6 +152,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const allImageItems = module.imageItems ?? [];
   const obsoleteCount = allImageItems.filter(i => statusOf(i) === 'obsolete').length;
   const imageItems = visibleItems(allImageItems, !!isEditing, showObsolete);
+  const imageCategories = module.imageCategories ?? [];
 
   const lightboxItems: LightboxItem[] = mode === 'gallery'
     ? imageItems.map(i => ({ src: `/uploads/${i.filename}`, filename: i.filename, mimeType: i.mimeType, caption: i.caption }))
@@ -239,13 +245,62 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   }
 
   async function handleGalleryInput(files: FileList) {
+    const categoryId = uploadTarget.current;
+    const before = new Set((module.imageItems ?? []).map(i => i.id));
+    let updated: Module = module;
     for (const file of Array.from(files)) {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('slot', 'image-item');
       const r = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+      updated = await r.json();
+      onUpdate(updated);
+    }
+    if (categoryId) {
+      // Les images ajoutées depuis une catégorie y sont rangées directement.
+      const imageItems = (updated.imageItems ?? []).map(i => before.has(i.id) ? i : { ...i, categoryId });
+      const r = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ imageItems }) });
       onUpdate(await r.json());
     }
+  }
+
+  function pickGalleryFiles(categoryId?: string) {
+    uploadTarget.current = categoryId;
+    galleryInputRef.current?.click();
+  }
+
+  // Enregistrement groupé des catégories et/ou de la liste d'images.
+  async function saveCategories(patch: CategoryPatch<ImageItem>) {
+    const body: Record<string, unknown> = {};
+    if (patch.categories) body.imageCategories = patch.categories;
+    if (patch.items) body.imageItems = patch.items;
+    const res = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    onUpdate(await res.json());
+  }
+
+  // Déplace une image avant l'index `toIdx` (imageItems.length = à la fin) et l'affecte à une catégorie.
+  async function moveItem(fromIdx: number, toIdx: number, categoryId?: string) {
+    const moved: ImageItem = { ...imageItems[fromIdx] };
+    if (categoryId) moved.categoryId = categoryId; else delete moved.categoryId;
+    const reordered = imageItems.filter((_, i) => i !== fromIdx);
+    reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
+    await patchImageItems(reordered);
+  }
+
+  async function assignSelection(categoryId?: string) {
+    await patchImageItems(imageItems.map(i => {
+      if (!selected.has(i.id)) return i;
+      const { categoryId: _c, ...rest } = i;
+      return categoryId ? { ...rest, categoryId } : rest;
+    }));
+  }
+
+  // Téléchargement d'un zip (toute la galerie, une sélection ou une catégorie à plat).
+  function zipUrl(params: Record<string, string>) {
+    const q = new URLSearchParams(params);
+    return shareToken
+      ? `/api/share/${shareToken}/download?${new URLSearchParams({ module: module.id })}&${q}`
+      : `/api/modules/${module.id}/download?${q}`;
   }
 
   async function setSingleStatus(status: AssetStatus) {
@@ -305,31 +360,27 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     });
   }
 
-  async function downloadZip(ids?: string[]) {
+  async function downloadZip(ids?: string[], category?: { name: string }) {
     setDownloading(true);
-    const url = ids?.length
-      ? `/api/modules/${module.id}/download?ids=${ids.join(',')}`
-      : `/api/modules/${module.id}/download`;
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${module.title || 'images'}.zip`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    setDownloading(false);
-  }
-
-  async function reorderItems(fromIdx: number, toIdx: number) {
-    const reordered = [...imageItems];
-    const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
-    const res = await fetch(`/api/modules/${module.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageItems: reordered }),
-    });
-    onUpdate(await res.json());
+    try {
+      const params: Record<string, string> = {};
+      if (ids?.length) params.ids = ids.join(',');
+      if (category) params.flat = '1';
+      const res = await fetch(zipUrl(params));
+      if (!res.ok) throw new Error(`Téléchargement impossible (${res.status})`);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${module.title || 'images'}${category ? ` - ${category.name.replace(/\//g, '-')}` : ''}.zip`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 10000);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Le téléchargement a échoué.');
+    } finally {
+      setDownloading(false);
+    }
   }
 
   async function patchImageItems(next: ImageItem[]) {
@@ -427,6 +478,153 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       onUpdate={desc => onUpdate({ ...module, description: desc })}
     />
   );
+
+  function renderCard(item: ImageItem) {
+          const idx = imageItems.indexOf(item);
+          const isSelected = selected.has(item.id);
+          return (
+          <div key={item.id} className="flex flex-col gap-1">
+            {/* Draggable card wrapper */}
+            <div
+              className="relative group"
+              style={{ opacity: dragIdx === idx ? 0.4 : statusOf(item) === 'obsolete' ? 0.55 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
+              draggable={isEditing && !selectMode}
+              onDragStart={isEditing && !selectMode ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
+              onDragOver={isEditing && !selectMode ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
+              onDragLeave={isEditing && !selectMode ? () => setDragOverIdx(null) : undefined}
+              onDrop={isEditing && !selectMode ? e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null && dragIdx !== idx) moveItem(dragIdx, idx, item.categoryId); setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onDragEnd={isEditing && !selectMode ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onClick={() => selectMode ? toggleSelect(item.id) : (!isEditing ? setLightboxIndex(idx) : undefined)}
+            >
+              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+              )}
+              <div
+                data-item-id={item.id}
+                className="rounded-xl overflow-hidden border bg-gray-50 dark:bg-gray-800/50"
+                style={{
+                  borderColor: isSelected ? brandColor : 'var(--border)',
+                  outline: isSelected ? `2px solid ${brandColor}` : 'none',
+                }}
+              >
+                <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2">
+                  {!selectMode && !isEditing && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
+                  {!selectMode && isEditing && (
+                    <button onClick={e => { e.stopPropagation(); setLightboxIndex(idx); }}
+                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                      <ZoomIn size={14} />
+                    </button>
+                  )}
+                </div>
+                {selectMode && (
+                  <div className="absolute top-2 left-2">
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
+                      style={isSelected ? { background: brandColor } : {}}>
+                      {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                  </div>
+                )}
+                <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <a
+                    href={`/uploads/${item.filename}`}
+                    download={item.filename}
+                    onClick={e => e.stopPropagation()}
+                    className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 shadow-sm"
+                  >
+                    <Download size={13} />
+                  </a>
+                  {isEditing && (
+                    <button
+                      onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
+                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500 shadow-sm"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            {isEditing && <CategorySelect categories={imageCategories} value={item.categoryId} onChange={cid => patchImageItems(imageItems.map(i => { if (i.id !== item.id) return i; const { categoryId: _c, ...rest } = i; return cid ? { ...rest, categoryId: cid } : rest; }))} />}
+            {/* Caption — outside the draggable div */}
+            {isEditing && (
+              <input
+                type="text"
+                placeholder="Ajouter une légende…"
+                defaultValue={item.caption ?? ''}
+                onBlur={e => { if (e.target.value !== (item.caption ?? '')) updateCaption(item.id, e.target.value); }}
+                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                className="w-full text-xs text-gray-500 placeholder-gray-300 bg-transparent outline-none border-b border-transparent focus:border-gray-300 dark:border-gray-700 transition-colors py-1 text-center"
+              />
+            )}
+            {(statusOf(item) !== 'validated' || isEditing) && (
+              <div className="flex items-center justify-center gap-2">
+                {isEditing
+                  ? <StatusSelect value={item.status} onChange={st => setImageStatus(item.id, st)} />
+                  : <StatusBadge status={statusOf(item)} />}
+                {(isEditing || (item.versions ?? []).length > 0) && (
+                  <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} title="Versions"
+                    className="p-1.5 rounded-lg border text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                    <History size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+            {!isEditing && statusOf(item) === 'validated' && (item.versions ?? []).length > 0 && (
+              <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} className="text-[10px] text-gray-400 hover:text-gray-600 text-center">
+                Historique des versions
+              </button>
+            )}
+            {openVersions === item.id && (
+              <div className="p-3 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
+                <VersionHistory
+                  current={item}
+                  versions={item.versions ?? []}
+                  baseName={item.caption || 'image'}
+                  canEdit={isEditing}
+                  accept="image/*"
+                  onReplace={file => replaceImageFile(item.id, file)}
+                  onRestore={i => patchImageItems(allImageItems.map(a => a.id === item.id ? restoreVersion(a, i) : a))}
+                />
+              </div>
+            )}
+          </div>
+          );
+  }
+
+  function renderGroup(groupItems: ImageItem[], cat: IconCategory | null) {
+    return (
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+        {groupItems.map(renderCard)}
+        {isEditing && !selectMode && dragIdx !== null && (
+          <div
+            className="relative min-h-[24px]"
+            onDragOver={e => { e.preventDefault(); setDragOverIdx(imageItems.length); }}
+            onDrop={e => { e.preventDefault(); if (dragIdx !== null) moveItem(dragIdx, imageItems.length, cat?.id); setDragIdx(null); setDragOverIdx(null); }}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+          />
+        )}
+
+        {isEditing && (
+          <button
+            onClick={() => pickGalleryFiles(cat?.id)}
+            className="h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <Plus size={20} />
+            <span className="text-xs">Ajouter une image</span>
+          </button>
+        )}
+
+        {!isEditing && imageItems.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-500">
+            <ImageIcon size={28} />
+            <span className="text-sm">Aucune image</span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // ——— Single ———
   if (mode === 'single') {
@@ -557,6 +755,15 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
               <button onClick={() => setSelected(new Set())} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300">
                 Tout désélectionner
               </button>
+              {isEditing && imageCategories.length > 0 && (
+                <Select
+                  value=""
+                  placeholder="Ranger dans…"
+                  className="text-xs"
+                  onChange={v => assignSelection(v === '__none' ? undefined : v)}
+                  options={[{ value: '__none', label: 'Sans catégorie' }, ...imageCategories.map(c => ({ value: c.id, label: `${c.emoji ?? '📁'} ${c.name}` }))]}
+                />
+              )}
             </>
           )}
           <div className="ml-auto flex items-center gap-2">
@@ -586,148 +793,31 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
           {showObsolete ? 'Masquer' : 'Afficher'} les obsolètes ({obsoleteCount})
         </button>
       )}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-        {imageItems.map((item, idx) => {
-          const isSelected = selected.has(item.id);
+      <CategorySections
+        items={imageItems}
+        categories={imageCategories}
+        isEditing={!!isEditing}
+        brandColor={brandColor}
+        onSave={saveCategories}
+        renderGroup={renderGroup}
+        itemDragging={dragIdx !== null}
+        onDropItem={catId => { if (dragIdx !== null) moveItem(dragIdx, imageItems.length, catId); setDragIdx(null); setDragOverIdx(null); }}
+        headerExtra={(cat, catItems) => {
+          const published = catItems.filter(i => isPublished(i));
+          if (published.length === 0) return null;
+          const name = cat ? (categoryFolders(imageCategories).get(cat.id) ?? cat.name) : 'Sans catégorie';
           return (
-          <div key={item.id} className="flex flex-col gap-1">
-            {/* Draggable card wrapper */}
-            <div
-              className="relative group"
-              style={{ opacity: dragIdx === idx ? 0.4 : statusOf(item) === 'obsolete' ? 0.55 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
-              draggable={isEditing && !selectMode}
-              onDragStart={isEditing && !selectMode ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
-              onDragOver={isEditing && !selectMode ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
-              onDragLeave={isEditing && !selectMode ? () => setDragOverIdx(null) : undefined}
-              onDrop={isEditing && !selectMode ? e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) reorderItems(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); } : undefined}
-              onDragEnd={isEditing && !selectMode ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
-              onClick={() => selectMode ? toggleSelect(item.id) : (!isEditing ? setLightboxIndex(idx) : undefined)}
+            <button
+              onClick={() => downloadZip(published.map(i => i.id), { name })}
+              disabled={downloading}
+              title="Télécharger cette catégorie (.zip)"
+              className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
             >
-              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
-                <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
-              )}
-              <div
-                data-item-id={item.id}
-                className="rounded-xl overflow-hidden border bg-gray-50 dark:bg-gray-800/50"
-                style={{
-                  borderColor: isSelected ? brandColor : 'var(--border)',
-                  outline: isSelected ? `2px solid ${brandColor}` : 'none',
-                }}
-              >
-                <img src={`/uploads/${item.filename}`} alt="" className="w-full h-40" style={{ objectFit: fit }} />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2">
-                  {!selectMode && !isEditing && <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />}
-                  {!selectMode && isEditing && (
-                    <button onClick={e => { e.stopPropagation(); setLightboxIndex(idx); }}
-                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                      <ZoomIn size={14} />
-                    </button>
-                  )}
-                </div>
-                {selectMode && (
-                  <div className="absolute top-2 left-2">
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-transparent' : 'border-white bg-black/20'}`}
-                      style={isSelected ? { background: brandColor } : {}}>
-                      {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                    </div>
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <a
-                    href={`/uploads/${item.filename}`}
-                    download={item.filename}
-                    onClick={e => e.stopPropagation()}
-                    className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 shadow-sm"
-                  >
-                    <Download size={13} />
-                  </a>
-                  {isEditing && (
-                    <button
-                      onClick={e => { e.stopPropagation(); removeGalleryItem(item.id); }}
-                      className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-red-500 shadow-sm"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            {/* Caption — outside the draggable div */}
-            {isEditing && (
-              <input
-                type="text"
-                placeholder="Ajouter une légende…"
-                defaultValue={item.caption ?? ''}
-                onBlur={e => { if (e.target.value !== (item.caption ?? '')) updateCaption(item.id, e.target.value); }}
-                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                className="w-full text-xs text-gray-500 placeholder-gray-300 bg-transparent outline-none border-b border-transparent focus:border-gray-300 dark:border-gray-700 transition-colors py-1 text-center"
-              />
-            )}
-            {(statusOf(item) !== 'validated' || isEditing) && (
-              <div className="flex items-center justify-center gap-2">
-                {isEditing
-                  ? <StatusSelect value={item.status} onChange={st => setImageStatus(item.id, st)} />
-                  : <StatusBadge status={statusOf(item)} />}
-                {(isEditing || (item.versions ?? []).length > 0) && (
-                  <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} title="Versions"
-                    className="p-1.5 rounded-lg border text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
-                    <History size={12} />
-                  </button>
-                )}
-              </div>
-            )}
-            {!isEditing && statusOf(item) === 'validated' && (item.versions ?? []).length > 0 && (
-              <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} className="text-[10px] text-gray-400 hover:text-gray-600 text-center">
-                Historique des versions
-              </button>
-            )}
-            {openVersions === item.id && (
-              <div className="p-3 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
-                <VersionHistory
-                  current={item}
-                  versions={item.versions ?? []}
-                  baseName={item.caption || 'image'}
-                  canEdit={isEditing}
-                  accept="image/*"
-                  onReplace={file => replaceImageFile(item.id, file)}
-                  onRestore={i => patchImageItems(allImageItems.map(a => a.id === item.id ? restoreVersion(a, i) : a))}
-                />
-              </div>
-            )}
-          </div>
+              <Download size={12} />
+            </button>
           );
-        })}
-        {isEditing && !selectMode && dragIdx !== null && (
-          <div
-            className="relative min-h-[24px]"
-            onDragOver={e => { e.preventDefault(); setDragOverIdx(imageItems.length); }}
-            onDrop={e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== imageItems.length - 1) reorderItems(dragIdx, imageItems.length); setDragIdx(null); setDragOverIdx(null); }}
-            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-          >
-            {dragOverIdx === imageItems.length && (
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
-            )}
-          </div>
-        )}
-
-        {isEditing && (
-          <button
-            onClick={() => galleryInputRef.current?.click()}
-            className="h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <Plus size={20} />
-            <span className="text-xs">Ajouter une image</span>
-          </button>
-        )}
-
-        {!isEditing && imageItems.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-500">
-            <ImageIcon size={28} />
-            <span className="text-sm">Aucune image</span>
-          </div>
-        )}
-      </div>
+        }}
+      />
       <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleGalleryInput(e.target.files)} />
       {lightboxIndex !== null && <Lightbox items={lightboxItems} index={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} />}
     </div>

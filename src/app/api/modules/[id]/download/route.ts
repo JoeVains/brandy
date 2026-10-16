@@ -24,9 +24,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     // Gallery
     const imageItems = (module.imageItems ?? []).filter(i => selectedIds ? selectedIds.has(i.id) : isPublished(i));
+    // Une catégorie par dossier ; flat=1 : zip d'une seule catégorie, fichiers à la racine.
+    const imageFolders = req.nextUrl.searchParams.get('flat') === '1' ? new Map<string, string>() : categoryFolders(module.imageCategories ?? []);
     for (const item of imageItems) {
       const file = await getFile(item.filename);
-      if (file) zip.file(item.filename, file.data);
+      if (file) zip.file(iconZipPath(item, imageFolders, item.filename), file.data);
+    }
+  } else if (module.type === 'attachments') {
+    const items = (module.attachmentItems ?? []).filter(i => selectedIds ? selectedIds.has(i.id) : isPublished(i));
+    if (items.length === 0) return NextResponse.json({ error: 'No files' }, { status: 400 });
+    const folders = req.nextUrl.searchParams.get('flat') === '1' ? new Map<string, string>() : categoryFolders(module.attachmentCategories ?? []);
+    const used = new Set<string>();
+    for (const item of items) {
+      const file = await getFile(item.filename);
+      if (!file) continue;
+      // Deux fichiers de même nom dans un même dossier : le second reçoit un suffixe.
+      let path = iconZipPath(item, folders, item.name);
+      for (let n = 2; used.has(path.toLowerCase()); n++) {
+        const dot = item.name.lastIndexOf('.');
+        const name = dot > 0 ? `${item.name.slice(0, dot)} (${n})${item.name.slice(dot)}` : `${item.name} (${n})`;
+        path = iconZipPath(item, folders, name);
+      }
+      used.add(path.toLowerCase());
+      zip.file(path, file.data);
     }
   } else {
     // Icons

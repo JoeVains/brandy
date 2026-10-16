@@ -1,10 +1,12 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Module, AttachmentItem, AssetStatus } from '@/types';
+import { Module, AttachmentItem, AssetStatus, IconCategory } from '@/types';
+import CategorySections, { CategorySelect, type CategoryPatch } from '../CategorySections';
+import { categoryFolders } from '@/lib/iconCategories';
 import { Download, Trash2, Plus, History } from 'lucide-react';
 import { StatusBadge, StatusSelect, VersionHistory } from '../AssetStatus';
-import { restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
+import { isPublished, restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
   brandColor: string;
   onUpdate: (updated: Module) => void;
   isEditing?: boolean;
+  shareToken?: string;
 }
 
 function formatSize(bytes: number) {
@@ -20,11 +23,14 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default function AttachmentsModule({ module, brandColor, onUpdate, isEditing }: Props) {
+export default function AttachmentsModule({ module, brandColor, onUpdate, isEditing, shareToken }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const items = module.attachmentItems ?? [];
   const [showObsolete, setShowObsolete] = useState(false);
   const [openVersions, setOpenVersions] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const uploadTarget = useRef<string | undefined>(undefined);
+  const categories = module.attachmentCategories ?? [];
   const obsoleteCount = items.filter(i => statusOf(i) === 'obsolete').length;
   const shown = visibleItems(items, !!isEditing, showObsolete);
 
@@ -56,13 +62,65 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
     else alert('Le remplacement du fichier a échoué.');
   }
 
+  async function saveCategories(patch: CategoryPatch<AttachmentItem>) {
+    const body: Record<string, unknown> = {};
+    if (patch.categories) body.attachmentCategories = patch.categories;
+    if (patch.items) body.attachmentItems = patch.items;
+    const res = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    onUpdate(await res.json());
+  }
+
+  async function setCategory(id: string, categoryId?: string) {
+    await patchItems(items.map(i => {
+      if (i.id !== id) return i;
+      const { categoryId: _c, ...rest } = i;
+      return categoryId ? { ...rest, categoryId } : rest;
+    }));
+  }
+
+  // Téléchargement d'un zip : tout le module (un dossier par catégorie) ou une catégorie à plat.
+  async function downloadZip(ids?: string[], category?: { name: string }) {
+    setDownloading(true);
+    try {
+      const q = new URLSearchParams();
+      if (ids?.length) q.set('ids', ids.join(','));
+      if (category) q.set('flat', '1');
+      const url = shareToken
+        ? `/api/share/${shareToken}/download?${new URLSearchParams({ module: module.id })}&${q}`
+        : `/api/modules/${module.id}/download?${q}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Téléchargement impossible (${res.status})`);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${module.title || 'fichiers'}${category ? ` - ${category.name.replace(/\//g, '-')}` : ''}.zip`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 10000);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Le téléchargement a échoué.');
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   async function upload(file: File) {
+    const categoryId = uploadTarget.current;
     const fd = new FormData();
     fd.append('file', file);
     fd.append('slot', 'attachment');
     fd.append('name', file.name);
+    const before = new Set(items.map(i => i.id));
     const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
-    onUpdate(await res.json());
+    let updated: Module = await res.json();
+    if (categoryId) {
+      // Le fichier ajouté depuis une catégorie y est rangé directement.
+      const attachmentItems = (updated.attachmentItems ?? []).map(i => before.has(i.id) ? i : { ...i, categoryId });
+      const r = await fetch(`/api/modules/${module.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ attachmentItems }) });
+      updated = await r.json();
+    }
+    onUpdate(updated);
   }
 
   async function deleteItem(id: string) {
@@ -85,22 +143,8 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
     return '📎';
   }
 
-  return (
-    <div>
-      <ModuleDescription
-        moduleId={module.id}
-        brandId={module.brandId}
-        value={module.description}
-        isEditing={isEditing}
-        onUpdate={desc => onUpdate({ ...module, description: desc })}
-      />
-    <div className="space-y-2">
-      {!isEditing && obsoleteCount > 0 && (
-        <button onClick={() => setShowObsolete(o => !o)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-          {showObsolete ? 'Masquer' : 'Afficher'} les obsolètes ({obsoleteCount})
-        </button>
-      )}
-      {shown.map(item => (
+  function renderRow(item: AttachmentItem) {
+    return (
         <div key={item.id}>
         <div data-item-id={item.id} className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50 dark:bg-gray-800/50 group" style={{ borderColor: 'var(--border)', opacity: statusOf(item) === 'obsolete' ? 0.6 : 1 }}>
           <span className="text-xl">{getIcon(item.mimeType)}</span>
@@ -110,6 +154,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">{formatSize(item.size)}</p>
           </div>
+          {isEditing && <CategorySelect categories={categories} value={item.categoryId} onChange={cid => setCategory(item.id, cid)} />}
           {isEditing && <StatusSelect value={item.status} onChange={st => setStatus(item.id, st)} />}
           {(isEditing || (item.versions ?? []).length > 0) && (
             <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} title="Versions"
@@ -143,18 +188,78 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
           </div>
         )}
         </div>
-      ))}
-      {isEditing && (
-        <>
-          <button onClick={() => inputRef.current?.click()}
+    );
+  }
+
+  const publishedCount = items.filter(isPublished).length;
+
+  function renderGroup(groupItems: AttachmentItem[], cat: IconCategory | null) {
+    return (
+      <div className="space-y-2">
+        {groupItems.map(renderRow)}
+        {isEditing && (
+          <button onClick={() => { uploadTarget.current = cat?.id; inputRef.current?.click(); }}
             className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed rounded-xl text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
             style={{ borderColor: 'var(--border)' }}>
             <Plus size={16} /> Ajouter un fichier
           </button>
-          <input ref={inputRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && upload(e.target.files[0])} />
-        </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <ModuleDescription
+        moduleId={module.id}
+        brandId={module.brandId}
+        value={module.description}
+        isEditing={isEditing}
+        onUpdate={desc => onUpdate({ ...module, description: desc })}
+      />
+      <div className="flex items-center gap-3 mb-3">
+        {!isEditing && obsoleteCount > 0 && (
+          <button onClick={() => setShowObsolete(o => !o)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+            {showObsolete ? 'Masquer' : 'Afficher'} les obsolètes ({obsoleteCount})
+          </button>
+        )}
+        {publishedCount > 1 && (
+          <button
+            onClick={() => downloadZip()}
+            disabled={downloading}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <Download size={12} /> {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
+          </button>
+        )}
+      </div>
+      <CategorySections
+        items={shown}
+        categories={categories}
+        isEditing={!!isEditing}
+        brandColor={brandColor}
+        onSave={saveCategories}
+        renderGroup={renderGroup}
+        headerExtra={(cat, catItems) => {
+          const published = catItems.filter(isPublished);
+          if (published.length === 0) return null;
+          const name = cat ? (categoryFolders(categories).get(cat.id) ?? cat.name) : 'Sans catégorie';
+          return (
+            <button
+              onClick={() => downloadZip(published.map(i => i.id), { name })}
+              disabled={downloading}
+              title="Télécharger cette catégorie (.zip)"
+              className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
+            >
+              <Download size={12} />
+            </button>
+          );
+        }}
+      />
+      {isEditing && (
+        <input ref={inputRef} type="file" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ''; }} />
       )}
-    </div>
     </div>
   );
 }

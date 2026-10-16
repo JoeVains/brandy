@@ -71,6 +71,7 @@ export interface ImageItem {
   mimeType: string;
   size: number;
   caption?: string;
+  categoryId?: string;
   status?: AssetStatus;
   versions?: FileVersion[];
 }
@@ -99,6 +100,7 @@ export interface AttachmentItem {
   filename: string;
   mimeType: string;
   size: number;
+  categoryId?: string;
   status?: AssetStatus;
   versions?: FileVersion[];
 }
@@ -172,6 +174,9 @@ export interface Module {
   iconColor?: string | null;
   iconItems?: IconItem[];
   iconCategories?: IconCategory[];
+  // catégories des galeries d'images et des fichiers joints
+  imageCategories?: IconCategory[];
+  attachmentCategories?: IconCategory[];
   // spacing
   spacingBase?: number;
   spacingSteps?: number[];
