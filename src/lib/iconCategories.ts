@@ -6,7 +6,11 @@ export function categoryFolders(categories: IconCategory[]): Map<string, string>
   const folders = new Map<string, string>();
   const used = new Set<string>();
   for (const c of categories) {
-    const base = c.name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().replace(/^\.+/, '') || 'Catégorie';
+    // « A / B » (catégorie issue d'un sous-dossier importé) redevient un vrai sous-dossier A/B.
+    const base = c.name.split('/')
+      .map(part => part.replace(/[\\:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().replace(/^\.+/, ''))
+      .filter(Boolean)
+      .join('/') || 'Catégorie';
     let name = base;
     for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base} (${n})`;
     used.add(name.toLowerCase());

@@ -1086,7 +1086,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     setDownloading(true);
     try {
       // Zip d'une seule catégorie : icônes à plat à la racine, nommé d'après la catégorie.
-      const zipName = `${module.title || 'icons'}${category ? ` - ${category.name}` : ''}.zip`;
+      const zipName = `${module.title || 'icons'}${category ? ` - ${category.name.replace(/\//g, '-')}` : ''}.zip`;
       if (format === 'png' || format === 'webp') {
         // Rastérisation côté client (canvas), puis zip dans le navigateur.
         const { default: JSZip } = await import('jszip');
