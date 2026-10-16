@@ -581,6 +581,15 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     await patchModule({ iconCategories: categories.filter(c => c.id !== id), iconItems });
   }
 
+  // Crée une catégorie et y range directement la sélection.
+  async function assignSelectionToNewCategory() {
+    const cat: IconCategory = { id: crypto.randomUUID(), name: 'Nouvelle catégorie' };
+    const iconItems = items.map(i => selected.has(i.id) ? { ...i, categoryId: cat.id } : i);
+    await patchModule({ iconCategories: [...categories, cat], iconItems });
+    setEditingCatId(cat.id);
+    setCatDraft(cat.name);
+  }
+
   async function assignSelection(categoryId: string) {
     const iconItems = items.map(i => {
       if (!selected.has(i.id)) return i;
@@ -950,16 +959,21 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                   className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
                   <X size={12} /> Désélectionner
                 </button>
-                {isEditing && categories.length > 0 && (
+                {isEditing && (
                   <select
                     value=""
-                    onChange={e => { if (e.target.value) assignSelection(e.target.value === '__none' ? '' : e.target.value); }}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v === '__new') assignSelectionToNewCategory();
+                      else if (v) assignSelection(v === '__none' ? '' : v);
+                    }}
                     title="Ranger la sélection dans une catégorie"
                     className="px-2 py-1 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 dark:border-gray-600"
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <option value="">Ranger dans…</option>
-                    <option value="__none">Sans catégorie</option>
+                    <option value="__new">+ Nouvelle catégorie</option>
+                    {categories.length > 0 && <option value="__none">Sans catégorie</option>}
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 )}
