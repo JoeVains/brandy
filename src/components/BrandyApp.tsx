@@ -385,6 +385,7 @@ export default function BrandyApp() {
   const [pageViewKey, setPageViewKey] = useState(0);
   const [showShare, setShowShare] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareViews, setShareViews] = useState<{ total: number; last7: number; last30: number; last: string | null } | null>(null);
   // Durée choisie à la création du lien (30 jours par défaut ; null = sans expiration).
   const [newShareExpiry, setNewShareExpiry] = useState<string | null>(() => { const d = new Date(); d.setDate(d.getDate() + 30); d.setHours(23, 59, 59, 0); return d.toISOString(); });
   const { dark, toggle } = useTheme();
@@ -401,6 +402,13 @@ export default function BrandyApp() {
 
   useEffect(() => { fetchAll(); }, []);
   useEffect(() => { setActiveSectionId(null); }, [activeBrandId]);
+  // Consultations du lien de partage : rechargées à l'ouverture du panneau de partage.
+  const activeShareToken = brands.find(b => b.id === activeBrandId)?.shareToken;
+  useEffect(() => {
+    setShareViews(null);
+    if (!showShare || !activeBrandId || !activeShareToken) return;
+    fetch(`/api/brands/${activeBrandId}/share`).then(r => r.ok ? r.json() : null).then(setShareViews).catch(() => {});
+  }, [showShare, activeBrandId, activeShareToken]);
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowSearch(v => !v); }
@@ -715,6 +723,12 @@ export default function BrandyApp() {
                         {shareCopied ? <Check size={13} /> : <Copy size={13} />}
                       </button>
                     </div>
+                    {shareViews && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <strong className="text-gray-700 dark:text-gray-200">{shareViews.total}</strong> consultation{shareViews.total > 1 ? 's' : ''}
+                        {shareViews.total > 0 && <> · {shareViews.last7} sur 7 jours · dernière le {new Date(shareViews.last!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</>}
+                      </p>
+                    )}
                     {(() => {
                       const st = expiryStatus(activeBrand.shareExpiresAt);
                       return (

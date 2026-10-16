@@ -91,6 +91,14 @@ export default function SharePage({ params }: { params: Promise<{ token: string 
     fetch(`/api/share/${token}`)
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(d => {
+        // Une consultation par visite : on ne recompte pas les rechargements de la même session.
+        try {
+          const k = `share-visit-${token}`;
+          if (!sessionStorage.getItem(k)) {
+            sessionStorage.setItem(k, '1');
+            void fetch(`/api/share/${token}/view`, { method: 'POST' });
+          }
+        } catch { /* stockage indisponible : pas de comptage */ }
         setData(d);
         const firstRoot = d.sections.filter((s: Section) => s.parentId === null).sort((a: Section, b: Section) => a.order - b.order)[0];
         setActiveSectionId(firstRoot?.id ?? null);

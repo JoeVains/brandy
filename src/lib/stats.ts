@@ -61,3 +61,31 @@ export function countSince(stat: ItemStat | undefined, days: number, bulk = fals
 export async function deleteStats(moduleId: string): Promise<void> {
   await store().delete(key(moduleId)).catch(() => {});
 }
+
+// --- Consultations d'un lien de partage (une par visite, comptée côté navigateur une fois par session) ---
+const viewsKey = (token: string) => `share-views-${token}`;
+
+export async function readShareViews(token: string): Promise<ItemStat | null> {
+  const data = await store().get(viewsKey(token), { type: 'json' }).catch(() => null);
+  return (data as ItemStat) ?? null;
+}
+
+export async function recordShareView(token: string): Promise<void> {
+  try {
+    const s = (await readShareViews(token)) ?? { total: 0, last: '', days: {} };
+    const now = new Date();
+    const day = now.toISOString().slice(0, 10);
+    const cutoff = new Date(now.getTime() - KEEP_DAYS * 86400_000).toISOString().slice(0, 10);
+    s.total += 1;
+    s.last = now.toISOString();
+    s.days[day] = (s.days[day] ?? 0) + 1;
+    for (const d of Object.keys(s.days)) if (d < cutoff) delete s.days[d];
+    await store().setJSON(viewsKey(token), s);
+  } catch (e) {
+    console.error('Share views error:', (e as Error).message);
+  }
+}
+
+export async function deleteShareViews(token: string): Promise<void> {
+  await store().delete(viewsKey(token)).catch(() => {});
+}

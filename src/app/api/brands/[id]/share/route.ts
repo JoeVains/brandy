@@ -1,7 +1,17 @@
+import { countSince, deleteShareViews, readShareViews } from '@/lib/stats';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { randomUUID } from 'crypto';
 import { parseExpiry } from '@/lib/share';
+
+// Consultations du lien de partage : total, 7 et 30 derniers jours, dernière visite.
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const brand = (await db.brands.all()).find(b => b.id === id);
+  if (!brand?.shareToken) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const stat = await readShareViews(brand.shareToken);
+  return NextResponse.json({ total: stat?.total ?? 0, last7: countSince(stat ?? undefined, 7), last30: countSince(stat ?? undefined, 30), last: stat?.last || null });
+}
 
 // Crée le lien (ou le conserve) avec une date d'expiration optionnelle : { expiresAt: ISO | null }.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -41,6 +51,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   const idx = brands.findIndex(b => b.id === id);
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  if (brands[idx].shareToken) await deleteShareViews(brands[idx].shareToken);
   brands[idx] = { ...brands[idx], shareToken: undefined, shareExpiresAt: undefined };
   await db.brands.save(brands);
   return NextResponse.json(brands[idx]);
