@@ -307,7 +307,7 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
   );
 }
 
-function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, initialColor, onClose, onDelete, isEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
   shareToken?: string;
   paletteId: string | null;
   onPaletteChange: (id: string) => void;
@@ -321,6 +321,9 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
   onDelete: () => void;
   isEditing?: boolean;
 }) {
+  // Édition locale à l'inspecteur : permet de modifier une icône sans passer le module entier en mode édition.
+  const [localEdit, setLocalEdit] = useState(false);
+  const isEditing = moduleEditing || localEdit;
   const [keywordDraft, setKeywordDraft] = useState('');
   const [nameDraft, setNameDraft] = useState(item.name);
   useEffect(() => { setNameDraft(item.name); }, [item.id, item.name]);
@@ -432,6 +435,16 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
         <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
           style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{item.name}</h2>
+          {!shareToken && !moduleEditing && (
+            <button
+              onClick={() => setLocalEdit(e => !e)}
+              title={localEdit ? 'Terminer la modification' : 'Modifier les infos de l\'icône'}
+              className={`p-1 rounded flex-shrink-0 mr-1 transition-colors ${localEdit ? 'text-white' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+              style={localEdit ? { background: 'var(--accent)' } : undefined}
+            >
+              {localEdit ? <Check size={14} /> : <Pencil size={14} />}
+            </button>
+          )}
           <button onClick={handleClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 flex-shrink-0">
             <X size={14} />
           </button>
