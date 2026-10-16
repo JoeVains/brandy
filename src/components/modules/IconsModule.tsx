@@ -307,10 +307,11 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
   );
 }
 
-function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, initialColor, onClose, onDelete, isEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, initialColor, onClose, onDelete, isEditing }: {
   shareToken?: string;
   paletteId: string | null;
   onPaletteChange: (id: string) => void;
+  onKeywordsChange: (keywords: string[]) => void;
   item: IconItem;
   initialColor: string | null;
   moduleId: string;
@@ -319,6 +320,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
   onDelete: () => void;
   isEditing?: boolean;
 }) {
+  const [keywordDraft, setKeywordDraft] = useState('');
   const [rasterSize, setRasterSize] = useState(1024);
   const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
   const [color, setColor] = useState<string | null>(initialColor);
@@ -347,6 +349,17 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, []);
+
+  // Valide la saisie : plusieurs mots-clés possibles, séparés par des virgules ; doublons ignorés.
+  function commitKeywords() {
+    const added = keywordDraft.split(',').map(k => k.trim()).filter(Boolean);
+    setKeywordDraft('');
+    if (added.length === 0) return;
+    const current = item.keywords ?? [];
+    const merged = [...current];
+    for (const k of added) if (!merged.some(m => m.toLowerCase() === k.toLowerCase())) merged.push(k);
+    if (merged.length !== current.length) onKeywordsChange(merged);
+  }
 
   function handleClose() {
     setVisible(false);
@@ -443,6 +456,38 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
               <span className="text-gray-700 dark:text-gray-300">SVG</span>
             </div>
           </div>
+          {(isEditing || (item.keywords ?? []).length > 0) && (
+            <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Mots-clés</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(item.keywords ?? []).map(k => (
+                  <span key={k} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                    {k}
+                    {isEditing && (
+                      <button onClick={() => onKeywordsChange((item.keywords ?? []).filter(x => x !== k))} title="Retirer"
+                        className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                        <X size={10} />
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {isEditing && (
+                  <input
+                    value={keywordDraft}
+                    onChange={e => setKeywordDraft(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitKeywords(); }
+                      else if (e.key === 'Backspace' && !keywordDraft && (item.keywords ?? []).length) onKeywordsChange((item.keywords ?? []).slice(0, -1));
+                    }}
+                    onBlur={commitKeywords}
+                    placeholder={(item.keywords ?? []).length ? 'Ajouter…' : 'Ajouter un mot-clé…'}
+                    className="flex-1 min-w-[90px] px-1 py-0.5 text-xs outline-none bg-transparent text-gray-700 dark:text-gray-300"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Couleur</p>
               <PaletteSwatches palettes={palettes} paletteId={paletteId} onPaletteChange={onPaletteChange} color={color} onPick={setColor} />
@@ -582,7 +627,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [catDraft, setCatDraft] = useState('');
   const items = module.iconItems ?? [];
-  const filtered = search.trim() ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : items;
+  const filtered = search.trim() ? items.filter(i => [i.name, ...(i.keywords ?? [])].some(t => t.toLowerCase().includes(search.toLowerCase()))) : items;
 
   async function patchModule(patch: Partial<Module>) {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -660,6 +705,16 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     if (categories.some(c => c.color)) {
       await patchModule({ iconCategories: categories.map(({ color: _c, ...rest }) => rest) });
     }
+  }
+
+  async function updateKeywords(id: string, keywords: string[]) {
+    await patchModule({
+      iconItems: items.map(i => {
+        if (i.id !== id) return i;
+        const { keywords: _old, ...rest } = i;
+        return keywords.length ? { ...rest, keywords } : rest;
+      }),
+    });
   }
 
   async function addCategory() {
@@ -1238,6 +1293,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             shareToken={shareToken}
             paletteId={paletteId}
             onPaletteChange={setPaletteId}
+            onKeywordsChange={keywords => updateKeywords(item.id, keywords)}
             initialColor={colorFor(item)}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}

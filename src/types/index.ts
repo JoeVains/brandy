@@ -66,6 +66,7 @@ export interface IconItem {
   filename: string;
   size: number;
   categoryId?: string;
+  keywords?: string[];
 }
 
 export interface IconCategory {
