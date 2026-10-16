@@ -272,7 +272,7 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
           maxLength={7}
           spellCheck={false}
           title={title}
-          className={`${compact ? 'w-24' : 'w-28'} pl-8 pr-6 py-1.5 text-xs font-mono rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600`}
+          className={`w-32 pl-8 pr-6 py-1.5 text-xs font-mono rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600`}
           style={{ borderColor: value && !color ? '#ef4444' : 'var(--border)' }}
         />
         {value && (
