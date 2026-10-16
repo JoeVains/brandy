@@ -71,6 +71,7 @@ export interface IconItem {
 export interface IconCategory {
   id: string;
   name: string;
+  color?: string;
 }
 
 export interface AttachmentItem {

@@ -35,14 +35,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const color = colorParam && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorParam) ? colorParam : null;
     // flat=1 : zip d'une seule catégorie, icônes à la racine (sans dossier).
     const folders = req.nextUrl.searchParams.get('flat') === '1' ? new Map<string, string>() : categoryFolders(module.iconCategories ?? []);
-    // Couleurs par catégorie (JSON {idCatégorie: "#hex"}), prioritaires sur la couleur globale.
+    // Couleur propre à chaque catégorie (mémorisée dans le module), prioritaire sur la couleur globale.
     const catColors: Record<string, string> = {};
-    try {
-      const raw = JSON.parse(req.nextUrl.searchParams.get('cc') ?? '{}') as Record<string, unknown>;
-      for (const [id, v] of Object.entries(raw)) {
-        if (typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) catColors[id] = v;
-      }
-    } catch { /* paramètre ignoré s'il est invalide */ }
+    for (const c of module.iconCategories ?? []) {
+      if (c.color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c.color)) catColors[c.id] = c.color;
+    }
     const asPdf = req.nextUrl.searchParams.get('format') === 'pdf';
     // Un seul navigateur pour tous les PDF (lancer Chromium par icône serait trop lent).
     const browser = asPdf ? await launchBrowser() : null;

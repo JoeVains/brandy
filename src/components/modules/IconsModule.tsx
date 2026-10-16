@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, IconCategory, ColorItem } from '@/types';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
-import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import Select from '../Select';
 import { recolorSvg } from '@/lib/svg';
@@ -563,13 +563,18 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   // Nuancier choisi : conservé à la fermeture du menu et partagé avec l'inspecteur.
   const [paletteId, setPaletteId] = useState<string | null>(null);
   const palettes = useBrandPalettes(module.brandId, shareToken);
+  const categories = module.iconCategories ?? [];
   const tint = normalizeHex(tintInput);
   // Couleur d'une catégorie (si définie) prioritaire sur la couleur globale.
+  // Mémorisée dans la catégorie ; la saisie en cours (catTintInputs) prime tant qu'elle n'est pas enregistrée.
+  const catInput = (cat: IconCategory) => catTintInputs[cat.id] ?? cat.color ?? '';
   const catTints: Record<string, string> = {};
-  for (const [id, v] of Object.entries(catTintInputs)) { const c = normalizeHex(v); if (c) catTints[id] = c; }
+  for (const c of categories) { const col = normalizeHex(catInput(c)); if (col) catTints[c.id] = col; }
   const colorFor = (item: IconItem): string | null => (item.categoryId && catTints[item.categoryId]) || tint;
-  const categories = module.iconCategories ?? [];
   const uploadTarget = useRef<string | undefined>(undefined);
+  const colorTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const categoriesRef = useRef<IconCategory[]>([]);
+  categoriesRef.current = categories;
   const gridRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<string | null>(null);
   const visibleOrder = useRef<string[]>([]);
@@ -628,6 +633,33 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     const reordered = items.filter((_, i) => i !== fromIdx);
     reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
     await patchModule({ iconItems: reordered });
+  }
+
+  // Enregistre la couleur d'une catégorie (avec délai : le sélecteur natif envoie un flux de valeurs).
+  function setCategoryColor(id: string, value: string) {
+    setCatTintInputs(prev => ({ ...prev, [id]: value }));
+    clearTimeout(colorTimers.current[id]);
+    colorTimers.current[id] = setTimeout(() => {
+      const color = normalizeHex(value);
+      if (value && !color) return;
+      patchModule({
+        iconCategories: categoriesRef.current.map(c => {
+          if (c.id !== id) return c;
+          const { color: _old, ...rest } = c;
+          return color ? { ...rest, color } : rest;
+        }),
+      });
+    }, 400);
+  }
+
+  // Rétablit les couleurs d'origine : couleur globale et couleurs de toutes les catégories.
+  async function resetColors() {
+    Object.values(colorTimers.current).forEach(clearTimeout);
+    setTintInput('');
+    setCatTintInputs(Object.fromEntries(categories.map(c => [c.id, ''])));
+    if (categories.some(c => c.color)) {
+      await patchModule({ iconCategories: categories.map(({ color: _c, ...rest }) => rest) });
+    }
   }
 
   async function addCategory() {
@@ -800,7 +832,6 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         const params = new URLSearchParams({ format });
         if (ids?.length) params.set('ids', ids.join(','));
         if (tint) params.set('color', tint);
-        if (Object.keys(catTints).length) params.set('cc', JSON.stringify(catTints));
         if (category) params.set('flat', '1');
         const res = await fetch(shareToken
           ? `/api/share/${shareToken}/download?${new URLSearchParams({ module: module.id })}&${params}`
@@ -959,11 +990,11 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                     </span>
                   )}
                   <span className="text-xs text-gray-400 dark:text-gray-500">{groupItems.length}</span>
-                  {cat && (
+                  {cat && !shareToken && (
                     <TintControl
                       compact
-                      value={catTintInputs[cat.id] ?? ''}
-                      onChange={v => setCatTintInputs(prev => ({ ...prev, [cat.id]: v }))}
+                      value={catInput(cat)}
+                      onChange={v => setCategoryColor(cat.id, v)}
                       palettes={palettes}
                       paletteId={paletteId}
                       onPaletteChange={setPaletteId}
@@ -1102,6 +1133,17 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               onPaletteChange={setPaletteId}
               title="Couleur des icônes (hexadécimal)"
             />
+            {(tintInput || categories.some(c => catInput(c))) && (
+              <button
+                onClick={resetColors}
+                title="Rétablir les couleurs d'origine de toutes les icônes"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <RotateCcw size={12} />
+                Réinitialiser les couleurs
+              </button>
+            )}
             {hasSelection && (
               <>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
