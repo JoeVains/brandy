@@ -1123,6 +1123,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           return (
             <div
               key={item.id}
+              data-item-id={item.id}
               className="relative group flex flex-col items-center gap-2"
               style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
               draggable={isEditing}

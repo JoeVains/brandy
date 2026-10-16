@@ -742,15 +742,20 @@ export default function BrandyApp() {
           sections={brandSections}
           onNavigate={(sectionId, moduleId, itemId) => {
             setActiveSectionId(sectionId);
-            setTimeout(() => {
-              const el = (
-                (itemId ? document.querySelector(`[data-item-id="${itemId}"]`) : null) ??
-                document.querySelector(`[data-module-id="${moduleId}"]`)
-              ) as HTMLElement | null;
-              if (!el) return;
+            // Le contenu de la rubrique peut mettre un moment à s'afficher (modules chargés, longues listes) : on réessaie jusqu'à 3 s.
+            let tries = 0;
+            const attempt = () => {
+              if (!moduleId) return;  // résultat « rubrique » : on s'arrête à l'affichage de la rubrique
+              // Avec un élément précis (icône, couleur…), on attend qu'il soit affiché avant de se rabattre sur le module.
+              const item = itemId ? document.querySelector(`[data-item-id="${itemId}"]`) : null;
+              const el = (item ?? (tries >= 20 || !itemId ? document.querySelector(`[data-module-id="${moduleId}"]`) : null)) as HTMLElement | null;
+              if (!el) { if (++tries < 30) setTimeout(attempt, 100); return; }
               const color = activeBrand?.color ?? '#6366f1';
               const radius = itemId ? '12px' : '16px';
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Défilement direct, puis recentrage : les images/icônes qui finissent de charger décalent la mise en page
+              // et interrompaient le défilement animé sur les longues rubriques.
+              el.scrollIntoView({ block: 'center' });
+              setTimeout(() => el.scrollIntoView({ block: 'center' }), 500);
               el.style.transition = 'none';
               el.style.outline = `2px solid ${color}`;
               el.style.outlineOffset = '4px';
@@ -760,7 +765,8 @@ export default function BrandyApp() {
                 el.style.outline = '2px solid transparent';
                 setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; el.style.borderRadius = ''; el.style.transition = ''; }, 700);
               }, 1600);
-            }, 150);
+            };
+            setTimeout(attempt, 100);
           }}
           onClose={() => setShowSearch(false)}
         />

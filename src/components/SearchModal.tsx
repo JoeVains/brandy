@@ -31,9 +31,28 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   spacing:     <span className="text-[10px] font-bold leading-none">⇥</span>,
 };
 
+// Insensible à la casse et aux accents : « fleche » trouve « Flèche ».
+const norm = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+const stripHtml = (t: string) => t.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Extrait de texte centré sur la première occurrence d'un mot de la recherche.
+function snippet(text: string, tokens: string[]): string {
+  const n = norm(text);
+  const idx = Math.min(...tokens.map(t => { const i = n.indexOf(t); return i < 0 ? Infinity : i; }));
+  if (!isFinite(idx) || idx < 40) return text.slice(0, 80);
+  return '…' + text.slice(idx - 30, idx + 50);
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  colors: 'Couleurs', typography: 'Typographie', image: 'Image', attachments: 'Fichiers', icons: 'Icônes',
+  gradients: 'Dégradés', text: 'Texte', heading: 'Titre', audio: 'Audio', video: 'Vidéo', dodont: "Do's & Don'ts", spacing: 'Espacements',
+};
+
 function searchModules(modules: Module[], sections: Section[], q: string): SearchResult[] {
-  const query = q.toLowerCase().trim();
-  if (!query) return [];
+  // Plusieurs mots = tous doivent être présents (dans n'importe quel ordre).
+  const tokens = norm(q).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return [];
+  const has = (text?: string | null) => !!text && tokens.every(t => norm(text).includes(t));
   const results: SearchResult[] = [];
   const section = (m: Module) => sections.find(s => s.id === m.sectionId);
 
@@ -42,64 +61,84 @@ function searchModules(modules: Module[], sections: Section[], q: string): Searc
     results.push({ moduleId: m.id, moduleType: m.type, moduleTitle: m.title, sectionId: m.sectionId, sectionName: s?.name ?? '', match, matchLabel, itemId });
   }
 
+  // Rubriques
+  for (const s of sections) {
+    if (has(s.name)) results.push({ moduleId: '', moduleType: 'section', moduleTitle: '', sectionId: s.id, sectionName: '', match: s.name, matchLabel: 'rubrique' });
+  }
+
   for (const m of modules) {
     // Module title
-    if (m.title?.toLowerCase().includes(query)) push(m, m.title, 'titre');
+    if (has(m.title)) push(m, m.title, 'titre');
 
     // Colors
     m.colorItems?.forEach(c => {
-      if (c.name.toLowerCase().includes(query)) push(m, c.name, 'couleur', c.id);
-      else if (c.value.toLowerCase().includes(query)) push(m, c.value, 'hex', c.id);
+      if (has(c.name)) push(m, c.name, 'couleur', c.id);
+      else if (has(c.value) || has(c.value.replace('#', ''))) push(m, c.value, 'hex', c.id);
     });
 
     // Typography
     m.fontItems?.forEach(f => {
-      if (f.name.toLowerCase().includes(query)) push(m, f.name, 'police', f.id);
-      else if (f.family?.toLowerCase().includes(query)) push(m, f.family, 'famille', f.id);
+      if (has(f.name)) push(m, f.name, 'police', f.id);
+      else if (has(f.family)) push(m, f.family!, 'famille', f.id);
     });
 
-    // Icons
+    // Icons : nom, mots-clés, catégorie (et emoji), nom de fichier
+    const cats = m.iconCategories ?? [];
     m.iconItems?.forEach(i => {
-      if (i.name.toLowerCase().includes(query)) push(m, i.name, 'icône', i.id);
+      const cat = cats.find(c => c.id === i.categoryId);
+      const keywords = i.keywords ?? [];
+      if (has(i.name)) push(m, i.name, cat ? `icône · ${cat.name}` : 'icône', i.id);
+      else if (keywords.some(k => has(k))) push(m, i.name, `mot-clé · ${keywords.find(k => has(k))}`, i.id);
+      else if (cat && has(cat.name)) push(m, i.name, `catégorie · ${cat.name}`, i.id);
+      else if (has([i.name, ...keywords, cat?.name ?? ''].join(' '))) push(m, i.name, 'icône', i.id);
+      else if (has(i.filename)) push(m, i.name, 'fichier', i.id);
     });
 
     // Attachments
     m.attachmentItems?.forEach(a => {
-      if (a.name.toLowerCase().includes(query)) push(m, a.name, 'fichier', a.id);
+      if (has(a.name)) push(m, a.name, 'fichier', a.id);
     });
 
     // Images
     m.imageItems?.forEach(img => {
-      if (img.filename.toLowerCase().includes(query)) push(m, img.filename, 'image', img.id);
+      if (has(img.filename)) push(m, img.filename, 'image', img.id);
     });
-    if (m.imageFilename?.toLowerCase().includes(query)) push(m, m.imageFilename, 'image');
+    if (has(m.imageFilename)) push(m, m.imageFilename!, 'image');
 
     // Gradients
     m.gradientItems?.forEach(g => {
-      if (g.name.toLowerCase().includes(query)) push(m, g.name, 'dégradé', g.id);
+      if (has(g.name)) push(m, g.name, 'dégradé', g.id);
     });
 
-    // Text content
-    if (m.content?.toLowerCase().includes(query)) push(m, m.content.slice(0, 60), 'contenu');
+    // Contenu texte (HTML retiré) et descriptions de modules
+    if (m.content) {
+      const text = stripHtml(m.content);
+      if (has(text)) push(m, snippet(text, tokens), 'contenu');
+    }
+    for (const [key, value] of Object.entries(m)) {
+      if (/Description$/.test(key) && typeof value === 'string') {
+        const text = stripHtml(value);
+        if (has(text)) push(m, snippet(text, tokens), 'description');
+      }
+    }
 
     // Do & Don't captions
     [...(m.doItems ?? []), ...(m.dontItems ?? [])].forEach(item => {
-      if (item.caption?.toLowerCase().includes(query)) push(m, item.caption, 'légende', item.id);
+      if (has(item.caption)) push(m, item.caption!, 'légende', item.id);
     });
 
     // Audio / video titles
-    if (m.audioTitle?.toLowerCase().includes(query)) push(m, m.audioTitle, 'audio');
-    if (m.videoTitle?.toLowerCase().includes(query)) push(m, m.videoTitle!, 'vidéo');
+    if (has(m.audioTitle)) push(m, m.audioTitle!, 'audio');
+    if (has(m.videoTitle)) push(m, m.videoTitle!, 'vidéo');
   }
 
-  // Deduplicate by moduleId (keep first match per module)
   const seen = new Set<string>();
   return results.filter(r => {
-    const key = r.moduleId + r.match;
+    const key = `${r.moduleId}|${r.itemId ?? ''}|${r.matchLabel}|${r.match}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  }).slice(0, 30);
+  }).slice(0, 60);
 }
 
 interface Props {
@@ -145,16 +184,37 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
     el?.scrollIntoView({ block: 'nearest' });
   }, [activeIdx]);
 
+  // Surligne chaque mot de la recherche (sans tenir compte des accents ni de la casse).
   function highlight(text: string) {
-    const idx = text.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1 || !query) return <span>{text}</span>;
-    return (
-      <span>
-        {text.slice(0, idx)}
-        <mark className="bg-yellow-100 text-yellow-800 rounded px-0.5">{text.slice(idx, idx + query.length)}</mark>
-        {text.slice(idx + query.length)}
-      </span>
-    );
+    const tokens = norm(query).split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return <span>{text}</span>;
+    // norm() peut changer la longueur (décomposition) : on repère les positions caractère par caractère.
+    const flags = new Array(text.length).fill(false);
+    const chars = Array.from(text);
+    let plain = '';
+    const map: number[] = [];
+    chars.forEach((ch, i) => { const n = norm(ch); for (let k = 0; k < n.length; k++) map.push(i); plain += n; });
+    for (const t of tokens) {
+      let from = 0;
+      for (;;) {
+        const idx = plain.indexOf(t, from);
+        if (idx === -1) break;
+        for (let k = idx; k < idx + t.length; k++) flags[map[k]] = true;
+        from = idx + t.length;
+      }
+    }
+    const parts: React.ReactNode[] = [];
+    let i = 0;
+    while (i < chars.length) {
+      let j = i;
+      while (j < chars.length && flags[j] === flags[i]) j++;
+      const chunk = chars.slice(i, j).join('');
+      parts.push(flags[i]
+        ? <mark key={i} className="bg-yellow-100 text-yellow-800 rounded px-0.5">{chunk}</mark>
+        : <span key={i}>{chunk}</span>);
+      i = j;
+    }
+    return <span>{parts}</span>;
   }
 
   return createPortal(
@@ -169,7 +229,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
           <Search size={16} className="text-gray-400 dark:text-gray-400 flex-shrink-0" />
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
-            placeholder="Rechercher couleurs, icônes, polices…"
+            placeholder="Rechercher couleurs, icônes, mots-clés, polices…"
             className="flex-1 text-sm outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400" />
           {query && (
             <button onClick={() => setQuery('')} className="text-gray-300 dark:text-gray-600 hover:text-gray-500">
@@ -191,7 +251,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
               <p className="text-xs">Aucun résultat pour « {query} »</p>
             </div>
           ) : results.map((r, i) => (
-            <button key={`${r.moduleId}-${r.match}`}
+            <button key={`${r.moduleId}-${r.itemId ?? ''}-${r.matchLabel}-${r.match}`}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
               style={{ background: i === activeIdx ? '#f9fafb' : 'white' }}
               onMouseEnter={() => setActiveIdx(i)}
@@ -208,7 +268,7 @@ export default function SearchModal({ brandId, sections, onNavigate, onClose }: 
                   <span className="text-[10px] text-gray-300 dark:text-gray-600 flex-shrink-0">{r.matchLabel}</span>
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">
-                  {r.moduleTitle || r.moduleType} · {r.sectionName}
+                  {r.moduleType === 'section' ? 'Rubrique' : `${r.moduleTitle || TYPE_LABELS[r.moduleType] || r.moduleType} · ${r.sectionName}`}
                 </p>
               </div>
               {i === activeIdx && (
