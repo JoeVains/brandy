@@ -12,6 +12,7 @@ import BackupsPanel from './BackupsPanel';
 import EmojiPicker from './EmojiPicker';
 import SearchModal from './SearchModal';
 import StatsPanel from './StatsPanel';
+import ExpiryPicker, { expiryStatus } from './ExpiryPicker';
 import { useTheme } from '@/hooks/useTheme';
 
 const BRAND_COLORS = [
@@ -384,6 +385,8 @@ export default function BrandyApp() {
   const [pageViewKey, setPageViewKey] = useState(0);
   const [showShare, setShowShare] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // Durée choisie à la création du lien (30 jours par défaut ; null = sans expiration).
+  const [newShareExpiry, setNewShareExpiry] = useState<string | null>(() => { const d = new Date(); d.setDate(d.getDate() + 30); d.setHours(23, 59, 59, 0); return d.toISOString(); });
   const { dark, toggle } = useTheme();
 
   const fetchAll = useCallback(async () => {
@@ -524,8 +527,16 @@ export default function BrandyApp() {
     );
   }
 
-  async function enableShare(id: string) {
-    const res = await fetch(`/api/brands/${id}/share`, { method: 'POST' });
+  async function enableShare(id: string, expiresAt: string | null) {
+    const res = await fetch(`/api/brands/${id}/share`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ expiresAt }) });
+    const updated = await res.json();
+    setBrands(prev => prev.map(b => b.id === id ? updated : b));
+  }
+
+  // Prolonge, raccourcit ou retire la date d'expiration sans changer l'adresse du lien.
+  async function updateShareExpiry(id: string, expiresAt: string | null) {
+    const res = await fetch(`/api/brands/${id}/share`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ expiresAt }) });
+    if (!res.ok) return;
     const updated = await res.json();
     setBrands(prev => prev.map(b => b.id === id ? updated : b));
   }
@@ -704,6 +715,20 @@ export default function BrandyApp() {
                         {shareCopied ? <Check size={13} /> : <Copy size={13} />}
                       </button>
                     </div>
+                    {(() => {
+                      const st = expiryStatus(activeBrand.shareExpiresAt);
+                      return (
+                        <>
+                          <p className={`text-xs ${st.expired ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                            {st.expired ? 'Ce lien a expiré : les visiteurs n’y ont plus accès. ' : ''}{st.text}
+                          </p>
+                          <ExpiryPicker
+                            placeholder={st.expired ? 'Prolonger le lien…' : 'Modifier la durée…'}
+                            onChange={exp => updateShareExpiry(activeBrand.id, exp)}
+                          />
+                        </>
+                      );
+                    })()}
                     <button
                       onClick={() => disableShare(activeBrand.id)}
                       className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 mt-1"
@@ -714,8 +739,14 @@ export default function BrandyApp() {
                 ) : (
                   <div className="flex flex-col gap-2">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Génère un lien public en lecture seule pour cette marque (consultation et téléchargements uniquement).</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Durée de validité :</p>
+                    <ExpiryPicker
+                      value={newShareExpiry === null ? 'none' : ''}
+                      placeholder={newShareExpiry ? expiryStatus(newShareExpiry).text.replace('Expire', 'Expirera') : "Sans date d'expiration"}
+                      onChange={setNewShareExpiry}
+                    />
                     <button
-                      onClick={() => enableShare(activeBrand.id)}
+                      onClick={() => enableShare(activeBrand.id, newShareExpiry)}
                       className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium"
                       style={{ background: activeBrand.color }}
                     >

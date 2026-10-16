@@ -6,6 +6,7 @@ export interface Brand {
   headerImage?: string;
   logoImage?: string;
   shareToken?: string;
+  shareExpiresAt?: string | null;  // fin de validité du lien de partage (absent = sans expiration)
   description?: string;
   categoryId?: string | null;
 }

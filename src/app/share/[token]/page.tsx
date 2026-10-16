@@ -84,22 +84,32 @@ function SectionNode({ section, allSections, activeId, onSelect, depth }: {
 
 export default function SharePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
-  const [data, setData] = useState<{ brand: Brand; sections: Section[]; modules: Module[] } | null | 'not-found'>(null);
+  const [data, setData] = useState<{ brand: Brand; sections: Section[]; modules: Module[] } | null | 'not-found' | 'expired'>(null);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/share/${token}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(d => {
         setData(d);
         const firstRoot = d.sections.filter((s: Section) => s.parentId === null).sort((a: Section, b: Section) => a.order - b.order)[0];
         setActiveSectionId(firstRoot?.id ?? null);
       })
-      .catch(() => setData('not-found'));
+      .catch(status => setData(status === 410 ? 'expired' : 'not-found'));
   }, [token]);
 
   if (data === null) {
     return <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }} />;
+  }
+
+  if (data === 'expired') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-2 px-6 text-center" style={{ background: 'var(--background)' }}>
+        <LayoutGrid size={28} className="text-gray-300 dark:text-gray-600" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Ce lien de partage a expiré.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">Demandez un nouveau lien à la personne qui vous l&apos;a envoyé.</p>
+      </div>
+    );
   }
 
   if (data === 'not-found') {
