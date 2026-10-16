@@ -745,7 +745,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [tintInput, setTintInput] = useState('');
+  // Couleur globale : enregistrée dans le module (valeur de départ pour tous les visiteurs) ; en lecture, la modifier n'est qu'un aperçu.
+  const [tintInput, setTintInput] = useState(module.iconColor ?? '');
   const [catTintInputs, setCatTintInputs] = useState<Record<string, string>>({});
   // Nuancier choisi : conservé à la fermeture du menu et partagé avec l'inspecteur.
   const [paletteId, setPaletteId] = useState<string | null>(null);
@@ -912,10 +913,23 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     }, 400);
   }
 
+  // Saisie de la couleur globale ; elle n'est mémorisée qu'en mode édition (avec délai : le sélecteur natif envoie un flux de valeurs).
+  function setGlobalTint(value: string) {
+    setTintInput(value);
+    if (!isEditing) return;
+    clearTimeout(colorTimers.current['__global']);
+    colorTimers.current['__global'] = setTimeout(() => {
+      const color = normalizeHex(value);
+      if (value && !color) return;
+      patchModule({ iconColor: color ?? null });
+    }, 400);
+  }
+
   // Rétablit les couleurs d'origine : couleur globale et couleurs de toutes les catégories.
   async function resetColors() {
     Object.values(colorTimers.current).forEach(clearTimeout);
     setTintInput('');
+    if (isEditing && module.iconColor) await patchModule({ iconColor: null });
     setCatTintInputs(Object.fromEntries(categories.map(c => [c.id, ''])));
     if (categories.some(c => c.color)) {
       await patchModule({ iconCategories: categories.map(({ color: _c, ...rest }) => rest) });
@@ -1584,7 +1598,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           <div className="flex items-center gap-2">
             <TintControl
               value={tintInput}
-              onChange={setTintInput}
+              onChange={setGlobalTint}
               palettes={palettes}
               paletteId={paletteId}
               onPaletteChange={setPaletteId}

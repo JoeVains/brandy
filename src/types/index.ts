@@ -169,6 +169,7 @@ export interface Module {
   attachmentItems?: AttachmentItem[];
   // icons
   iconDescription?: string;
+  iconColor?: string | null;
   iconItems?: IconItem[];
   iconCategories?: IconCategory[];
   // spacing
