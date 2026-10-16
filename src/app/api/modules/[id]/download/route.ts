@@ -5,6 +5,7 @@ import { recolorSvg } from '@/lib/svg';
 import { launchBrowser, renderSvgToPdf } from '@/lib/pdfBrowser';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
 import { isPublished } from '@/lib/assetStatus';
+import { recordDownloads } from '@/lib/stats';
 import JSZip from 'jszip';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,12 +16,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const idsParam = req.nextUrl.searchParams.get('ids');
   const selectedIds = idsParam ? new Set(idsParam.split(',')) : null;
   const zip = new JSZip();
+  const downloaded: string[] = [];  // éléments réellement inclus dans le zip (statistiques)
 
   if (module.type === 'image') {
     // Single image
     if (module.imageMode !== 'gallery' && module.imageFilename && (selectedIds || isPublished({ status: module.imageStatus }))) {
       const file = await getFile(module.imageFilename);
-      if (file) zip.file(module.imageFilename, file.data);
+      if (file) { zip.file(module.imageFilename, file.data); downloaded.push('__single'); }
     }
     // Gallery
     const imageItems = (module.imageItems ?? []).filter(i => selectedIds ? selectedIds.has(i.id) : isPublished(i));
@@ -28,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const imageFolders = req.nextUrl.searchParams.get('flat') === '1' ? new Map<string, string>() : categoryFolders(module.imageCategories ?? []);
     for (const item of imageItems) {
       const file = await getFile(item.filename);
-      if (file) zip.file(iconZipPath(item, imageFolders, item.filename), file.data);
+      if (file) { zip.file(iconZipPath(item, imageFolders, item.filename), file.data); downloaded.push(item.id); }
     }
   } else if (module.type === 'attachments') {
     const items = (module.attachmentItems ?? []).filter(i => selectedIds ? selectedIds.has(i.id) : isPublished(i));
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       }
       used.add(path.toLowerCase());
       zip.file(path, file.data);
+      downloaded.push(item.id);
     }
   } else {
     // Icons
@@ -73,6 +76,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         const svg = new TextDecoder().decode(file.data);
         const itemColor = (item.categoryId && catColors[item.categoryId]) || color;
         const svgOut = itemColor ? recolorSvg(svg, itemColor) : svg;
+        downloaded.push(item.id);
         if (page) zip.file(iconZipPath(item, folders, `${item.name}.pdf`), await renderSvgToPdf(page, svgOut));
         else zip.file(iconZipPath(item, folders, `${item.name}.svg`), itemColor ? svgOut : file.data);
       }
@@ -81,6 +85,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
   }
 
+  await recordDownloads(module.id, downloaded, !selectedIds);
   const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
   const zipName = (module.title || module.type).replace(/[^a-z0-9]/gi, '_').toLowerCase();
 

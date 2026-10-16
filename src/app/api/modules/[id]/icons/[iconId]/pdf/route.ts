@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getFile } from '@/lib/files';
 import { recolorSvg } from '@/lib/svg';
 import { launchBrowser, renderSvgToPdf } from '@/lib/pdfBrowser';
+import { recordDownloads } from '@/lib/stats';
 
 const HEX_RE = /^#[0-9a-f]{3,8}$/i;
 
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const page = await browser.newPage();
     const pdf = await renderSvgToPdf(page, svgText);
+    await recordDownloads(module.id, [item.id]);
     return new NextResponse(pdf as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',

@@ -1,5 +1,6 @@
 'use client';
 
+import { trackDownload } from '@/lib/trackDownload';
 import { useRef, useState } from 'react';
 import { Module, AttachmentItem, AssetStatus, IconCategory } from '@/types';
 import CategorySections, { CategorySelect, type CategoryPatch } from '../CategorySections';
@@ -163,7 +164,7 @@ export default function AttachmentsModule({ module, brandColor, onUpdate, isEdit
             </button>
           )}
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <a href={`/uploads/${item.filename}`} download={item.name}
+            <a href={`/uploads/${item.filename}`} download={item.name} onClick={() => trackDownload(module.id, [item.id])}
               className="p-1.5 rounded-lg border hover:bg-white dark:bg-gray-900 transition-colors text-gray-500" style={{ borderColor: 'var(--border)' }}>
               <Download size={13} />
             </a>

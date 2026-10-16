@@ -1,5 +1,6 @@
 'use client';
 
+import { trackDownload } from '@/lib/trackDownload';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, IconCategory, ColorItem, AssetStatus } from '@/types';
@@ -454,12 +455,14 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
     setExportingRaster(true);
     try {
       await downloadRaster(item.filename, item.name, rasterSize, color, rasterFormat);
+      trackDownload(moduleId, [item.id]);
     } finally {
       setExportingRaster(false);
     }
   }
 
   function handleDownloadSvg() {
+    trackDownload(moduleId, [item.id]);
     if (color && svgText) {
       const blob = new Blob([recolorSvg(svgText, color)], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
@@ -1157,7 +1160,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     document.addEventListener('mouseup', up);
   }
 
-  function downloadSingle(filename: string, name: string) {
+  function downloadSingle(filename: string, name: string, itemId: string) {
+    trackDownload(module.id, [itemId]);
     const a = document.createElement('a');
     a.href = `/uploads/${filename}`;
     a.download = `${name}.svg`;
@@ -1174,10 +1178,12 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
         const folders = category ? new Map<string, string>() : categoryFolders(categories);
+        const included: string[] = [];
         for (const item of items.filter(i => ids?.length ? ids.includes(i.id) : isPublished(i))) {
           const blob = await renderRaster(item.filename, size, colorFor(item), format);
-          if (blob) zip.file(iconZipPath(item, folders, `${item.name}-${size}.${format}`), blob);
+          if (blob) { zip.file(iconZipPath(item, folders, `${item.name}-${size}.${format}`), blob); included.push(item.id); }
         }
+        trackDownload(module.id, included, !ids?.length);
         saveBlob(await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }), zipName);
       } else {
         const params = new URLSearchParams({ format });
@@ -1248,7 +1254,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 {/* Action buttons */}
                 <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={e => { e.stopPropagation(); downloadSingle(item.filename, item.name); }}
+                    onClick={e => { e.stopPropagation(); downloadSingle(item.filename, item.name, item.id); }}
                     className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100"
                   >
                     <Download size={11} />

@@ -6,11 +6,12 @@ import { Brand, Section, Module } from '@/types';
 import Sidebar from './Sidebar';
 import PageView from './PageView';
 import HomeView from './HomeView';
-import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy, DatabaseBackup, LogOut } from 'lucide-react';
+import { Plus, Trash2, Check, X, Pencil, FolderOpen, ChevronLeft, Clock, Search, Upload, Trash, FileDown, Moon, Sun, Link as LinkIcon, Share2, Copy, DatabaseBackup, LogOut, BarChart3 } from 'lucide-react';
 import HistoryPanel from './HistoryPanel';
 import BackupsPanel from './BackupsPanel';
 import EmojiPicker from './EmojiPicker';
 import SearchModal from './SearchModal';
+import StatsPanel from './StatsPanel';
 import { useTheme } from '@/hooks/useTheme';
 
 const BRAND_COLORS = [
@@ -376,6 +377,7 @@ export default function BrandyApp() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showBackups, setShowBackups] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
@@ -561,6 +563,36 @@ export default function BrandyApp() {
     );
   }
 
+  // Ouvre une rubrique puis met en évidence un module ou un élément (recherche, statistiques).
+  function navigateTo(sectionId: string, moduleId: string, itemId?: string) {
+    setActiveSectionId(sectionId);
+    // Le contenu de la rubrique peut mettre un moment à s'afficher (modules chargés, longues listes) : on réessaie jusqu'à 3 s.
+    let tries = 0;
+    const attempt = () => {
+      if (!moduleId) return;  // résultat « rubrique » : on s'arrête à l'affichage de la rubrique
+      // Avec un élément précis (icône, couleur…), on attend qu'il soit affiché avant de se rabattre sur le module.
+      const item = itemId ? document.querySelector(`[data-item-id="${itemId}"]`) : null;
+      const el = (item ?? (tries >= 20 || !itemId ? document.querySelector(`[data-module-id="${moduleId}"]`) : null)) as HTMLElement | null;
+      if (!el) { if (++tries < 30) setTimeout(attempt, 100); return; }
+      const color = activeBrand?.color ?? '#6366f1';
+      const radius = itemId ? '12px' : '16px';
+      // Défilement direct, puis recentrage : les images/icônes qui finissent de charger décalent la mise en page
+      // et interrompaient le défilement animé sur les longues rubriques.
+      el.scrollIntoView({ block: 'center' });
+      setTimeout(() => el.scrollIntoView({ block: 'center' }), 500);
+      el.style.transition = 'none';
+      el.style.outline = `2px solid ${color}`;
+      el.style.outlineOffset = '4px';
+      el.style.borderRadius = radius;
+      setTimeout(() => {
+        el.style.transition = 'outline 0.6s, outline-offset 0.6s, border-radius 0.6s';
+        el.style.outline = '2px solid transparent';
+        setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; el.style.borderRadius = ''; el.style.transition = ''; }, 700);
+      }, 1600);
+    };
+    setTimeout(attempt, 100);
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
       {/* Header */}
@@ -586,7 +618,7 @@ export default function BrandyApp() {
             const isEditing = editingBrandId === brand.id;
             const isDragging = dragId === brand.id;
             const isOver = dragOverId === brand.id;
-            return (
+  return (
               <div
                 key={brand.id}
                 className="relative flex-shrink-0"
@@ -719,6 +751,15 @@ export default function BrandyApp() {
           <Clock size={15} />
         </button>
 
+        {/* Download stats button */}
+        {activeBrandId && (
+          <button onClick={() => setShowStats(v => !v)}
+            className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Statistiques de téléchargement">
+            <BarChart3 size={15} />
+          </button>
+        )}
+
         {/* Backups button */}
         <button onClick={() => setShowBackups(v => !v)}
           className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -735,39 +776,13 @@ export default function BrandyApp() {
       </header>
 
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
+      {showStats && activeBrandId && <StatsPanel brandId={activeBrandId} onClose={() => setShowStats(false)} onNavigate={navigateTo} />}
       {showBackups && <BackupsPanel onClose={() => setShowBackups(false)} onRestored={fetchAll} />}
       {showSearch && activeBrandId && (
         <SearchModal
           brandId={activeBrandId}
           sections={brandSections}
-          onNavigate={(sectionId, moduleId, itemId) => {
-            setActiveSectionId(sectionId);
-            // Le contenu de la rubrique peut mettre un moment à s'afficher (modules chargés, longues listes) : on réessaie jusqu'à 3 s.
-            let tries = 0;
-            const attempt = () => {
-              if (!moduleId) return;  // résultat « rubrique » : on s'arrête à l'affichage de la rubrique
-              // Avec un élément précis (icône, couleur…), on attend qu'il soit affiché avant de se rabattre sur le module.
-              const item = itemId ? document.querySelector(`[data-item-id="${itemId}"]`) : null;
-              const el = (item ?? (tries >= 20 || !itemId ? document.querySelector(`[data-module-id="${moduleId}"]`) : null)) as HTMLElement | null;
-              if (!el) { if (++tries < 30) setTimeout(attempt, 100); return; }
-              const color = activeBrand?.color ?? '#6366f1';
-              const radius = itemId ? '12px' : '16px';
-              // Défilement direct, puis recentrage : les images/icônes qui finissent de charger décalent la mise en page
-              // et interrompaient le défilement animé sur les longues rubriques.
-              el.scrollIntoView({ block: 'center' });
-              setTimeout(() => el.scrollIntoView({ block: 'center' }), 500);
-              el.style.transition = 'none';
-              el.style.outline = `2px solid ${color}`;
-              el.style.outlineOffset = '4px';
-              el.style.borderRadius = radius;
-              setTimeout(() => {
-                el.style.transition = 'outline 0.6s, outline-offset 0.6s, border-radius 0.6s';
-                el.style.outline = '2px solid transparent';
-                setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; el.style.borderRadius = ''; el.style.transition = ''; }, 700);
-              }, 1600);
-            };
-            setTimeout(attempt, 100);
-          }}
+          onNavigate={navigateTo}
           onClose={() => setShowSearch(false)}
         />
       )}

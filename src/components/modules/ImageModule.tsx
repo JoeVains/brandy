@@ -1,5 +1,6 @@
 'use client';
 
+import { trackDownload } from '@/lib/trackDownload';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, ImageItem, IconCategory, AssetStatus } from '@/types';
@@ -529,7 +530,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing, s
                   <a
                     href={`/uploads/${item.filename}`}
                     download={item.filename}
-                    onClick={e => e.stopPropagation()}
+                    onClick={e => { e.stopPropagation(); trackDownload(module.id, [item.id]); }}
                     className="p-1.5 rounded-lg bg-white dark:bg-gray-900/80 hover:bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 shadow-sm"
                   >
                     <Download size={13} />
@@ -661,7 +662,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing, s
                 className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: 'var(--border)' }}>
                 <ZoomIn size={14} />
               </button>
-              <a href={`/uploads/${module.imageFilename}`} download={module.imageFilename}
+              <a href={`/uploads/${module.imageFilename}`} download={module.imageFilename} onClick={() => trackDownload(module.id, ['__single'])}
                 className="p-2 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center" style={{ borderColor: 'var(--border)' }}>
                 <Download size={14} />
               </a>

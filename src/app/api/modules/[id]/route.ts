@@ -1,3 +1,4 @@
+import { deleteStats } from '@/lib/stats';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logHistory } from '@/lib/history';
@@ -38,6 +39,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   await Promise.all(filesToDelete.map(deleteFile));
 
   await db.modules.save(all.filter(m => m.id !== id));
+  await deleteStats(id);
 
   const brand = (await db.brands.all()).find(b => b.id === module.brandId);
   const section = (await db.sections.all()).find(s => s.id === module.sectionId);

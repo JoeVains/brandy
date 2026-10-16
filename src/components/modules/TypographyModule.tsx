@@ -1,5 +1,6 @@
 'use client';
 
+import { trackDownload } from '@/lib/trackDownload';
 import { useRef, useState, useEffect } from 'react';
 import { Module, FontItem, FontVariant, AssetStatus } from '@/types';
 import { StatusBadge, StatusSelect, VersionHistory } from '../AssetStatus';
@@ -292,7 +293,7 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                     </a>
                   )}
                   {item.source === 'upload' && item.filename && (
-                    <a href={`/uploads/${item.filename}`} download={item.filename}
+                    <a href={`/uploads/${item.filename}`} download={item.filename} onClick={() => trackDownload(module.id, [item.id])}
                       className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-200 transition-colors border rounded-lg px-3 py-1.5"
                       style={{ borderColor: 'var(--border)' }}>
                       Télécharger ↓
