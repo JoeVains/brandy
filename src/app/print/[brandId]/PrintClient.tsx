@@ -1,5 +1,6 @@
 'use client';
 
+import { isPublished } from '@/lib/assetStatus';
 import { Brand, Section, Module, ColorItem } from '@/types';
 import { useEffect } from 'react';
 import { contrastRatio } from '@/lib/colorUtils';
@@ -103,7 +104,7 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
 
         {module.type === 'image' && module.imageMode === 'gallery' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-            {(module.imageItems ?? []).map(item => (
+            {(module.imageItems ?? []).filter(isPublished).map(item => (
               <img key={item.id} src={`/uploads/${item.filename}`} alt="" style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
             ))}
           </div>
@@ -111,7 +112,7 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
 
         {module.type === 'icons' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 12 }}>
-            {(module.iconItems ?? []).map(item => (
+            {(module.iconItems ?? []).filter(isPublished).map(item => (
               <div key={item.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <img src={`/uploads/${item.filename}`} alt={item.name} style={{ width: 40, height: 40, objectFit: 'contain' }} />
                 <span style={{ fontSize: 9, color: '#6b7280', textAlign: 'center' }}>{item.name}</span>
@@ -133,7 +134,7 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
 
         {module.type === 'attachments' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {(module.attachmentItems ?? []).map(item => (
+            {(module.attachmentItems ?? []).filter(isPublished).map(item => (
               <div key={item.id} style={{ padding: '6px 10px', background: '#f9fafb', borderRadius: 6, border: '1px solid #e5e7eb' }}>
                 <span style={{ fontSize: 11, color: '#374151' }}>{item.name || item.filename}</span>
               </div>

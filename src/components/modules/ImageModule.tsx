@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Module, ImageItem } from '@/types';
-import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square, X, Download, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Module, ImageItem, AssetStatus } from '@/types';
+import { StatusBadge, StatusSelect, VersionHistory } from '../AssetStatus';
+import { restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
+import { ImageIcon, Trash2, Upload, Plus, LayoutGrid, Square, X, Download, ZoomIn, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -139,7 +141,12 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const mode = module.imageMode ?? 'single';
   const fit = module.imageFit ?? 'contain';
-  const imageItems = module.imageItems ?? [];
+  // En lecture, les brouillons sont masqués et les obsolètes repliés ; en édition, tout est visible.
+  const [showObsolete, setShowObsolete] = useState(false);
+  const [openVersions, setOpenVersions] = useState<string | null>(null);
+  const allImageItems = module.imageItems ?? [];
+  const obsoleteCount = allImageItems.filter(i => statusOf(i) === 'obsolete').length;
+  const imageItems = visibleItems(allImageItems, !!isEditing, showObsolete);
 
   const lightboxItems: LightboxItem[] = mode === 'gallery'
     ? imageItems.map(i => ({ src: `/uploads/${i.filename}`, filename: i.filename, mimeType: i.mimeType, caption: i.caption }))
@@ -291,6 +298,34 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
       body: JSON.stringify({ imageItems: reordered }),
     });
     onUpdate(await res.json());
+  }
+
+  async function patchImageItems(next: ImageItem[]) {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageItems: next }),
+    });
+    onUpdate(await res.json());
+  }
+
+  async function setImageStatus(id: string, status: AssetStatus) {
+    await patchImageItems(imageItems.map(i => {
+      if (i.id !== id) return i;
+      const { status: _old, ...rest } = i;
+      return status === 'validated' ? rest : { ...rest, status };
+    }));
+  }
+
+  // Remplace le fichier ; l'ancienne version reste dans l'historique.
+  async function replaceImageFile(id: string, file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('slot', 'image-item');
+    fd.append('replaceItemId', id);
+    const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+    if (res.ok) onUpdate(await res.json());
+    else alert('Le remplacement du fichier a échoué.');
   }
 
   async function updateCaption(id: string, caption: string) {
@@ -469,6 +504,11 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
         </div>
       )}
 
+      {!isEditing && obsoleteCount > 0 && (
+        <button onClick={() => setShowObsolete(o => !o)} className="mb-3 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+          {showObsolete ? 'Masquer' : 'Afficher'} les obsolètes ({obsoleteCount})
+        </button>
+      )}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {imageItems.map((item, idx) => {
           const isSelected = selected.has(item.id);
@@ -477,7 +517,7 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             {/* Draggable card wrapper */}
             <div
               className="relative group"
-              style={{ opacity: dragIdx === idx ? 0.4 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
+              style={{ opacity: dragIdx === idx ? 0.4 : statusOf(item) === 'obsolete' ? 0.55 : 1, cursor: isEditing ? 'grab' : 'pointer' }}
               draggable={isEditing && !selectMode}
               onDragStart={isEditing && !selectMode ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
               onDragOver={isEditing && !selectMode ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
@@ -545,6 +585,37 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
                 onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                 className="w-full text-xs text-gray-500 placeholder-gray-300 bg-transparent outline-none border-b border-transparent focus:border-gray-300 dark:border-gray-700 transition-colors py-1 text-center"
               />
+            )}
+            {(statusOf(item) !== 'validated' || isEditing) && (
+              <div className="flex items-center justify-center gap-2">
+                {isEditing
+                  ? <StatusSelect value={item.status} onChange={st => setImageStatus(item.id, st)} />
+                  : <StatusBadge status={statusOf(item)} />}
+                {(isEditing || (item.versions ?? []).length > 0) && (
+                  <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} title="Versions"
+                    className="p-1.5 rounded-lg border text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                    <History size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+            {!isEditing && statusOf(item) === 'validated' && (item.versions ?? []).length > 0 && (
+              <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} className="text-[10px] text-gray-400 hover:text-gray-600 text-center">
+                Historique des versions
+              </button>
+            )}
+            {openVersions === item.id && (
+              <div className="p-3 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
+                <VersionHistory
+                  current={item}
+                  versions={item.versions ?? []}
+                  baseName={item.caption || 'image'}
+                  canEdit={isEditing}
+                  accept="image/*"
+                  onReplace={file => replaceImageFile(item.id, file)}
+                  onRestore={i => patchImageItems(allImageItems.map(a => a.id === item.id ? restoreVersion(a, i) : a))}
+                />
+              </div>
             )}
           </div>
           );

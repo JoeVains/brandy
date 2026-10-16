@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Module, IconItem, IconCategory, ColorItem } from '@/types';
+import { Module, IconItem, IconCategory, ColorItem, AssetStatus } from '@/types';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
 import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical, FolderUp } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import Select from '../Select';
 import EmojiPicker from '../EmojiPicker';
+import { StatusBadge, StatusSelect, VersionHistory } from '../AssetStatus';
+import { isPublished, restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
 import { recolorSvg } from '@/lib/svg';
 
 type RasterFormat = 'png' | 'webp';
@@ -354,13 +356,16 @@ const END_DROP = '__end';
 const DEFAULT_CATEGORY_EMOJI = '📁';
 const byAlpha = (a: string, b: string) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
 
-function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, onStatusChange, onReplaceFile, onRestoreVersion, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
   shareToken?: string;
   paletteId: string | null;
   onPaletteChange: (id: string) => void;
   onKeywordsChange: (keywords: string[]) => void;
   onRename: (name: string) => void;
   allKeywords: string[];
+  onStatusChange: (status: AssetStatus) => void;
+  onReplaceFile: (file: File) => Promise<void>;
+  onRestoreVersion: (index: number) => void;
   item: IconItem;
   initialColor: string | null;
   moduleId: string;
@@ -548,6 +553,17 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
               <span className="text-gray-700 dark:text-gray-300">SVG</span>
             </div>
           </div>
+          {(isEditing || statusOf(item) !== 'validated') && (
+            <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Statut</p>
+              {isEditing ? (
+                <StatusSelect value={item.status} onChange={onStatusChange} />
+              ) : (
+                <StatusBadge status={statusOf(item)} showValidated />
+              )}
+            </div>
+          )}
+
           {(isEditing || (item.keywords ?? []).length > 0) && (
             <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Mots-clés</p>
@@ -597,6 +613,20 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {(isEditing || (item.versions ?? []).length > 0) && (
+            <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+              <VersionHistory
+                current={item}
+                versions={item.versions ?? []}
+                baseName={item.name}
+                canEdit={isEditing}
+                accept=".svg,image/svg+xml"
+                onReplace={onReplaceFile}
+                onRestore={onRestoreVersion}
+              />
             </div>
           )}
 
@@ -745,7 +775,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [catDraft, setCatDraft] = useState('');
   const items = module.iconItems ?? [];
-  const filtered = search.trim() ? items.filter(i => [i.name, ...(i.keywords ?? [])].some(t => t.toLowerCase().includes(search.toLowerCase()))) : items;
+  const [showObsolete, setShowObsolete] = useState(false);
+  const obsoleteCount = items.filter(i => statusOf(i) === 'obsolete').length;
+  const shown = visibleItems(items, !!isEditing, showObsolete);
+  const filtered = search.trim() ? shown.filter(i => [i.name, ...(i.keywords ?? [])].some(t => t.toLowerCase().includes(search.toLowerCase()))) : shown;
 
   async function patchModule(patch: Partial<Module>) {
     const res = await fetch(`/api/modules/${module.id}`, {
@@ -887,6 +920,41 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     if (categories.some(c => c.color)) {
       await patchModule({ iconCategories: categories.map(({ color: _c, ...rest }) => rest) });
     }
+  }
+
+  async function setItemStatus(id: string, status: AssetStatus) {
+    await patchModule({
+      iconItems: items.map(i => {
+        if (i.id !== id) return i;
+        const { status: _old, ...rest } = i;
+        return status === 'validated' ? rest : { ...rest, status };
+      }),
+    });
+  }
+
+  async function setSelectionStatus(status: AssetStatus) {
+    await patchModule({
+      iconItems: items.map(i => {
+        if (!selected.has(i.id)) return i;
+        const { status: _old, ...rest } = i;
+        return status === 'validated' ? rest : { ...rest, status };
+      }),
+    });
+  }
+
+  // Remplace le fichier d'une icône ; l'ancienne version est conservée dans l'historique.
+  async function replaceIconFile(id: string, file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('slot', 'icon');
+    fd.append('replaceItemId', id);
+    const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+    if (res.ok) onUpdate(await res.json());
+    else alert('Le remplacement du fichier a échoué.');
+  }
+
+  async function restoreIconVersion(id: string, index: number) {
+    await patchModule({ iconItems: items.map(i => i.id === id ? restoreVersion(i, index) : i) });
   }
 
   async function updateKeywords(id: string, keywords: string[]) {
@@ -1092,7 +1160,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
         const folders = category ? new Map<string, string>() : categoryFolders(categories);
-        for (const item of items.filter(i => !ids?.length || ids.includes(i.id))) {
+        for (const item of items.filter(i => ids?.length ? ids.includes(i.id) : isPublished(i))) {
           const blob = await renderRaster(item.filename, size, colorFor(item), format);
           if (blob) zip.file(iconZipPath(item, folders, `${item.name}-${size}.${format}`), blob);
         }
@@ -1125,7 +1193,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               key={item.id}
               data-item-id={item.id}
               className="relative group flex flex-col items-center gap-2"
-              style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
+              style={{ opacity: dragIdx === idx ? 0.4 : statusOf(item) === 'obsolete' ? 0.55 : 1 }}
               draggable={isEditing}
               onDragStart={isEditing ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
               onDragOver={isEditing ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
@@ -1150,6 +1218,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 }}
               >
                 <TintedImg filename={item.filename} alt={item.name} color={colorFor(item)} />
+
+                {statusOf(item) !== 'validated' && (
+                  <StatusBadge status={statusOf(item)} className="absolute bottom-1.5 left-1.5" />
+                )}
 
                 {/* Selection checkbox */}
                 <div
@@ -1346,7 +1418,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                     />
                   )}
                   {(() => {
-                    const catItems = items.filter(i => cat ? i.categoryId === cat.id : !i.categoryId || !known.has(i.categoryId));
+                    const catItems = items.filter(i => isPublished(i) && (cat ? i.categoryId === cat.id : !i.categoryId || !known.has(i.categoryId)));
                     if (catItems.length === 0) return null;
                     const key = `cat:${cat?.id ?? ''}`;
                     const folderName = cat ? categoryFolders(categories).get(cat.id)! : 'Sans catégorie';
@@ -1530,6 +1602,15 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               </button>
             )}
             {renderSortButton()}
+            {!isEditing && obsoleteCount > 0 && (
+              <button
+                onClick={() => setShowObsolete(o => !o)}
+                className="px-2 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                {showObsolete ? 'Masquer' : 'Afficher'} les obsolètes ({obsoleteCount})
+              </button>
+            )}
           </div>
           <div className="relative flex items-center gap-2">
             {hasSelection && (
@@ -1584,6 +1665,21 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           >
             <span className="text-xs text-gray-600 dark:text-gray-300">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
             {isEditing && renderMoveMenu()}
+            {isEditing && (
+              <Select
+                direction="up"
+                value=""
+                placeholder="Statut…"
+                title="Changer le statut de la sélection"
+                className="text-xs"
+                onChange={v => setSelectionStatus(v as AssetStatus)}
+                options={[
+                  { value: 'draft', label: 'Brouillon' },
+                  { value: 'validated', label: 'Validé' },
+                  { value: 'obsolete', label: 'Obsolète' },
+                ]}
+              />
+            )}
             <button onClick={() => setSelected(new Set())}
               className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
               <X size={12} /> Désélectionner
@@ -1612,6 +1708,9 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             paletteId={paletteId}
             onPaletteChange={setPaletteId}
             onKeywordsChange={keywords => updateKeywords(item.id, keywords)}
+            onStatusChange={status => setItemStatus(item.id, status)}
+            onReplaceFile={file => replaceIconFile(item.id, file)}
+            onRestoreVersion={index => restoreIconVersion(item.id, index)}
             onRename={name => renameIcon(item.id, name)}
             allKeywords={[...new Map(items.flatMap(i => i.keywords ?? []).map(k => [k.toLowerCase(), k])).values()].sort(byAlpha)}
             initialColor={colorFor(item)}

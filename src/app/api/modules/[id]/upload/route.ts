@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { saveFile, deleteFile } from '@/lib/files';
-import { AttachmentItem, DoDontItem, FontItem, IconItem, ImageItem } from '@/types';
+import { AttachmentItem, DoDontItem, FileVersion, FontItem, IconItem, ImageItem } from '@/types';
 import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,12 +15,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const file = formData.get('file') as File | null;
   const slot = formData.get('slot') as string | null; // 'image' | 'font' | 'attachment'
   const itemName = formData.get('name') as string | null;
+  const replaceItemId = formData.get('replaceItemId') as string | null;
 
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 });
 
   const ext = file.name.split('.').pop() ?? 'bin';
   const filename = `${randomUUID()}.${ext}`;
   await saveFile(filename, await file.arrayBuffer(), file.type || 'application/octet-stream');
+
+  // Remplacement du fichier d'un élément existant : l'ancien fichier est conservé dans l'historique des versions.
+  if (replaceItemId && (slot === 'icon' || slot === 'image-item' || slot === 'attachment')) {
+    const key = slot === 'icon' ? 'iconItems' : slot === 'image-item' ? 'imageItems' : 'attachmentItems';
+    const list = (module[key] ?? []) as { id: string; filename: string; size: number; mimeType?: string; versions?: FileVersion[] }[];
+    const target = list.find(i => i.id === replaceItemId);
+    if (!target) {
+      await deleteFile(filename);
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
+    const previous: FileVersion = { filename: target.filename, size: target.size, ...(target.mimeType ? { mimeType: target.mimeType } : {}), date: new Date().toISOString() };
+    target.versions = [previous, ...(target.versions ?? [])];
+    target.filename = filename;
+    target.size = file.size;
+    if ('mimeType' in target || slot !== 'icon') target.mimeType = file.type;
+    all[idx] = module;
+    await db.modules.save(all);
+    return NextResponse.json(module);
+  }
 
   if (slot === 'image') {
     if (module.imageFilename) await deleteFile(module.imageFilename);

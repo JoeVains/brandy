@@ -52,12 +52,25 @@ export interface FontItem {
   size?: number;
 }
 
+// Statut d'un fichier : sans valeur = validé (les fichiers existants restent donc publiés).
+export type AssetStatus = 'draft' | 'validated' | 'obsolete';
+
+// Ancienne version d'un fichier, conservée lors d'un remplacement.
+export interface FileVersion {
+  filename: string;
+  size: number;
+  mimeType?: string;
+  date: string;
+}
+
 export interface ImageItem {
   id: string;
   filename: string;
   mimeType: string;
   size: number;
   caption?: string;
+  status?: AssetStatus;
+  versions?: FileVersion[];
 }
 
 export interface IconItem {
@@ -67,6 +80,8 @@ export interface IconItem {
   size: number;
   categoryId?: string;
   keywords?: string[];
+  status?: AssetStatus;
+  versions?: FileVersion[];
 }
 
 export interface IconCategory {
@@ -82,6 +97,8 @@ export interface AttachmentItem {
   filename: string;
   mimeType: string;
   size: number;
+  status?: AssetStatus;
+  versions?: FileVersion[];
 }
 
 export interface GradientStop {
