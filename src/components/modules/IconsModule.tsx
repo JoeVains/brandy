@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, IconCategory, ColorItem } from '@/types';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
-import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical, FolderUp } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import Select from '../Select';
 import EmojiPicker from '../EmojiPicker';
@@ -306,6 +306,48 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
       )}
     </div>
   );
+}
+
+interface ImportItem { file: File; folder?: string }
+
+// Parcourt récursivement un dossier déposé ; le dossier racine est ignoré, les sous-dossiers donnent la catégorie.
+async function readDirectory(dir: FileSystemDirectoryEntry, path: string[]): Promise<ImportItem[]> {
+  const reader = dir.createReader();
+  const entries: FileSystemEntry[] = [];
+  // readEntries renvoie les résultats par paquets : on boucle jusqu'à épuisement.
+  for (;;) {
+    const batch = await new Promise<FileSystemEntry[]>((resolve, reject) => reader.readEntries(resolve, reject));
+    if (batch.length === 0) break;
+    entries.push(...batch);
+  }
+  const out: ImportItem[] = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+    if (entry.isDirectory) {
+      out.push(...await readDirectory(entry as FileSystemDirectoryEntry, [...path, entry.name]));
+    } else {
+      const file = await new Promise<File>((resolve, reject) => (entry as FileSystemFileEntry).file(resolve, reject));
+      out.push({ file, folder: path.length ? path.join(' / ') : undefined });
+    }
+  }
+  return out;
+}
+
+// Archive .zip (par exemple un export de Brandy) : les dossiers deviennent des catégories.
+async function readZip(zipFile: File): Promise<ImportItem[]> {
+  const { default: JSZip } = await import('jszip');
+  const zip = await JSZip.loadAsync(zipFile);
+  const out: ImportItem[] = [];
+  for (const entry of Object.values(zip.files)) {
+    if (entry.dir || entry.name.startsWith('__MACOSX/')) continue;
+    const parts = entry.name.split('/');
+    const name = parts[parts.length - 1];
+    if (name.startsWith('.') || !/\.svg$/i.test(name)) continue;
+    const blob = await entry.async('blob');
+    const dirs = parts.slice(0, -1);
+    out.push({ file: new File([blob], name, { type: 'image/svg+xml' }), folder: dirs.length ? dirs.join(' / ') : undefined });
+  }
+  return out;
 }
 
 const END_DROP = '__end';
@@ -695,6 +737,9 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const visibleOrder = useRef<string[]>([]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [emojiPicker, setEmojiPicker] = useState<{ catId: string; rect: DOMRect } | null>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState<{ done: number; total: number } | null>(null);
+  const [fileDrag, setFileDrag] = useState(false);
   const [dragCatId, setDragCatId] = useState<string | null>(null);
   const [overCatId, setOverCatId] = useState<string | null>(null);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
@@ -718,30 +763,94 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     inputRef.current?.click();
   }
 
-  async function uploadIcons(files: FileList) {
-    const categoryId = uploadTarget.current;
-    const before = new Set(items.map(i => i.id));
-    let updated = module;
-    for (const file of Array.from(files)) {
-      if (!file.name.endsWith('.svg')) continue;
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('slot', 'icon');
-      fd.append('name', file.name);
-      const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
-      updated = await res.json();
-    }
-    if (categoryId) {
-      // Les icônes ajoutées depuis une catégorie y sont rangées directement.
-      const iconItems = (updated.iconItems ?? []).map(i => before.has(i.id) ? i : { ...i, categoryId });
+  // --- Import de fichiers SVG : sélection, dossiers (sous-dossiers = catégories) et archives .zip ---
+
+  // Une icône à importer + le dossier d'origine (devient sa catégorie).
+  async function importItems(list: ImportItem[], defaultCategoryId?: string) {
+    const svgs = list.filter(i => /\.svg$/i.test(i.file.name) && !i.file.name.startsWith('.'));
+    if (svgs.length === 0) { alert('Aucun fichier SVG trouvé.'); return; }
+    setImporting({ done: 0, total: svgs.length });
+    try {
+      const before = new Set(items.map(i => i.id));
+      let updated = module;
+      const added: { id: string; folder?: string }[] = [];
+      for (const it of svgs) {
+        const fd = new FormData();
+        fd.append('file', it.file);
+        fd.append('slot', 'icon');
+        fd.append('name', it.file.name);
+        const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+        if (res.ok) {
+          updated = await res.json();
+          const list = updated.iconItems ?? [];
+          const last = list[list.length - 1];
+          if (last && !before.has(last.id)) { before.add(last.id); added.push({ id: last.id, folder: it.folder }); }
+        }
+        setImporting(p => p && { ...p, done: p.done + 1 });
+      }
+
+      // Catégories : réutilise celles qui existent déjà (même nom), crée les autres.
+      const cats = [...(updated.iconCategories ?? [])];
+      const catFor = (name: string) => {
+        const found = cats.find(c => c.name.toLowerCase() === name.toLowerCase());
+        if (found) return found.id;
+        const created: IconCategory = { id: crypto.randomUUID(), name };
+        cats.push(created);
+        return created.id;
+      };
+      const byId = new Map(added.map(a => [a.id, a.folder]));
+      const iconItems = (updated.iconItems ?? []).map(i => {
+        if (!byId.has(i.id)) return i;
+        const folder = byId.get(i.id);
+        const categoryId = folder ? catFor(folder) : defaultCategoryId;
+        return categoryId ? { ...i, categoryId } : i;
+      });
       const res = await fetch(`/api/modules/${module.id}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ iconItems }),
+        body: JSON.stringify({ iconItems, iconCategories: cats }),
       });
-      updated = await res.json();
+      onUpdate(await res.json());
+    } finally {
+      setImporting(null);
     }
-    onUpdate(updated);
+  }
+
+  // Sélecteur de fichiers classique (.svg et .zip), éventuellement depuis une catégorie.
+  async function uploadIcons(files: FileList) {
+    const categoryId = uploadTarget.current;
+    const list: ImportItem[] = [];
+    for (const file of Array.from(files)) {
+      if (/\.zip$/i.test(file.name)) list.push(...await readZip(file));
+      else list.push({ file });
+    }
+    await importItems(list, categoryId);
+  }
+
+  // Sélecteur de dossier : le dossier choisi est la racine, ses sous-dossiers deviennent des catégories.
+  async function importFolder(files: FileList) {
+    const list: ImportItem[] = Array.from(files).map(file => {
+      const segs = (file.webkitRelativePath || file.name).split('/').slice(1, -1);
+      return { file, folder: segs.length ? segs.join(' / ') : undefined };
+    });
+    await importItems(list);
+  }
+
+  // Glisser-déposer de fichiers, dossiers et zips depuis le Finder/l'Explorateur.
+  async function handleFileDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setFileDrag(false);
+    // Les entrées doivent être lues de façon synchrone, avant le premier await.
+    const dropped = Array.from(e.dataTransfer.items)
+      .filter(i => i.kind === 'file')
+      .map(i => ({ entry: i.webkitGetAsEntry?.() ?? null, file: i.getAsFile() }));
+    const list: ImportItem[] = [];
+    for (const { entry, file } of dropped) {
+      if (entry?.isDirectory) list.push(...await readDirectory(entry as FileSystemDirectoryEntry, []));
+      else if (file && /\.zip$/i.test(file.name)) list.push(...await readZip(file));
+      else if (file) list.push({ file });
+    }
+    await importItems(list);
   }
 
   // Déplace une icône avant l'index `toIdx` (items.length = à la fin) et l'affecte à une catégorie.
@@ -1316,6 +1425,16 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               <FolderPlus size={13} />
               Ajouter une catégorie
             </button>
+            <button
+              onClick={() => folderInputRef.current?.click()}
+              disabled={!!importing}
+              title="Les sous-dossiers deviennent des catégories"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <FolderUp size={13} />
+              Importer un dossier
+            </button>
             {renderSortButton()}
           </div>
         )}
@@ -1334,8 +1453,29 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
 
   const hasSelection = selected.size > 0;
 
+  const isFileDrag = (e: React.DragEvent) => isEditing && e.dataTransfer.types.includes('Files');
+
   return (
-    <div>
+    <div
+      className="relative"
+      onDragOver={e => { if (isFileDrag(e)) { e.preventDefault(); setFileDrag(true); } }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFileDrag(false); }}
+      onDrop={e => { if (isFileDrag(e)) handleFileDrop(e); }}
+    >
+      {fileDrag && (
+        <div className="absolute inset-0 z-40 rounded-xl border-2 border-dashed flex items-center justify-center text-sm font-medium pointer-events-none"
+          style={{ borderColor: brandColor, background: `${brandColor}14`, color: brandColor }}>
+          Déposez des SVG, des dossiers ou des .zip
+        </div>
+      )}
+      {importing && (
+        <div className="mb-3 px-3 py-2 rounded-lg border text-xs text-gray-600 dark:text-gray-300" style={{ borderColor: 'var(--border)' }}>
+          Import en cours… {importing.done} / {importing.total}
+          <div className="mt-1.5 h-1 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <div className="h-full transition-all" style={{ width: `${(importing.done / importing.total) * 100}%`, background: brandColor }} />
+          </div>
+        </div>
+      )}
       {/* Description */}
       <ModuleDescription
         moduleId={module.id}
@@ -1428,8 +1568,11 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
       {/* Grid */}
       {renderGroups()}
 
-      <input ref={inputRef} type="file" accept=".svg" multiple className="hidden"
-        onChange={e => e.target.files && uploadIcons(e.target.files)} />
+      <input ref={inputRef} type="file" accept=".svg,.zip" multiple className="hidden"
+        onChange={e => { if (e.target.files) uploadIcons(e.target.files); e.target.value = ''; }} />
+      <input ref={folderInputRef} type="file" multiple className="hidden"
+        {...({ webkitdirectory: '' } as object)}
+        onChange={e => { if (e.target.files) importFolder(e.target.files); e.target.value = ''; }} />
 
       {/* Barre de sélection flottante : reste visible en bas de l'écran pendant qu'on fait défiler le module. */}
       {hasSelection && (
