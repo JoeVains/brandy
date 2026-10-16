@@ -33,7 +33,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (items.length === 0) return NextResponse.json({ error: 'No icons' }, { status: 400 });
     const colorParam = req.nextUrl.searchParams.get('color');
     const color = colorParam && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorParam) ? colorParam : null;
-    const folders = categoryFolders(module.iconCategories ?? []);
+    // flat=1 : zip d'une seule catégorie, icônes à la racine (sans dossier).
+    const folders = req.nextUrl.searchParams.get('flat') === '1' ? new Map<string, string>() : categoryFolders(module.iconCategories ?? []);
     const asPdf = req.nextUrl.searchParams.get('format') === 'pdf';
     // Un seul navigateur pour tous les PDF (lancer Chromium par icône serait trop lent).
     const browser = asPdf ? await launchBrowser() : null;

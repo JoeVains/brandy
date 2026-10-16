@@ -106,7 +106,8 @@ async function downloadRaster(filename: string, name: string, size: number, colo
 type BulkFormat = 'svg' | 'pdf' | RasterFormat;
 
 // Choix du format (et de la taille pour PNG/WebP) avant un téléchargement groupé.
-function BulkExportMenu({ label, busy, onClose, onConfirm }: {
+function BulkExportMenu({ label, busy, onClose, onConfirm, align = 'right' }: {
+  align?: 'left' | 'right';
   label: string;
   busy: boolean;
   onClose: () => void;
@@ -129,7 +130,7 @@ function BulkExportMenu({ label, busy, onClose, onConfirm }: {
   }, [onClose]);
 
   return (
-    <div ref={ref} className="absolute right-0 top-full mt-1.5 z-30 w-64 rounded-xl border shadow-lg p-3"
+    <div ref={ref} className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1.5 z-30 w-64 rounded-xl border shadow-lg p-3`}
       style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
       <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">{label}</p>
       <div className="grid grid-cols-4 gap-1.5 mb-2">
@@ -477,7 +478,7 @@ interface Props {
 export default function IconsModule({ module, brandColor, onUpdate, isEditing, shareToken }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
-  const [exportMenu, setExportMenu] = useState<'all' | 'selection' | null>(null);
+  const [exportMenu, setExportMenu] = useState<string | null>(null)  // 'all' | 'selection' | 'cat:<id>' (id vide = sans catégorie);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [inspectedId, setInspectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -704,15 +705,16 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     a.click();
   }
 
-  async function downloadZip(format: BulkFormat, size: number, ids?: string[]) {
+  async function downloadZip(format: BulkFormat, size: number, ids?: string[], category?: { name: string }) {
     setDownloading(true);
     try {
-      const zipName = `${module.title || 'icons'}.zip`;
+      // Zip d'une seule catégorie : icônes à plat à la racine, nommé d'après la catégorie.
+      const zipName = `${module.title || 'icons'}${category ? ` - ${category.name}` : ''}.zip`;
       if (format === 'png' || format === 'webp') {
         // Rastérisation côté client (canvas), puis zip dans le navigateur.
         const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
-        const folders = categoryFolders(categories);
+        const folders = category ? new Map<string, string>() : categoryFolders(categories);
         for (const item of items.filter(i => !ids?.length || ids.includes(i.id))) {
           const blob = await renderRaster(item.filename, size, tint, format);
           if (blob) zip.file(iconZipPath(item, folders, `${item.name}-${size}.${format}`), blob);
@@ -722,6 +724,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         const params = new URLSearchParams({ format });
         if (ids?.length) params.set('ids', ids.join(','));
         if (tint) params.set('color', tint);
+        if (category) params.set('flat', '1');
         const res = await fetch(shareToken
           ? `/api/share/${shareToken}/download?${new URLSearchParams({ module: module.id })}&${params}`
           : `/api/modules/${module.id}/download?${params}`);
@@ -879,6 +882,36 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                     </span>
                   )}
                   <span className="text-xs text-gray-400 dark:text-gray-500">{groupItems.length}</span>
+                  {(() => {
+                    const catItems = items.filter(i => cat ? i.categoryId === cat.id : !i.categoryId || !known.has(i.categoryId));
+                    if (catItems.length === 0) return null;
+                    const key = `cat:${cat?.id ?? ''}`;
+                    const folderName = cat ? categoryFolders(categories).get(cat.id)! : 'Sans catégorie';
+                    return (
+                      <div className="relative">
+                        <button
+                          data-bulk-trigger
+                          onClick={() => setExportMenu(m => m === key ? null : key)}
+                          disabled={downloading}
+                          title="Télécharger cette catégorie (.zip)"
+                          className="p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
+                        >
+                          <Download size={12} />
+                        </button>
+                        {exportMenu === key && (
+                          <div className="absolute left-0 top-full">
+                            <BulkExportMenu
+                              align="left"
+                              label={`${cat?.name ?? 'Sans catégorie'} (${catItems.length} icône${catItems.length > 1 ? 's' : ''})`}
+                              busy={downloading}
+                              onClose={() => setExportMenu(null)}
+                              onConfirm={(format, size) => downloadZip(format, size, catItems.map(i => i.id), { name: folderName })}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {cat && isEditing && (
                     <div className="ml-auto flex items-center gap-0.5 text-gray-400 dark:text-gray-500">
                       <button onClick={() => { setEditingCatId(cat.id); setCatDraft(cat.name); }} title="Renommer" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200"><Pencil size={12} /></button>
@@ -1077,7 +1110,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               <Download size={12} />
               {downloading ? 'Génération…' : 'Tout télécharger (.zip)'}
             </button>
-            {exportMenu && (
+            {(exportMenu === 'all' || exportMenu === 'selection') && (
               <BulkExportMenu
                 label={exportMenu === 'selection' ? `Sélection (${selected.size} icône${selected.size > 1 ? 's' : ''})` : `Toutes les icônes (${items.length})`}
                 busy={downloading}
