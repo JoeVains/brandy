@@ -235,6 +235,78 @@ function PaletteSwatches({ palettes, paletteId, onPaletteChange, color, onPick }
   );
 }
 
+// Champ de couleur : pastille (sélecteur natif) + hex + raccourci vers les nuanciers de la marque.
+function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, title, compact }: {
+  value: string;
+  onChange: (value: string) => void;
+  palettes: Palette[];
+  paletteId: string | null;
+  onPaletteChange: (id: string) => void;
+  title: string;
+  compact?: boolean;
+}) {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const color = normalizeHex(value);
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative">
+        <span
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded border overflow-hidden"
+          style={{
+            borderColor: 'var(--border)',
+            background: color ?? 'repeating-conic-gradient(#d1d5db 0% 25%, white 0% 50%) 50% / 6px 6px',
+          }}
+        >
+          <input
+            type="color"
+            value={toPickerValue(color)}
+            onChange={e => onChange(e.target.value)}
+            title="Choisir une couleur"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </span>
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="#000000"
+          maxLength={7}
+          spellCheck={false}
+          title={title}
+          className={`${compact ? 'w-24' : 'w-28'} pl-8 pr-6 py-1.5 text-xs font-mono rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600`}
+          style={{ borderColor: value && !color ? '#ef4444' : 'var(--border)' }}
+        />
+        {value && (
+          <button onClick={() => onChange('')} title="Couleurs d'origine"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
+            <X size={12} />
+          </button>
+        )}
+      </div>
+      {palettes.length > 0 && (
+        <div className="relative">
+          <button
+            onClick={() => setPaletteOpen(o => !o)}
+            title="Couleurs de la marque"
+            className="p-1.5 rounded-lg border text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-gray-900 dark:border-gray-600"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <PaletteIcon size={14} />
+          </button>
+          {paletteOpen && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setPaletteOpen(false)} />
+              <div className="absolute left-0 top-full mt-2 z-30 w-64 p-3 rounded-2xl border shadow-xl"
+                style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
+                <PaletteSwatches palettes={palettes} paletteId={paletteId} onPaletteChange={onPaletteChange} color={color} onPick={hex => { onChange(hex); setPaletteOpen(false); }} />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, initialColor, onClose, onDelete, isEditing }: {
   shareToken?: string;
   paletteId: string | null;
@@ -487,11 +559,15 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [tintInput, setTintInput] = useState('');
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [catTintInputs, setCatTintInputs] = useState<Record<string, string>>({});
   // Nuancier choisi : conservé à la fermeture du menu et partagé avec l'inspecteur.
   const [paletteId, setPaletteId] = useState<string | null>(null);
   const palettes = useBrandPalettes(module.brandId, shareToken);
   const tint = normalizeHex(tintInput);
+  // Couleur d'une catégorie (si définie) prioritaire sur la couleur globale.
+  const catTints: Record<string, string> = {};
+  for (const [id, v] of Object.entries(catTintInputs)) { const c = normalizeHex(v); if (c) catTints[id] = c; }
+  const colorFor = (item: IconItem): string | null => (item.categoryId && catTints[item.categoryId]) || tint;
   const categories = module.iconCategories ?? [];
   const uploadTarget = useRef<string | undefined>(undefined);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -716,7 +792,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         const zip = new JSZip();
         const folders = category ? new Map<string, string>() : categoryFolders(categories);
         for (const item of items.filter(i => !ids?.length || ids.includes(i.id))) {
-          const blob = await renderRaster(item.filename, size, tint, format);
+          const blob = await renderRaster(item.filename, size, colorFor(item), format);
           if (blob) zip.file(iconZipPath(item, folders, `${item.name}-${size}.${format}`), blob);
         }
         saveBlob(await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }), zipName);
@@ -724,6 +800,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         const params = new URLSearchParams({ format });
         if (ids?.length) params.set('ids', ids.join(','));
         if (tint) params.set('color', tint);
+        if (Object.keys(catTints).length) params.set('cc', JSON.stringify(catTints));
         if (category) params.set('flat', '1');
         const res = await fetch(shareToken
           ? `/api/share/${shareToken}/download?${new URLSearchParams({ module: module.id })}&${params}`
@@ -771,7 +848,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                   boxShadow: isSelected ? `0 0 0 2px ${brandColor}` : undefined,
                 }}
               >
-                <TintedImg filename={item.filename} alt={item.name} color={tint} />
+                <TintedImg filename={item.filename} alt={item.name} color={colorFor(item)} />
 
                 {/* Selection checkbox */}
                 <div
@@ -882,6 +959,17 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                     </span>
                   )}
                   <span className="text-xs text-gray-400 dark:text-gray-500">{groupItems.length}</span>
+                  {cat && (
+                    <TintControl
+                      compact
+                      value={catTintInputs[cat.id] ?? ''}
+                      onChange={v => setCatTintInputs(prev => ({ ...prev, [cat.id]: v }))}
+                      palettes={palettes}
+                      paletteId={paletteId}
+                      onPaletteChange={setPaletteId}
+                      title="Couleur des icônes de cette catégorie (hexadécimal)"
+                    />
+                  )}
                   {(() => {
                     const catItems = items.filter(i => cat ? i.categoryId === cat.id : !i.categoryId || !known.has(i.categoryId));
                     if (catItems.length === 0) return null;
@@ -1006,60 +1094,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
       {items.length > 0 && (
         <div className="flex items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <span
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded border overflow-hidden"
-                style={{
-                  borderColor: 'var(--border)',
-                  background: tint ?? 'repeating-conic-gradient(#d1d5db 0% 25%, white 0% 50%) 50% / 6px 6px',
-                }}
-              >
-                <input
-                  type="color"
-                  value={toPickerValue(tint)}
-                  onChange={e => setTintInput(e.target.value)}
-                  title="Choisir une couleur"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-              </span>
-              <input
-                value={tintInput}
-                onChange={e => setTintInput(e.target.value)}
-                placeholder="#000000"
-                maxLength={7}
-                spellCheck={false}
-                title="Couleur des icônes (hexadécimal)"
-                className="w-28 pl-8 pr-6 py-1.5 text-xs font-mono rounded-lg border outline-none bg-white dark:bg-gray-900 focus:border-gray-400 dark:border-gray-600"
-                style={{ borderColor: tintInput && !tint ? '#ef4444' : 'var(--border)' }}
-              />
-              {tintInput && (
-                <button onClick={() => setTintInput('')} title="Couleurs d'origine"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
-                  <X size={12} />
-                </button>
-              )}
-            </div>
-            {palettes.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setPaletteOpen(o => !o)}
-                  title="Couleurs de la marque"
-                  className="p-1.5 rounded-lg border text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-gray-900 dark:border-gray-600"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  <PaletteIcon size={14} />
-                </button>
-                {paletteOpen && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setPaletteOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 z-30 w-64 p-3 rounded-2xl border shadow-xl"
-                      style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
-                      <PaletteSwatches palettes={palettes} paletteId={paletteId} onPaletteChange={setPaletteId} color={tint} onPick={hex => { setTintInput(hex); setPaletteOpen(false); }} />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            <TintControl
+              value={tintInput}
+              onChange={setTintInput}
+              palettes={palettes}
+              paletteId={paletteId}
+              onPaletteChange={setPaletteId}
+              title="Couleur des icônes (hexadécimal)"
+            />
             {hasSelection && (
               <>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
@@ -1139,7 +1181,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             shareToken={shareToken}
             paletteId={paletteId}
             onPaletteChange={setPaletteId}
-            initialColor={tint}
+            initialColor={colorFor(item)}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
             onDelete={() => { deleteIcon(item.id); setInspectedId(null); }}
