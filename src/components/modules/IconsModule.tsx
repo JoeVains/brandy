@@ -307,11 +307,12 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
   );
 }
 
-function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, initialColor, onClose, onDelete, isEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, initialColor, onClose, onDelete, isEditing }: {
   shareToken?: string;
   paletteId: string | null;
   onPaletteChange: (id: string) => void;
   onKeywordsChange: (keywords: string[]) => void;
+  onRename: (name: string) => void;
   item: IconItem;
   initialColor: string | null;
   moduleId: string;
@@ -321,6 +322,8 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
   isEditing?: boolean;
 }) {
   const [keywordDraft, setKeywordDraft] = useState('');
+  const [nameDraft, setNameDraft] = useState(item.name);
+  useEffect(() => { setNameDraft(item.name); }, [item.id, item.name]);
   const [rasterSize, setRasterSize] = useState(1024);
   const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
   const [color, setColor] = useState<string | null>(initialColor);
@@ -441,7 +444,23 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
           <div className="space-y-2 text-xs">
             <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
               <span className="text-gray-400 dark:text-gray-500">Nom</span>
-              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[60%]">{item.name}</span>
+              {isEditing ? (
+                <input
+                  value={nameDraft}
+                  onChange={e => setNameDraft(e.target.value)}
+                  onBlur={() => { const n = nameDraft.trim(); if (n && n !== item.name) onRename(n); else setNameDraft(item.name); }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    if (e.key === 'Escape') { setNameDraft(item.name); (e.target as HTMLInputElement).blur(); }
+                  }}
+                  title="Renommer l'icône"
+                  spellCheck={false}
+                  className="w-[60%] px-2 py-0.5 -my-0.5 -mr-2 text-xs text-right rounded-lg border outline-none bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:border-gray-400 dark:border-gray-600"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              ) : (
+                <span className="text-gray-700 dark:text-gray-300 truncate max-w-[60%]">{item.name}</span>
+              )}
             </div>
             <div className="flex justify-between py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
               <span className="text-gray-400 dark:text-gray-500">Fichier</span>
@@ -1294,6 +1313,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             paletteId={paletteId}
             onPaletteChange={setPaletteId}
             onKeywordsChange={keywords => updateKeywords(item.id, keywords)}
+            onRename={name => renameIcon(item.id, name)}
             initialColor={colorFor(item)}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
