@@ -307,6 +307,8 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
   );
 }
 
+const byAlpha = (a: string, b: string) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
+
 function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
   shareToken?: string;
   paletteId: string | null;
@@ -371,7 +373,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
       const k = allKeywords.find(a => a.toLowerCase() === raw.toLowerCase()) ?? raw;
       if (!merged.some(m => m.toLowerCase() === k.toLowerCase())) merged.push(k);
     }
-    if (merged.length !== current.length) onKeywordsChange(merged);
+    if (merged.length !== current.length) onKeywordsChange(merged.sort(byAlpha));
   }
 
   // Suggestions : mots-clés déjà utilisés dans ce module qui contiennent la saisie.
@@ -505,7 +507,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
             <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Mots-clés</p>
               <div className="flex items-center gap-1.5 flex-wrap">
-                {(item.keywords ?? []).map(k => (
+                {[...(item.keywords ?? [])].sort(byAlpha).map(k => (
                   <span key={k} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
                     {k}
                     {isEditing && (
@@ -528,7 +530,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
                         commitKeywords(suggestions[suggestIdx]);
                       }
                       else if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitKeywords(); }
-                      else if (e.key === 'Backspace' && !keywordDraft && (item.keywords ?? []).length) onKeywordsChange((item.keywords ?? []).slice(0, -1));
+                      else if (e.key === 'Backspace' && !keywordDraft && (item.keywords ?? []).length) onKeywordsChange([...(item.keywords ?? [])].sort(byAlpha).slice(0, -1));
                     }}
                     onBlur={() => commitKeywords()}
                     placeholder={(item.keywords ?? []).length ? 'Ajouter…' : 'Ajouter un mot-clé…'}
@@ -1360,7 +1362,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             onPaletteChange={setPaletteId}
             onKeywordsChange={keywords => updateKeywords(item.id, keywords)}
             onRename={name => renameIcon(item.id, name)}
-            allKeywords={[...new Map(items.flatMap(i => i.keywords ?? []).map(k => [k.toLowerCase(), k])).values()].sort((a, b) => a.localeCompare(b))}
+            allKeywords={[...new Map(items.flatMap(i => i.keywords ?? []).map(k => [k.toLowerCase(), k])).values()].sort(byAlpha)}
             initialColor={colorFor(item)}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
