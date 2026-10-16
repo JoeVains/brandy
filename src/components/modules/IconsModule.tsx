@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, IconCategory, ColorItem } from '@/types';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
-import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import Select from '../Select';
 import { recolorSvg } from '@/lib/svg';
@@ -307,6 +307,7 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
   );
 }
 
+const END_DROP = '__end';
 const byAlpha = (a: string, b: string) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
 
 function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
@@ -691,6 +692,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const anchorRef = useRef<string | null>(null);
   const visibleOrder = useRef<string[]>([]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [dragCatId, setDragCatId] = useState<string | null>(null);
+  const [overCatId, setOverCatId] = useState<string | null>(null);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [catDraft, setCatDraft] = useState('');
   const items = module.iconItems ?? [];
@@ -804,6 +807,26 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     if (i < 0 || j < 0 || j >= categories.length) return;
     const next = [...categories];
     [next[i], next[j]] = [next[j], next[i]];
+    await patchModule({ iconCategories: next });
+  }
+
+  // Glisser-déposer d'une catégorie (avec son contenu) : elle se place avant/après la cible selon le sens du déplacement.
+  async function dropCategory(targetId: string) {
+    const fromId = dragCatId;
+    setDragCatId(null);
+    setOverCatId(null);
+    if (!fromId || fromId === targetId) return;
+    const fromIdx = categories.findIndex(c => c.id === fromId);
+    if (fromIdx < 0) return;
+    // Cible spéciale : zone sous la dernière catégorie → dernière position.
+    if (targetId === END_DROP) {
+      await patchModule({ iconCategories: [...categories.filter(c => c.id !== fromId), categories[fromIdx]] });
+      return;
+    }
+    const toIdx = categories.findIndex(c => c.id === targetId);
+    if (toIdx < 0) return;
+    const next = categories.filter(c => c.id !== fromId);
+    next.splice(fromIdx < toIdx ? next.findIndex(c => c.id === targetId) + 1 : next.findIndex(c => c.id === targetId), 0, categories[fromIdx]);
     await patchModule({ iconCategories: next });
   }
 
@@ -1130,7 +1153,22 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           if (search && groupItems.length === 0) return null;
           const catIndex = cat ? categories.findIndex(c => c.id === cat.id) : -1;
           return (
-            <div key={cat?.id ?? 'none'}>
+            <div
+              key={cat?.id ?? 'none'}
+              className="relative"
+              style={{ opacity: cat && dragCatId === cat.id ? 0.4 : 1 }}
+              onDragOver={isEditing && cat && dragCatId ? e => { e.preventDefault(); setOverCatId(cat.id); } : undefined}
+              onDrop={isEditing && cat && dragCatId ? e => { e.preventDefault(); dropCategory(cat.id); } : undefined}
+            >
+              {cat && dragCatId && overCatId === cat.id && dragCatId !== cat.id && (
+                <div
+                  className="absolute left-0 right-0 h-0.5 rounded-full z-10"
+                  style={{
+                    background: brandColor,
+                    ...(categories.findIndex(c => c.id === dragCatId) < catIndex ? { bottom: -12 } : { top: -12 }),
+                  }}
+                />
+              )}
               {grouped && (
                 <div
                   className="flex items-center gap-2 mb-3 pb-1.5 border-b"
@@ -1138,6 +1176,17 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                   onDragOver={isEditing ? e => e.preventDefault() : undefined}
                   onDrop={isEditing ? dropToEnd(cat?.id) : undefined}
                 >
+                  {cat && isEditing && categories.length > 1 && (
+                    <span
+                      draggable
+                      onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', cat.id); setDragCatId(cat.id); }}
+                      onDragEnd={() => { setDragCatId(null); setOverCatId(null); }}
+                      title="Glisser pour déplacer la catégorie"
+                      className="cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 -ml-1"
+                    >
+                      <GripVertical size={14} />
+                    </span>
+                  )}
                   {cat && isEditing && editingCatId === cat.id ? (
                     <input
                       autoFocus
@@ -1233,7 +1282,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           );
         })}
         {isEditing && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div
+            className="relative flex items-center gap-2 flex-wrap pt-6 -mt-6"
+            onDragOver={dragCatId ? e => { e.preventDefault(); setOverCatId(END_DROP); } : undefined}
+            onDrop={dragCatId ? e => { e.preventDefault(); dropCategory(END_DROP); } : undefined}
+          >
+            {dragCatId && overCatId === END_DROP && (
+              <div className="absolute left-0 right-0 top-3 h-0.5 rounded-full z-10" style={{ background: brandColor }} />
+            )}
             <button
               onClick={addCategory}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
