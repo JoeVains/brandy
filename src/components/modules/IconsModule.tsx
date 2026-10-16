@@ -307,12 +307,13 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
   );
 }
 
-function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
+function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
   shareToken?: string;
   paletteId: string | null;
   onPaletteChange: (id: string) => void;
   onKeywordsChange: (keywords: string[]) => void;
   onRename: (name: string) => void;
+  allKeywords: string[];
   item: IconItem;
   initialColor: string | null;
   moduleId: string;
@@ -325,6 +326,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
   const [localEdit, setLocalEdit] = useState(false);
   const isEditing = moduleEditing || localEdit;
   const [keywordDraft, setKeywordDraft] = useState('');
+  const [suggestIdx, setSuggestIdx] = useState(-1);  // -1 : aucune suggestion en surbrillance, Entrée valide la saisie telle quelle
   const [nameDraft, setNameDraft] = useState(item.name);
   useEffect(() => { setNameDraft(item.name); }, [item.id, item.name]);
   const [rasterSize, setRasterSize] = useState(1024);
@@ -357,15 +359,26 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
   }, []);
 
   // Valide la saisie : plusieurs mots-clés possibles, séparés par des virgules ; doublons ignorés.
-  function commitKeywords() {
-    const added = keywordDraft.split(',').map(k => k.trim()).filter(Boolean);
+  function commitKeywords(extra?: string) {
+    const added = (extra ?? keywordDraft).split(',').map(k => k.trim()).filter(Boolean);
     setKeywordDraft('');
+    setSuggestIdx(-1);
     if (added.length === 0) return;
     const current = item.keywords ?? [];
     const merged = [...current];
-    for (const k of added) if (!merged.some(m => m.toLowerCase() === k.toLowerCase())) merged.push(k);
+    for (const raw of added) {
+      // Réutilise la graphie d'un mot-clé déjà existant dans le module.
+      const k = allKeywords.find(a => a.toLowerCase() === raw.toLowerCase()) ?? raw;
+      if (!merged.some(m => m.toLowerCase() === k.toLowerCase())) merged.push(k);
+    }
     if (merged.length !== current.length) onKeywordsChange(merged);
   }
+
+  // Suggestions : mots-clés déjà utilisés dans ce module qui contiennent la saisie.
+  const typed = keywordDraft.split(',').pop()!.trim().toLowerCase();
+  const suggestions = typed
+    ? allKeywords.filter(k => k.toLowerCase().includes(typed) && !(item.keywords ?? []).some(c => c.toLowerCase() === k.toLowerCase())).slice(0, 6)
+    : [];
 
   function handleClose() {
     setVisible(false);
@@ -506,17 +519,37 @@ function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPalet
                 {isEditing && (
                   <input
                     value={keywordDraft}
-                    onChange={e => setKeywordDraft(e.target.value)}
+                    onChange={e => { setKeywordDraft(e.target.value); setSuggestIdx(-1); }}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitKeywords(); }
+                      if (e.key === 'ArrowDown' && suggestions.length) { e.preventDefault(); setSuggestIdx(i => (i + 1) % suggestions.length); }
+                      else if (e.key === 'ArrowUp' && suggestions.length) { e.preventDefault(); setSuggestIdx(i => (i <= 0 ? suggestions.length - 1 : i - 1)); }
+                      else if (e.key === 'Enter' && suggestions[suggestIdx]) {
+                        e.preventDefault();
+                        commitKeywords(suggestions[suggestIdx]);
+                      }
+                      else if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitKeywords(); }
                       else if (e.key === 'Backspace' && !keywordDraft && (item.keywords ?? []).length) onKeywordsChange((item.keywords ?? []).slice(0, -1));
                     }}
-                    onBlur={commitKeywords}
+                    onBlur={() => commitKeywords()}
                     placeholder={(item.keywords ?? []).length ? 'Ajouter…' : 'Ajouter un mot-clé…'}
                     className="flex-1 min-w-[90px] px-1 py-0.5 text-xs outline-none bg-transparent text-gray-700 dark:text-gray-300"
                   />
                 )}
               </div>
+              {isEditing && suggestions.length > 0 && (
+                <div className="mt-1.5 rounded-xl border shadow-md py-1 overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
+                  {suggestions.map((k, idx) => (
+                    <button
+                      key={k}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => commitKeywords(k)}
+                      className={`w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 transition-colors ${idx === suggestIdx ? 'bg-gray-100 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                    >
+                      {k}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1327,6 +1360,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             onPaletteChange={setPaletteId}
             onKeywordsChange={keywords => updateKeywords(item.id, keywords)}
             onRename={name => renameIcon(item.id, name)}
+            allKeywords={[...new Map(items.flatMap(i => i.keywords ?? []).map(k => [k.toLowerCase(), k])).values()].sort((a, b) => a.localeCompare(b))}
             initialColor={colorFor(item)}
             isEditing={isEditing}
             onClose={() => setInspectedId(null)}
