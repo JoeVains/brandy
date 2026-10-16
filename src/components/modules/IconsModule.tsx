@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, ColorItem } from '@/types';
-import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import { recolorSvg } from '@/lib/svg';
 
@@ -184,20 +184,36 @@ function useBrandPalettes(brandId: string, shareToken?: string): Palette[] {
 function PaletteSwatches({ palettes, paletteId, onPaletteChange, color, onPick }: {
   palettes: Palette[]; paletteId: string | null; onPaletteChange: (id: string) => void; color: string | null; onPick: (hex: string) => void;
 }) {
+  const [listOpen, setListOpen] = useState(false);
   if (palettes.length === 0) return null;
   const palette = palettes.find(p => p.id === paletteId) ?? palettes[0];
   return (
     <>
       {palettes.length > 1 && (
-        <select
-          value={palette.id}
-          onChange={e => onPaletteChange(e.target.value)}
-          title="Nuancier"
-          className="w-full mb-2 px-2 py-1 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 dark:border-gray-600"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          {palettes.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-        </select>
+        <div className="mb-2">
+          <button
+            onClick={() => setListOpen(o => !o)}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}
+          >
+            <span className="flex-1 text-left truncate">{palette.title}</span>
+            <ChevronDown size={12} className={`text-gray-400 flex-shrink-0 transition-transform ${listOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {listOpen && (
+            <div className="mt-1 rounded-2xl border shadow-xl py-1.5 max-h-48 overflow-y-auto" style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
+              {palettes.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => { onPaletteChange(p.id); setListOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <span className="flex-1 text-left truncate">{p.title}</span>
+                  {p.id === palette.id && <Check size={12} className="text-gray-500 flex-shrink-0" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
       <div className="flex items-center gap-1.5 flex-wrap">
         {palette.colors.map(c => (
@@ -665,8 +681,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 {paletteOpen && (
                   <>
                     <div className="fixed inset-0 z-20" onClick={() => setPaletteOpen(false)} />
-                    <div className="absolute left-0 top-full mt-1 z-30 w-60 p-3 rounded-xl border shadow-lg bg-white dark:bg-gray-900"
-                      style={{ borderColor: 'var(--border)' }}>
+                    <div className="absolute left-0 top-full mt-2 z-30 w-64 p-3 rounded-2xl border shadow-xl"
+                      style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
                       <PaletteSwatches palettes={palettes} paletteId={paletteId} onPaletteChange={setPaletteId} color={tint} onPick={hex => { setTintInput(hex); setPaletteOpen(false); }} />
                     </div>
                   </>
