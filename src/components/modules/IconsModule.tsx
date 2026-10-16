@@ -493,6 +493,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const tint = normalizeHex(tintInput);
   const categories = module.iconCategories ?? [];
   const uploadTarget = useRef<string | undefined>(undefined);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<string | null>(null);
+  const visibleOrder = useRef<string[]>([]);
+  const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [catDraft, setCatDraft] = useState('');
   const items = module.iconItems ?? [];
@@ -632,6 +636,67 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     });
   }
 
+  // Clic sur une icône avec modificateur : Maj = plage depuis la dernière icône cochée, Cmd/Ctrl = bascule.
+  // Renvoie true si le clic a été traité comme une sélection.
+  function selectWithModifier(id: string, e: React.MouseEvent): boolean {
+    if (e.shiftKey && anchorRef.current) {
+      const order = visibleOrder.current;
+      const a = order.indexOf(anchorRef.current);
+      const b = order.indexOf(id);
+      if (a >= 0 && b >= 0) {
+        const range = order.slice(Math.min(a, b), Math.max(a, b) + 1);
+        setSelected(prev => new Set([...prev, ...range]));
+        return true;
+      }
+    }
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      toggleSelect(id);
+      anchorRef.current = id;
+      return true;
+    }
+    return false;
+  }
+
+  // Cadre de sélection : glisser depuis une zone vide de la grille.
+  function startMarquee(e: React.MouseEvent) {
+    if (e.button !== 0 || !gridRef.current) return;
+    if ((e.target as HTMLElement).closest('[data-icon-card], button, input, [draggable="true"]')) return;
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+    const base = additive ? new Set(selected) : new Set<string>();
+    let active = false;
+
+    const move = (ev: MouseEvent) => {
+      if (!active && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+      active = true;
+      const grid = gridRef.current;
+      if (!grid) return;
+      const box = grid.getBoundingClientRect();
+      const left = Math.min(startX, ev.clientX);
+      const top = Math.min(startY, ev.clientY);
+      const right = Math.max(startX, ev.clientX);
+      const bottom = Math.max(startY, ev.clientY);
+      setMarquee({ x: left - box.left, y: top - box.top, w: right - left, h: bottom - top });
+      const hit = new Set(base);
+      grid.querySelectorAll<HTMLElement>('[data-icon-card]').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (r.left < right && r.right > left && r.top < bottom && r.bottom > top && el.dataset.iconId) hit.add(el.dataset.iconId);
+      });
+      setSelected(hit);
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      setMarquee(null);
+      // Simple clic dans le vide : on désélectionne tout.
+      if (!active && !additive) setSelected(new Set());
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }
+
   function downloadSingle(filename: string, name: string) {
     const a = document.createElement('a');
     a.href = `/uploads/${filename}`;
@@ -692,8 +757,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               )}
               {/* Card */}
               <div
-                onClick={() => setInspectedId(item.id)}
+                onMouseDown={e => { if (e.shiftKey) e.preventDefault(); }}
+                onClick={e => { if (!selectWithModifier(item.id, e)) setInspectedId(item.id); }}
                 data-icon-card
+                data-icon-id={item.id}
                 className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer transition-all"
                 style={{
                   borderColor: isSelected ? brandColor : 'var(--border)',
@@ -705,7 +772,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
 
                 {/* Selection checkbox */}
                 <div
-                  onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
+                  onClick={e => { e.stopPropagation(); if (!selectWithModifier(item.id, e)) { toggleSelect(item.id); anchorRef.current = item.id; } }}
                   className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
                   style={{ background: isSelected ? brandColor : 'var(--card-bg)', borderColor: isSelected ? brandColor : '#d1d5db' }}>
                   {isSelected && <Check size={10} color="white" strokeWidth={3} />}
@@ -761,6 +828,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
       ...categories.map(c => ({ cat: c, items: filtered.filter(i => i.categoryId === c.id) })),
     ];
     const grouped = categories.length > 0;
+    visibleOrder.current = groups.flatMap(g => g.items.map(i => i.id));
     const dropToEnd = (catId?: string) => (e: React.DragEvent) => {
       e.preventDefault();
       if (dragIdx !== null) moveItem(dragIdx, items.length, catId);
@@ -768,7 +836,13 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     };
 
     return (
-      <div className="space-y-6">
+      <div ref={gridRef} className="space-y-6 relative" onMouseDown={startMarquee}>
+        {marquee && (
+          <div
+            className="absolute z-20 rounded-sm border pointer-events-none"
+            style={{ left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h, borderColor: brandColor, background: `${brandColor}20` }}
+          />
+        )}
         {filtered.length === 0 && search && (
           <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Aucune icône ne correspond à « {search} »</div>
         )}
