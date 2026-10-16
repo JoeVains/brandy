@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, IconCategory, ColorItem } from '@/types';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
-import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import Select from '../Select';
 import { recolorSvg } from '@/lib/svg';
@@ -807,6 +807,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     await patchModule({ iconCategories: next });
   }
 
+  // Déjà classées de A à Z → le clic inverse (Z à A) ; sinon A à Z.
+  const categoriesAscending = categories.every((c, i) => i === 0 || byAlpha(categories[i - 1].name, c.name) <= 0);
+
+  async function sortCategories() {
+    const dir = categoriesAscending ? -1 : 1;
+    await patchModule({ iconCategories: [...categories].sort((a, b) => dir * byAlpha(a.name, b.name)) });
+  }
+
   async function deleteCategory(id: string) {
     // Les icônes de la catégorie supprimée repassent « sans catégorie ».
     const iconItems = items.map(i => {
@@ -1076,6 +1084,21 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     );
   }
 
+  function renderSortButton() {
+    if (!isEditing || categories.length < 2) return null;
+    return (
+      <button
+        onClick={sortCategories}
+        title={categoriesAscending ? 'Trier les catégories de Z à A' : 'Trier les catégories de A à Z'}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <ArrowDownAZ size={13} />
+        {categoriesAscending ? 'Trier les catégories Z → A' : 'Trier les catégories A → Z'}
+      </button>
+    );
+  }
+
   function renderGroups() {
     const known = new Set(categories.map(c => c.id));
     const groups: { cat: IconCategory | null; items: IconItem[] }[] = [
@@ -1210,7 +1233,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           );
         })}
         {isEditing && (
-          <div>
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={addCategory}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
@@ -1219,6 +1242,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               <FolderPlus size={13} />
               Ajouter une catégorie
             </button>
+            {renderSortButton()}
           </div>
         )}
       </div>
@@ -1290,6 +1314,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 Réinitialiser les couleurs
               </button>
             )}
+            {renderSortButton()}
           </div>
           <div className="relative flex items-center gap-2">
             {hasSelection && (
