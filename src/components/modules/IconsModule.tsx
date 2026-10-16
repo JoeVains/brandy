@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Module, IconItem, ColorItem } from '@/types';
-import { Plus, Trash2, Download, Check, X, Search } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import { recolorSvg } from '@/lib/svg';
 
@@ -157,6 +157,64 @@ function BulkExportMenu({ label, busy, onClose, onConfirm }: {
   );
 }
 
+interface Palette { id: string; title: string; colors: ColorItem[] }
+
+// Nuanciers de la marque = modules « couleurs ».
+function useBrandPalettes(brandId: string, shareToken?: string): Palette[] {
+  const [palettes, setPalettes] = useState<Palette[]>([]);
+  useEffect(() => {
+    // Page partagée : pas d'accès à /api/modules (protégé), on passe par le jeton de partage.
+    const source = shareToken ? `/api/share/${shareToken}` : `/api/modules?brandId=${brandId}`;
+    fetch(source)
+      .then(r => r.json())
+      .then((data: Module[] | { modules: Module[] }) => {
+        const modules = Array.isArray(data) ? data : data.modules;
+        setPalettes(
+          modules
+            .filter(m => m.type === 'colors' && (m.colorItems ?? []).length > 0)
+            .map((m, i) => ({ id: m.id, title: m.title || `Nuancier ${i + 1}`, colors: m.colorItems ?? [] })),
+        );
+      })
+      .catch(() => {});
+  }, [brandId, shareToken]);
+  return palettes;
+}
+
+// Choix d'un nuancier (si plusieurs) puis de l'une de ses couleurs.
+function PaletteSwatches({ palettes, color, onPick }: { palettes: Palette[]; color: string | null; onPick: (hex: string) => void }) {
+  const [paletteId, setPaletteId] = useState<string | null>(null);
+  if (palettes.length === 0) return null;
+  const palette = palettes.find(p => p.id === paletteId) ?? palettes[0];
+  return (
+    <>
+      {palettes.length > 1 && (
+        <select
+          value={palette.id}
+          onChange={e => setPaletteId(e.target.value)}
+          title="Nuancier"
+          className="w-full mb-2 px-2 py-1 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 dark:border-gray-600"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          {palettes.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+        </select>
+      )}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {palette.colors.map(c => (
+          <button
+            key={c.id}
+            onClick={() => onPick(c.value)}
+            title={c.name || c.value}
+            className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-transform hover:scale-110"
+            style={{ background: c.value, borderColor: sameColor(color, c.value) ? 'var(--accent)' : 'var(--border)' }}
+          >
+            {sameColor(color, c.value) && <Check size={10} color="white" strokeWidth={3} />}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onClose, onDelete, isEditing }: {
   shareToken?: string;
   item: IconItem;
@@ -171,7 +229,7 @@ function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onCl
   const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
   const [color, setColor] = useState<string | null>(initialColor);
   const [exportingRaster, setExportingRaster] = useState(false);
-  const [brandColors, setBrandColors] = useState<ColorItem[]>([]);
+  const palettes = useBrandPalettes(brandId, shareToken);
   const [svgText, setSvgText] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
@@ -200,19 +258,6 @@ function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onCl
     setVisible(false);
     setTimeout(onClose, 200);
   }
-
-  useEffect(() => {
-    // Page partagée : pas d'accès à /api/modules (protégé), on passe par le jeton de partage.
-    const source = shareToken ? `/api/share/${shareToken}` : `/api/modules?brandId=${brandId}`;
-    fetch(source)
-      .then(r => r.json())
-      .then((data: Module[] | { modules: Module[] }) => {
-        const modules = Array.isArray(data) ? data : data.modules;
-        const seen = new Map<string, ColorItem>();
-        modules.filter(m => m.type === 'colors').flatMap(m => m.colorItems ?? []).forEach(c => seen.set(c.id, c));
-        setBrandColors([...seen.values()]);
-      });
-  }, [brandId, shareToken]);
 
   useEffect(() => {
     setSvgText(null);
@@ -306,7 +351,8 @@ function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onCl
           </div>
           <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 pt-2">Couleur</p>
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <PaletteSwatches palettes={palettes} color={color} onPick={setColor} />
+              <div className="flex items-center gap-1.5 flex-wrap mt-2">
                 <button
                   onClick={() => setColor(null)}
                   title="Couleur d'origine"
@@ -318,22 +364,11 @@ function IconInspector({ item, moduleId, brandId, shareToken, initialColor, onCl
                 >
                   {color === null && <Check size={10} className="text-gray-700" strokeWidth={3} />}
                 </button>
-                {brandColors.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => setColor(c.value)}
-                    title={c.name || c.value}
-                    className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-transform hover:scale-110"
-                    style={{ background: c.value, borderColor: sameColor(color, c.value) ? 'var(--accent)' : 'var(--border)' }}
-                  >
-                    {sameColor(color, c.value) && <Check size={10} color="white" strokeWidth={3} />}
-                  </button>
-                ))}
                 <label
                   title="Choisir une couleur"
                   className="relative w-6 h-6 rounded-full flex-shrink-0 overflow-hidden border-2 cursor-pointer transition-transform hover:scale-110"
                   style={{
-                    borderColor: color && !brandColors.some(c => sameColor(color, c.value)) ? 'var(--accent)' : 'var(--border)',
+                    borderColor: color && !palettes.some(p => p.colors.some(c => sameColor(color, c.value))) ? 'var(--accent)' : 'var(--border)',
                     background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
                   }}
                 >
@@ -430,6 +465,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [tintInput, setTintInput] = useState('');
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const palettes = useBrandPalettes(module.brandId, shareToken);
   const tint = normalizeHex(tintInput);
   const items = module.iconItems ?? [];
   const filtered = search.trim() ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : items;
@@ -610,6 +647,27 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 </button>
               )}
             </div>
+            {palettes.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setPaletteOpen(o => !o)}
+                  title="Couleurs de la marque"
+                  className="p-1.5 rounded-lg border text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-gray-900 dark:border-gray-600"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <PaletteIcon size={14} />
+                </button>
+                {paletteOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setPaletteOpen(false)} />
+                    <div className="absolute left-0 top-full mt-1 z-30 w-60 p-3 rounded-xl border shadow-lg bg-white dark:bg-gray-900"
+                      style={{ borderColor: 'var(--border)' }}>
+                      <PaletteSwatches palettes={palettes} color={tint} onPick={hex => { setTintInput(hex); setPaletteOpen(false); }} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             {hasSelection && (
               <>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
