@@ -932,6 +932,28 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           );
   }
 
+  // Menu « Ranger dans… » (sélection → catégorie), affiché près de la barre d'outils et des catégories.
+  function renderMoveMenu() {
+    return (
+      <Select
+        direction="up"
+        value=""
+        placeholder="Ranger dans…"
+        title="Ranger la sélection dans une catégorie"
+        className="text-xs"
+        onChange={v => {
+          if (v === '__new') assignSelectionToNewCategory();
+          else assignSelection(v === '__none' ? '' : v);
+        }}
+        options={[
+          { value: '__new', label: '+ Nouvelle catégorie' },
+          ...(categories.length > 0 ? [{ value: '__none', label: 'Sans catégorie' }] : []),
+          ...categories.map(c => ({ value: c.id, label: c.name })),
+        ]}
+      />
+    );
+  }
+
   function renderGroups() {
     const known = new Set(categories.map(c => c.id));
     const groups: { cat: IconCategory | null; items: IconItem[] }[] = [
@@ -1066,14 +1088,16 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           );
         })}
         {isEditing && (
-          <button
-            onClick={addCategory}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <FolderPlus size={13} />
-            Ajouter une catégorie
-          </button>
+          <div>
+            <button
+              onClick={addCategory}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <FolderPlus size={13} />
+              Ajouter une catégorie
+            </button>
+          </div>
         )}
       </div>
     );
@@ -1144,32 +1168,6 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 Réinitialiser les couleurs
               </button>
             )}
-            {hasSelection && (
-              <>
-                <span className="text-xs text-gray-500">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
-                <button onClick={() => setSelected(new Set())}
-                  className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
-                  <X size={12} /> Désélectionner
-                </button>
-                {isEditing && (
-                  <Select
-                    value=""
-                    placeholder="Ranger dans…"
-                    title="Ranger la sélection dans une catégorie"
-                    className="text-xs"
-                    onChange={v => {
-                      if (v === '__new') assignSelectionToNewCategory();
-                      else assignSelection(v === '__none' ? '' : v);
-                    }}
-                    options={[
-                      { value: '__new', label: '+ Nouvelle catégorie' },
-                      ...(categories.length > 0 ? [{ value: '__none', label: 'Sans catégorie' }] : []),
-                      ...categories.map(c => ({ value: c.id, label: c.name })),
-                    ]}
-                  />
-                )}
-              </>
-            )}
           </div>
           <div className="relative flex items-center gap-2">
             {hasSelection && (
@@ -1211,6 +1209,23 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
 
       <input ref={inputRef} type="file" accept=".svg" multiple className="hidden"
         onChange={e => e.target.files && uploadIcons(e.target.files)} />
+
+      {/* Barre de sélection flottante : reste visible en bas de l'écran pendant qu'on fait défiler le module. */}
+      {hasSelection && (
+        <div className="sticky bottom-4 z-30 flex justify-center pointer-events-none mt-4">
+          <div
+            className="pointer-events-auto flex items-center gap-3 px-4 py-2 rounded-2xl border shadow-xl"
+            style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}
+          >
+            <span className="text-xs text-gray-600 dark:text-gray-300">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
+            {isEditing && renderMoveMenu()}
+            <button onClick={() => setSelected(new Set())}
+              className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+              <X size={12} /> Désélectionner
+            </button>
+          </div>
+        </div>
+      )}
 
       {inspectedId && (() => {
         const item = items.find(i => i.id === inspectedId);

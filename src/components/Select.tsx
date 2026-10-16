@@ -7,7 +7,7 @@ export interface SelectOption { value: string; label: string }
 
 // Menu déroulant au design de l'appli (remplace le <select> natif).
 // Si `value` ne correspond à aucune option, `placeholder` s'affiche (menu d'actions).
-export default function Select({ value, onChange, options, placeholder, title, className = '', align = 'left' }: {
+export default function Select({ value, onChange, options, placeholder, title, className = '', align = 'left', direction = 'down' }: {
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
@@ -15,6 +15,7 @@ export default function Select({ value, onChange, options, placeholder, title, c
   title?: string;
   className?: string;
   align?: 'left' | 'right';
+  direction?: 'down' | 'up';
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -43,7 +44,7 @@ export default function Select({ value, onChange, options, placeholder, title, c
       </button>
       {open && (
         <div
-          className={`absolute top-full mt-1.5 z-50 min-w-full w-max max-w-[260px] max-h-64 overflow-y-auto rounded-2xl border shadow-xl py-1.5 ${align === 'right' ? 'right-0' : 'left-0'}`}
+          className={`absolute ${direction === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-50 min-w-full w-max max-w-[260px] max-h-64 overflow-y-auto rounded-2xl border shadow-xl py-1.5 ${align === 'right' ? 'right-0' : 'left-0'}`}
           style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}
         >
           {options.map(o => (
