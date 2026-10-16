@@ -7,7 +7,7 @@ export interface SelectOption { value: string; label: string }
 
 // Menu déroulant au design de l'appli (remplace le <select> natif).
 // Si `value` ne correspond à aucune option, `placeholder` s'affiche (menu d'actions).
-export default function Select({ value, onChange, options, placeholder, title, className = '', align = 'left', direction = 'down' }: {
+export default function Select({ value, onChange, options, placeholder, title, className = '', align = 'left', direction = 'down', fullWidth }: {
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
@@ -16,6 +16,7 @@ export default function Select({ value, onChange, options, placeholder, title, c
   className?: string;
   align?: 'left' | 'right';
   direction?: 'down' | 'up';
+  fullWidth?: boolean;  // occupe toute la largeur du conteneur (texte tronqué si trop long)
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -31,12 +32,12 @@ export default function Select({ value, onChange, options, placeholder, title, c
   }, [open]);
 
   return (
-    <div ref={ref} className="relative inline-block">
+    <div ref={ref} className={`relative ${fullWidth ? 'block w-full' : 'inline-block'}`}>
       <button
         type="button"
         title={title}
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-2 border rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${className}`}
+        className={`${fullWidth ? 'w-full ' : ''}flex items-center gap-2 border rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${className}`}
         style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}
       >
         <span className="flex-1 text-left truncate">{current?.label ?? placeholder ?? ''}</span>

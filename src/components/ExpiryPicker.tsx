@@ -32,6 +32,7 @@ export default function ExpiryPicker({ onChange, placeholder = 'Modifier la dur√
   return (
     <div className="flex flex-col gap-1.5">
       <Select
+        fullWidth
         className="text-xs"
         value={value}
         placeholder={placeholder}

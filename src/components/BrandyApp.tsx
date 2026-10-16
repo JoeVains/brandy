@@ -384,6 +384,7 @@ export default function BrandyApp() {
   const [draggingModule, setDraggingModule] = useState<Module | null>(null);
   const [pageViewKey, setPageViewKey] = useState(0);
   const [showShare, setShowShare] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareViews, setShareViews] = useState<{ total: number; last7: number; last30: number; last: string | null } | null>(null);
   // Durée choisie à la création du lien (30 jours par défaut ; null = sans expiration).
@@ -402,6 +403,16 @@ export default function BrandyApp() {
 
   useEffect(() => { fetchAll(); }, []);
   useEffect(() => { setActiveSectionId(null); }, [activeBrandId]);
+  // Le panneau de partage se ferme au clic à l'extérieur ou avec Échap.
+  useEffect(() => {
+    if (!showShare) return;
+    const onDown = (e: MouseEvent) => { if (!shareRef.current?.contains(e.target as Node)) setShowShare(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowShare(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [showShare]);
+
   // Consultations du lien de partage : rechargées à l'ouverture du panneau de partage.
   const activeShareToken = brands.find(b => b.id === activeBrandId)?.shareToken;
   useEffect(() => {
@@ -695,7 +706,7 @@ export default function BrandyApp() {
 
         {/* Share link */}
         {activeBrandId && activeBrand && (
-          <div className="relative">
+          <div className="relative" ref={shareRef}>
             <button onClick={() => { setShowShare(v => !v); setShareCopied(false); }}
               className="flex-shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="Partager">
@@ -756,7 +767,7 @@ export default function BrandyApp() {
                     <p className="text-xs text-gray-500 dark:text-gray-400">Durée de validité :</p>
                     <ExpiryPicker
                       value={newShareExpiry === null ? 'none' : ''}
-                      placeholder={newShareExpiry ? expiryStatus(newShareExpiry).text.replace('Expire', 'Expirera') : "Sans date d'expiration"}
+                      placeholder={newShareExpiry ? expiryStatus(newShareExpiry).text.replace('Expire', 'Expirera').replace(/ \(dans.*\)/, '') : "Sans date d'expiration"}
                       onChange={setNewShareExpiry}
                     />
                     <button
