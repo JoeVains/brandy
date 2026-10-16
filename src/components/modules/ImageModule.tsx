@@ -248,11 +248,43 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
     }
   }
 
+  async function setSingleStatus(status: AssetStatus) {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageStatus: status === 'validated' ? null : status }),
+    });
+    onUpdate(await res.json());
+  }
+
+  // Remplacement : l'ancienne image reste dans l'historique (géré côté serveur).
+  async function replaceSingleFile(file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('slot', 'image');
+    const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+    if (res.ok) onUpdate(await res.json());
+    else alert('Le remplacement du fichier a échoué.');
+  }
+
+  async function restoreSingleVersion(index: number) {
+    const restored = restoreVersion(
+      { filename: module.imageFilename ?? '', size: module.imageSize ?? 0, mimeType: module.imageMimeType, versions: module.imageVersions },
+      index,
+    );
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageFilename: restored.filename, imageSize: restored.size, imageMimeType: restored.mimeType, imageVersions: restored.versions }),
+    });
+    onUpdate(await res.json());
+  }
+
   async function removeSingle() {
     const res = await fetch(`/api/modules/${module.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageFilename: null, imageMimeType: null, imageSize: null }),
+      body: JSON.stringify({ imageFilename: null, imageMimeType: null, imageSize: null, imageStatus: null, imageVersions: null }),
     });
     onUpdate(await res.json());
   }
@@ -399,12 +431,31 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
   // ——— Single ———
   if (mode === 'single') {
     if (module.imageFilename) {
+      const singleStatus = statusOf({ status: module.imageStatus });
+      // En lecture : brouillon masqué, obsolète replié derrière un bouton.
+      if (!isEditing && (singleStatus === 'draft' || (singleStatus === 'obsolete' && !showObsolete))) {
+        return (
+          <div>
+            {descriptionBlock}
+            {singleStatus === 'obsolete' ? (
+              <button onClick={() => setShowObsolete(true)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                Afficher l&apos;image obsolète
+              </button>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-300 dark:text-gray-500">
+                <ImageIcon size={28} />
+                <span className="text-sm">Aucune image</span>
+              </div>
+            )}
+          </div>
+        );
+      }
       return (
         <div>
           {isEditing && <ModeToggle />}
           {isEditing && <FitToggle />}
           {descriptionBlock}
-          <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+          <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)', opacity: singleStatus === 'obsolete' ? 0.6 : 1 }}>
             <img src={`/uploads/${module.imageFilename}`} alt="" className="w-full max-h-[500px] bg-gray-50 dark:bg-gray-800/50" style={{ objectFit: fit }} />
             <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
@@ -430,6 +481,32 @@ export default function ImageModule({ module, brandColor, onUpdate, isEditing }:
             </div>
             <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => e.target.files && handleSingleInput(e.target.files)} />
           </div>
+          {(isEditing || singleStatus !== 'validated' || (module.imageVersions ?? []).length > 0) && (
+            <div className="mt-2 flex items-center gap-2">
+              {isEditing
+                ? <StatusSelect value={module.imageStatus} onChange={setSingleStatus} />
+                : <StatusBadge status={singleStatus} />}
+              {(isEditing || (module.imageVersions ?? []).length > 0) && (
+                <button onClick={() => setOpenVersions(v => v === 'single' ? null : 'single')}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                  <History size={12} /> Versions
+                </button>
+              )}
+            </div>
+          )}
+          {openVersions === 'single' && (
+            <div className="mt-2 p-3 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
+              <VersionHistory
+                current={{ filename: module.imageFilename, size: module.imageSize ?? 0 }}
+                versions={module.imageVersions ?? []}
+                baseName="image"
+                canEdit={isEditing}
+                accept="image/*"
+                onReplace={replaceSingleFile}
+                onRestore={restoreSingleVersion}
+              />
+            </div>
+          )}
           {lightboxIndex !== null && <Lightbox items={lightboxItems} index={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} />}
         </div>
       );

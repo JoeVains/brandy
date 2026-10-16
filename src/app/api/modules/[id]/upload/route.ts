@@ -24,15 +24,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await saveFile(filename, await file.arrayBuffer(), file.type || 'application/octet-stream');
 
   // Remplacement du fichier d'un élément existant : l'ancien fichier est conservé dans l'historique des versions.
-  if (replaceItemId && (slot === 'icon' || slot === 'image-item' || slot === 'attachment')) {
-    const key = slot === 'icon' ? 'iconItems' : slot === 'image-item' ? 'imageItems' : 'attachmentItems';
-    const list = (module[key] ?? []) as { id: string; filename: string; size: number; mimeType?: string; versions?: FileVersion[] }[];
+  if (replaceItemId && (slot === 'icon' || slot === 'image-item' || slot === 'attachment' || slot === 'font')) {
+    const key = slot === 'icon' ? 'iconItems' : slot === 'image-item' ? 'imageItems' : slot === 'font' ? 'fontItems' : 'attachmentItems';
+    const list = (module[key] ?? []) as { id: string; filename?: string; size?: number; mimeType?: string; versions?: FileVersion[] }[];
     const target = list.find(i => i.id === replaceItemId);
     if (!target) {
       await deleteFile(filename);
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
-    const previous: FileVersion = { filename: target.filename, size: target.size, ...(target.mimeType ? { mimeType: target.mimeType } : {}), date: new Date().toISOString() };
+    if (!target.filename) {
+      await deleteFile(filename);
+      return NextResponse.json({ error: 'Item has no file' }, { status: 400 });
+    }
+    const previous: FileVersion = { filename: target.filename ?? '', size: target.size ?? 0, ...(target.mimeType ? { mimeType: target.mimeType } : {}), date: new Date().toISOString() };
     target.versions = [previous, ...(target.versions ?? [])];
     target.filename = filename;
     target.size = file.size;
@@ -43,7 +47,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   if (slot === 'image') {
-    if (module.imageFilename) await deleteFile(module.imageFilename);
+    // L'ancien fichier est conservé dans l'historique des versions au lieu d'être supprimé.
+    if (module.imageFilename) {
+      module.imageVersions = [
+        { filename: module.imageFilename, size: module.imageSize ?? 0, ...(module.imageMimeType ? { mimeType: module.imageMimeType } : {}), date: new Date().toISOString() },
+        ...(module.imageVersions ?? []),
+      ];
+    }
     module.imageFilename = filename;
     module.imageMimeType = file.type;
     module.imageSize = file.size;

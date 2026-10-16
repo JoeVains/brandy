@@ -118,3 +118,17 @@ export async function restoreBackup(id: string): Promise<boolean> {
   await s.delete('backup-last').catch(() => {});
   return true;
 }
+
+// Texte JSON de l'état actuel et de toutes les sauvegardes conservées : sert à repérer les fichiers encore référencés.
+export async function allDataAsText(): Promise<string[]> {
+  const texts: string[] = [];
+  for (const c of COLLECTIONS) texts.push(JSON.stringify(await readJson(c, [])));
+  const s = store();
+  const { blobs } = await s.list({ prefix: 'backup-' });
+  for (const b of blobs) {
+    if (b.key === 'backup-last') continue;
+    const snapshot = await s.get(b.key, { type: 'json' }).catch(() => null);
+    if (snapshot) texts.push(JSON.stringify(snapshot));
+  }
+  return texts;
+}

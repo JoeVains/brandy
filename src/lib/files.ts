@@ -23,3 +23,15 @@ export async function deleteFile(filename: string): Promise<void> {
   const s = store();
   await s.delete(filename).catch(() => {});
 }
+
+// Toutes les clés du stockage de fichiers (utilisé par le nettoyage des fichiers inutilisés).
+export async function listFileKeys(): Promise<string[]> {
+  const s = store();
+  const { blobs } = await s.list();
+  return blobs.map(b => b.key);
+}
+
+export async function fileSize(filename: string): Promise<number> {
+  const result = await store().get(filename, { type: 'arrayBuffer' }).catch(() => null);
+  return result ? result.byteLength : 0;
+}

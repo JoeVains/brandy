@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (module.type === 'image') {
     // Single image
-    if (module.imageMode !== 'gallery' && module.imageFilename) {
+    if (module.imageMode !== 'gallery' && module.imageFilename && (selectedIds || isPublished({ status: module.imageStatus }))) {
       const file = await getFile(module.imageFilename);
       if (file) zip.file(module.imageFilename, file.data);
     }

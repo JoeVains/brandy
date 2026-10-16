@@ -1,8 +1,10 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { Module, FontItem, FontVariant } from '@/types';
-import { Plus, Trash2, Upload, Type, ChevronDown } from 'lucide-react';
+import { Module, FontItem, FontVariant, AssetStatus } from '@/types';
+import { StatusBadge, StatusSelect, VersionHistory } from '../AssetStatus';
+import { restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
+import { Plus, Trash2, Upload, Type, ChevronDown, History } from 'lucide-react';
 import Select from '../Select';
 import ModuleDescription from './ModuleDescription';
 
@@ -143,7 +145,12 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
   const [addingVariantFor, setAddingVariantFor] = useState<string | null>(null);
   const [previewText, setPreviewText] = useState(module.typographyPreviewText ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
-  const items = module.fontItems ?? [];
+  // En lecture, brouillons masqués et obsolètes repliés ; en édition, tout est visible (les modifications portent sur la liste complète).
+  const [showObsolete, setShowObsolete] = useState(false);
+  const [openVersions, setOpenVersions] = useState<string | null>(null);
+  const allItems = module.fontItems ?? [];
+  const obsoleteCount = allItems.filter(i => statusOf(i) === 'obsolete').length;
+  const items = visibleItems(allItems, !!isEditing, showObsolete);
   const SAMPLE_DEFAULT = 'The quick brown fox jumps over the lazy dog';
 
   async function savePreviewText(text: string) {
@@ -197,6 +204,25 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
     onUpdate(await res.json());
   }
 
+  async function setFontStatus(id: string, status: AssetStatus) {
+    await patch(items.map(i => {
+      if (i.id !== id) return i;
+      const { status: _old, ...rest } = i;
+      return status === 'validated' ? rest : { ...rest, status };
+    }));
+  }
+
+  // Remplace le fichier de la police ; l'ancien reste dans l'historique.
+  async function replaceFontFile(id: string, file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('slot', 'font');
+    fd.append('replaceItemId', id);
+    const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
+    if (res.ok) onUpdate(await res.json());
+    else alert('Le remplacement du fichier a échoué.');
+  }
+
   async function deleteFontItem(id: string) {
     await patch(items.filter(i => i.id !== id));
   }
@@ -226,6 +252,11 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
         isEditing={isEditing}
         onUpdate={desc => onUpdate({ ...module, description: desc })}
       />
+      {!isEditing && obsoleteCount > 0 && (
+        <button onClick={() => setShowObsolete(o => !o)} className="mb-3 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+          {showObsolete ? 'Masquer' : 'Afficher'} les obsolètes ({obsoleteCount})
+        </button>
+      )}
       <div className="space-y-8">
         {items.map(item => {
           const variants = item.variants ?? (item.source === 'google' ? [{ weight: 400, style: 'normal' as const }] : []);
@@ -235,14 +266,23 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
             : undefined;
 
           return (
-            <div key={item.id} data-item-id={item.id} className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+            <div key={item.id} data-item-id={item.id} className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)', opacity: statusOf(item) === 'obsolete' ? 0.6 : 1 }}>
               {/* Font header */}
               <div className="flex items-center justify-between px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-b" style={{ borderColor: 'var(--border)' }}>
                 <div>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200">{item.name}</p>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">
+                    {item.name} <StatusBadge status={statusOf(item)} className="ml-1 align-middle" />
+                  </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{item.source === 'google' ? 'Google Fonts' : 'Police uploadée'}</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {isEditing && <StatusSelect value={item.status} onChange={st => setFontStatus(item.id, st)} />}
+                  {item.source === 'upload' && item.filename && (isEditing || (item.versions ?? []).length > 0) && (
+                    <button onClick={() => setOpenVersions(v => v === item.id ? null : item.id)} title="Versions"
+                      className="p-1.5 rounded-lg border text-gray-500 hover:bg-white dark:hover:bg-gray-900 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                      <History size={13} />
+                    </button>
+                  )}
                   {item.source === 'google' && item.family && (
                     <a href={`https://fonts.google.com/specimen/${encodeURIComponent(item.family.replace(/ /g, '+'))}`}
                       target="_blank" rel="noopener noreferrer"
@@ -266,6 +306,20 @@ export default function TypographyModule({ module, brandColor, onUpdate, isEditi
                   )}
                 </div>
               </div>
+
+              {openVersions === item.id && item.filename && (
+                <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                  <VersionHistory
+                    current={{ filename: item.filename, size: item.size ?? 0 }}
+                    versions={item.versions ?? []}
+                    baseName={item.name}
+                    canEdit={isEditing}
+                    accept=".woff,.woff2,.ttf,.otf"
+                    onReplace={file => replaceFontFile(item.id, file)}
+                    onRestore={i => patch(allItems.map(f => f.id === item.id ? restoreVersion({ ...f, filename: f.filename ?? '', size: f.size ?? 0 }, i) : f))}
+                  />
+                </div>
+              )}
 
               {/* Load Google font for all variants */}
               {googleUrl && <link rel="stylesheet" href={googleUrl} />}

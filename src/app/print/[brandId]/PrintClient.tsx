@@ -88,7 +88,7 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
 
         {module.type === 'typography' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {(module.fontItems ?? []).map(item => (
+            {(module.fontItems ?? []).filter(isPublished).map(item => (
               <div key={item.id} style={{ borderBottom: '1px solid #f3f4f6', paddingBottom: 12 }}>
                 <p style={{ fontFamily: item.family ?? item.name, fontSize: 28, margin: '0 0 4px', color: '#111827' }}>Aa</p>
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', margin: '0 0 2px' }}>{item.name}</p>
@@ -98,7 +98,7 @@ function ModulePrint({ module, brandColor, colorModules }: { module: Module; bra
           </div>
         )}
 
-        {module.type === 'image' && module.imageMode === 'single' && module.imageFilename && (
+        {module.type === 'image' && module.imageMode === 'single' && module.imageFilename && isPublished({ status: module.imageStatus }) && (
           <img src={`/uploads/${module.imageFilename}`} alt="" style={{ maxWidth: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 8 }} />
         )}
 

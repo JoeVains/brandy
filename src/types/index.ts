@@ -50,6 +50,8 @@ export interface FontItem {
   filename?: string;
   mimeType?: string;
   size?: number;
+  status?: AssetStatus;
+  versions?: FileVersion[];
 }
 
 // Statut d'un fichier : sans valeur = validé (les fichiers existants restent donc publiés).
@@ -160,6 +162,8 @@ export interface Module {
   imageFilename?: string;
   imageMimeType?: string;
   imageSize?: number;
+  imageStatus?: AssetStatus;
+  imageVersions?: FileVersion[];
   imageItems?: ImageItem[];
   // attachments
   attachmentItems?: AttachmentItem[];
