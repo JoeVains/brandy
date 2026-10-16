@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Brand, BrandCategory, Section } from '@/types';
 import { Plus, Copy, Trash2, ArrowRight, Pencil, Check, Moon, Sun, Upload, X, Link, LogOut, GripVertical, FolderPlus, ChevronDown } from 'lucide-react';
+import Select from './Select';
 import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
@@ -777,15 +778,12 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                 </div>
               </div>
               {categories.length > 0 && (
-                <select
-                  className="text-xs border rounded-lg px-2 py-1.5 outline-none bg-transparent"
-                  style={{ borderColor: 'var(--border)' }}
+                <Select
+                  className="text-xs"
                   value={newCategoryId ?? ''}
-                  onChange={e => setNewCategoryId(e.target.value || null)}
-                >
-                  <option value="">Sans catégorie</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                  onChange={v => setNewCategoryId(v || null)}
+                  options={[{ value: '', label: 'Sans catégorie' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                />
               )}
             </div>
             <div className="ml-auto flex gap-2">

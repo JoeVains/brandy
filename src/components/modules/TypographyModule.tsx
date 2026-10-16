@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Module, FontItem, FontVariant } from '@/types';
 import { Plus, Trash2, Upload, Type, ChevronDown } from 'lucide-react';
+import Select from '../Select';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -109,15 +110,18 @@ function AddVariantPicker({ existing, onAdd, onClose }: {
 
   return (
     <div className="flex items-center gap-2 mt-3 p-3 border rounded-xl bg-gray-50 dark:bg-gray-800/50" style={{ borderColor: 'var(--border)' }}>
-      <select value={weight} onChange={e => setWeight(Number(e.target.value))}
-        className="text-sm border rounded-lg px-2 py-1.5 bg-white dark:bg-gray-900 outline-none" style={{ borderColor: 'var(--border)' }}>
-        {ALL_WEIGHTS.map(w => <option key={w} value={w}>{w} – {WEIGHT_NAMES[w]}</option>)}
-      </select>
-      <select value={style} onChange={e => setStyle(e.target.value as 'normal' | 'italic')}
-        className="text-sm border rounded-lg px-2 py-1.5 bg-white dark:bg-gray-900 outline-none" style={{ borderColor: 'var(--border)' }}>
-        <option value="normal">Normal</option>
-        <option value="italic">Italic</option>
-      </select>
+      <Select
+        className="text-sm"
+        value={String(weight)}
+        onChange={v => setWeight(Number(v))}
+        options={ALL_WEIGHTS.map(w => ({ value: String(w), label: `${w} – ${WEIGHT_NAMES[w]}` }))}
+      />
+      <Select
+        className="text-sm"
+        value={style}
+        onChange={v => setStyle(v as 'normal' | 'italic')}
+        options={[{ value: 'normal', label: 'Normal' }, { value: 'italic', label: 'Italic' }]}
+      />
       <button
         disabled={alreadyExists}
         onClick={() => { onAdd({ weight, style }); onClose(); }}

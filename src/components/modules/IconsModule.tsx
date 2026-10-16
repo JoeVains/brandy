@@ -6,6 +6,7 @@ import { Module, IconItem, IconCategory, ColorItem } from '@/types';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
 import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
+import Select from '../Select';
 import { recolorSvg } from '@/lib/svg';
 
 type RasterFormat = 'png' | 'webp';
@@ -960,22 +961,21 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                   <X size={12} /> Désélectionner
                 </button>
                 {isEditing && (
-                  <select
+                  <Select
                     value=""
-                    onChange={e => {
-                      const v = e.target.value;
-                      if (v === '__new') assignSelectionToNewCategory();
-                      else if (v) assignSelection(v === '__none' ? '' : v);
-                    }}
+                    placeholder="Ranger dans…"
                     title="Ranger la sélection dans une catégorie"
-                    className="px-2 py-1 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 dark:border-gray-600"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <option value="">Ranger dans…</option>
-                    <option value="__new">+ Nouvelle catégorie</option>
-                    {categories.length > 0 && <option value="__none">Sans catégorie</option>}
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                    className="text-xs"
+                    onChange={v => {
+                      if (v === '__new') assignSelectionToNewCategory();
+                      else assignSelection(v === '__none' ? '' : v);
+                    }}
+                    options={[
+                      { value: '__new', label: '+ Nouvelle catégorie' },
+                      ...(categories.length > 0 ? [{ value: '__none', label: 'Sans catégorie' }] : []),
+                      ...categories.map(c => ({ value: c.id, label: c.name })),
+                    ]}
+                  />
                 )}
               </>
             )}
