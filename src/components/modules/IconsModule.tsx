@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Module, IconItem, ColorItem } from '@/types';
-import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown } from 'lucide-react';
+import { Module, IconItem, IconCategory, ColorItem } from '@/types';
+import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
+import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import { recolorSvg } from '@/lib/svg';
 
@@ -489,10 +490,32 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [paletteId, setPaletteId] = useState<string | null>(null);
   const palettes = useBrandPalettes(module.brandId, shareToken);
   const tint = normalizeHex(tintInput);
+  const categories = module.iconCategories ?? [];
+  const uploadTarget = useRef<string | undefined>(undefined);
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [catDraft, setCatDraft] = useState('');
   const items = module.iconItems ?? [];
   const filtered = search.trim() ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase())) : items;
 
+  async function patchModule(patch: Partial<Module>) {
+    const res = await fetch(`/api/modules/${module.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    const updated = await res.json();
+    onUpdate(updated);
+    return updated as Module;
+  }
+
+  function pickFiles(categoryId?: string) {
+    uploadTarget.current = categoryId;
+    inputRef.current?.click();
+  }
+
   async function uploadIcons(files: FileList) {
+    const categoryId = uploadTarget.current;
+    const before = new Set(items.map(i => i.id));
     let updated = module;
     for (const file of Array.from(files)) {
       if (!file.name.endsWith('.svg')) continue;
@@ -503,19 +526,68 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
       const res = await fetch(`/api/modules/${module.id}/upload`, { method: 'POST', body: fd });
       updated = await res.json();
     }
+    if (categoryId) {
+      // Les icônes ajoutées depuis une catégorie y sont rangées directement.
+      const iconItems = (updated.iconItems ?? []).map(i => before.has(i.id) ? i : { ...i, categoryId });
+      const res = await fetch(`/api/modules/${module.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ iconItems }),
+      });
+      updated = await res.json();
+    }
     onUpdate(updated);
   }
 
-  async function reorderItems(fromIdx: number, toIdx: number) {
-    const reordered = [...items];
-    const [moved] = reordered.splice(fromIdx, 1);
+  // Déplace une icône avant l'index `toIdx` (items.length = à la fin) et l'affecte à une catégorie.
+  async function moveItem(fromIdx: number, toIdx: number, categoryId?: string) {
+    const moved: IconItem = { ...items[fromIdx] };
+    if (categoryId) moved.categoryId = categoryId; else delete moved.categoryId;
+    const reordered = items.filter((_, i) => i !== fromIdx);
     reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
-    const res = await fetch(`/api/modules/${module.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ iconItems: reordered }),
+    await patchModule({ iconItems: reordered });
+  }
+
+  async function addCategory() {
+    const cat: IconCategory = { id: crypto.randomUUID(), name: 'Nouvelle catégorie' };
+    await patchModule({ iconCategories: [...categories, cat] });
+    setEditingCatId(cat.id);
+    setCatDraft(cat.name);
+  }
+
+  async function renameCategory(id: string, name: string) {
+    setEditingCatId(null);
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    await patchModule({ iconCategories: categories.map(c => c.id === id ? { ...c, name: trimmed } : c) });
+  }
+
+  async function moveCategory(id: string, dir: -1 | 1) {
+    const i = categories.findIndex(c => c.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= categories.length) return;
+    const next = [...categories];
+    [next[i], next[j]] = [next[j], next[i]];
+    await patchModule({ iconCategories: next });
+  }
+
+  async function deleteCategory(id: string) {
+    // Les icônes de la catégorie supprimée repassent « sans catégorie ».
+    const iconItems = items.map(i => {
+      if (i.categoryId !== id) return i;
+      const { categoryId: _removed, ...rest } = i;
+      return rest;
     });
-    onUpdate(await res.json());
+    await patchModule({ iconCategories: categories.filter(c => c.id !== id), iconItems });
+  }
+
+  async function assignSelection(categoryId: string) {
+    const iconItems = items.map(i => {
+      if (!selected.has(i.id)) return i;
+      const { categoryId: _old, ...rest } = i;
+      return categoryId ? { ...rest, categoryId } : rest;
+    });
+    await patchModule({ iconItems });
   }
 
   async function deleteIcon(id: string) {
@@ -565,9 +637,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
         // Rastérisation côté client (canvas), puis zip dans le navigateur.
         const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
+        const folders = categoryFolders(categories);
         for (const item of items.filter(i => !ids?.length || ids.includes(i.id))) {
           const blob = await renderRaster(item.filename, size, tint, format);
-          if (blob) zip.file(`${item.name}-${size}.${format}`, blob);
+          if (blob) zip.file(iconZipPath(item, folders, `${item.name}-${size}.${format}`), blob);
         }
         saveBlob(await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }), zipName);
       } else {
@@ -587,6 +660,187 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     } finally {
       setDownloading(false);
     }
+  }
+
+  function renderCard(item: IconItem) {
+          const idx = items.indexOf(item);
+          const isSelected = selected.has(item.id);
+          return (
+            <div
+              key={item.id}
+              className="relative group flex flex-col items-center gap-2"
+              style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
+              draggable={isEditing}
+              onDragStart={isEditing ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
+              onDragOver={isEditing ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
+              onDragLeave={isEditing ? () => setDragOverIdx(null) : undefined}
+              onDrop={isEditing ? e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null && dragIdx !== idx) moveItem(dragIdx, idx, item.categoryId); setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onDragEnd={isEditing ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
+            >
+              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
+              )}
+              {/* Card */}
+              <div
+                onClick={() => setInspectedId(item.id)}
+                data-icon-card
+                className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer transition-all"
+                style={{
+                  borderColor: isSelected ? brandColor : 'var(--border)',
+                  background: isSelected ? `${brandColor}10` : '#f9fafb',
+                  boxShadow: isSelected ? `0 0 0 2px ${brandColor}` : undefined,
+                }}
+              >
+                <TintedImg filename={item.filename} alt={item.name} color={tint} />
+
+                {/* Selection checkbox */}
+                <div
+                  onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
+                  className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
+                  style={{ background: isSelected ? brandColor : 'var(--card-bg)', borderColor: isSelected ? brandColor : '#d1d5db' }}>
+                  {isSelected && <Check size={10} color="white" strokeWidth={3} />}
+                </div>
+
+                {/* Action buttons */}
+                <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={e => { e.stopPropagation(); downloadSingle(item.filename, item.name); }}
+                    className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100"
+                  >
+                    <Download size={11} />
+                  </button>
+                  {isEditing && (
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteIcon(item.id); }}
+                      className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-red-400 hover:text-red-600"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Name */}
+              {isEditing && editingId === item.id ? (
+                <input
+                  autoFocus
+                  className="w-full text-center text-xs outline-none border-b"
+                  style={{ borderColor: brandColor }}
+                  value={nameDraft}
+                  onChange={e => setNameDraft(e.target.value)}
+                  onBlur={() => renameIcon(item.id, nameDraft)}
+                  onKeyDown={e => { if (e.key === 'Enter') renameIcon(item.id, nameDraft); if (e.key === 'Escape') setEditingId(null); }}
+                />
+              ) : (
+                <span
+                  className="text-xs text-gray-500 dark:text-gray-300 truncate w-full text-center"
+                  title={item.name}
+                  onDoubleClick={() => { if (isEditing) { setEditingId(item.id); setNameDraft(item.name); } }}
+                >
+                  {item.name}
+                </span>
+              )}
+            </div>
+          );
+  }
+
+  function renderGroups() {
+    const known = new Set(categories.map(c => c.id));
+    const groups: { cat: IconCategory | null; items: IconItem[] }[] = [
+      { cat: null, items: filtered.filter(i => !i.categoryId || !known.has(i.categoryId)) },
+      ...categories.map(c => ({ cat: c, items: filtered.filter(i => i.categoryId === c.id) })),
+    ];
+    const grouped = categories.length > 0;
+    const dropToEnd = (catId?: string) => (e: React.DragEvent) => {
+      e.preventDefault();
+      if (dragIdx !== null) moveItem(dragIdx, items.length, catId);
+      setDragIdx(null); setDragOverIdx(null);
+    };
+
+    return (
+      <div className="space-y-6">
+        {filtered.length === 0 && search && (
+          <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Aucune icône ne correspond à « {search} »</div>
+        )}
+        {groups.map(({ cat, items: groupItems }) => {
+          // « Sans catégorie » n'apparaît que s'il contient des icônes (ou en édition) ; pendant une recherche, les groupes vides sont masqués.
+          if (grouped && cat === null && groupItems.length === 0 && !isEditing) return null;
+          if (search && groupItems.length === 0) return null;
+          const catIndex = cat ? categories.findIndex(c => c.id === cat.id) : -1;
+          return (
+            <div key={cat?.id ?? 'none'}>
+              {grouped && (
+                <div
+                  className="flex items-center gap-2 mb-3 pb-1.5 border-b"
+                  style={{ borderColor: 'var(--border)' }}
+                  onDragOver={isEditing ? e => e.preventDefault() : undefined}
+                  onDrop={isEditing ? dropToEnd(cat?.id) : undefined}
+                >
+                  {cat && isEditing && editingCatId === cat.id ? (
+                    <input
+                      autoFocus
+                      value={catDraft}
+                      onChange={e => setCatDraft(e.target.value)}
+                      onBlur={() => renameCategory(cat.id, catDraft)}
+                      onKeyDown={e => { if (e.key === 'Enter') renameCategory(cat.id, catDraft); if (e.key === 'Escape') setEditingCatId(null); }}
+                      className="text-sm font-semibold outline-none border-b bg-transparent text-gray-800 dark:text-gray-200"
+                      style={{ borderColor: brandColor }}
+                    />
+                  ) : (
+                    <span
+                      className="text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      onDoubleClick={() => { if (isEditing && cat) { setEditingCatId(cat.id); setCatDraft(cat.name); } }}
+                    >
+                      {cat ? cat.name : 'Sans catégorie'}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{groupItems.length}</span>
+                  {cat && isEditing && (
+                    <div className="ml-auto flex items-center gap-0.5 text-gray-400 dark:text-gray-500">
+                      <button onClick={() => { setEditingCatId(cat.id); setCatDraft(cat.name); }} title="Renommer" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200"><Pencil size={12} /></button>
+                      <button onClick={() => moveCategory(cat.id, -1)} disabled={catIndex === 0} title="Monter" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30"><ChevronUp size={13} /></button>
+                      <button onClick={() => moveCategory(cat.id, 1)} disabled={catIndex === categories.length - 1} title="Descendre" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30"><ChevronDown size={13} /></button>
+                      <button onClick={() => deleteCategory(cat.id)} title="Supprimer la catégorie (les icônes sont conservées)" className="p-1 rounded text-red-400 hover:text-red-600"><Trash2 size={12} /></button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
+                {groupItems.map(renderCard)}
+                {isEditing && dragIdx !== null && (
+                  <div
+                    className="relative min-h-[24px]"
+                    onDragOver={e => { e.preventDefault(); setDragOverIdx(items.length); }}
+                    onDrop={dropToEnd(cat?.id)}
+                    onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                  />
+                )}
+                {isEditing && (
+                  <button
+                    onClick={() => pickFiles(cat?.id)}
+                    className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <Plus size={20} />
+                    <span className="text-xs">Ajouter</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {isEditing && (
+          <button
+            onClick={addCategory}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <FolderPlus size={13} />
+            Ajouter une catégorie
+          </button>
+        )}
+      </div>
+    );
   }
 
   if (items.length === 0 && !isEditing) {
@@ -696,6 +950,19 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                   className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
                   <X size={12} /> Désélectionner
                 </button>
+                {isEditing && categories.length > 0 && (
+                  <select
+                    value=""
+                    onChange={e => { if (e.target.value) assignSelection(e.target.value === '__none' ? '' : e.target.value); }}
+                    title="Ranger la sélection dans une catégorie"
+                    className="px-2 py-1 text-xs rounded-lg border outline-none bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 dark:border-gray-600"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <option value="">Ranger dans…</option>
+                    <option value="__none">Sans catégorie</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                )}
               </>
             )}
           </div>
@@ -735,115 +1002,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
       )}
 
       {/* Grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
-        {filtered.length === 0 && search && (
-          <div className="col-span-full py-8 text-center text-sm text-gray-400 dark:text-gray-500">Aucune icône ne correspond à « {search} »</div>
-        )}
-        {filtered.map((item, idx) => {
-          const isSelected = selected.has(item.id);
-          return (
-            <div
-              key={item.id}
-              className="relative group flex flex-col items-center gap-2"
-              style={{ opacity: dragIdx === idx ? 0.4 : 1 }}
-              draggable={isEditing}
-              onDragStart={isEditing ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
-              onDragOver={isEditing ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
-              onDragLeave={isEditing ? () => setDragOverIdx(null) : undefined}
-              onDrop={isEditing ? e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) reorderItems(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); } : undefined}
-              onDragEnd={isEditing ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
-            >
-              {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
-                <div className="absolute -left-2 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
-              )}
-              {/* Card */}
-              <div
-                onClick={() => setInspectedId(item.id)}
-                data-icon-card
-                className="relative w-full aspect-square rounded-xl border flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 cursor-pointer transition-all"
-                style={{
-                  borderColor: isSelected ? brandColor : 'var(--border)',
-                  background: isSelected ? `${brandColor}10` : '#f9fafb',
-                  boxShadow: isSelected ? `0 0 0 2px ${brandColor}` : undefined,
-                }}
-              >
-                <TintedImg filename={item.filename} alt={item.name} color={tint} />
-
-                {/* Selection checkbox */}
-                <div
-                  onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}
-                  className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}
-                  style={{ background: isSelected ? brandColor : 'var(--card-bg)', borderColor: isSelected ? brandColor : '#d1d5db' }}>
-                  {isSelected && <Check size={10} color="white" strokeWidth={3} />}
-                </div>
-
-                {/* Action buttons */}
-                <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={e => { e.stopPropagation(); downloadSingle(item.filename, item.name); }}
-                    className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100"
-                  >
-                    <Download size={11} />
-                  </button>
-                  {isEditing && (
-                    <button
-                      onClick={e => { e.stopPropagation(); deleteIcon(item.id); }}
-                      className="p-1 rounded-lg bg-white dark:bg-gray-800 shadow-sm text-red-400 hover:text-red-600"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Name */}
-              {isEditing && editingId === item.id ? (
-                <input
-                  autoFocus
-                  className="w-full text-center text-xs outline-none border-b"
-                  style={{ borderColor: brandColor }}
-                  value={nameDraft}
-                  onChange={e => setNameDraft(e.target.value)}
-                  onBlur={() => renameIcon(item.id, nameDraft)}
-                  onKeyDown={e => { if (e.key === 'Enter') renameIcon(item.id, nameDraft); if (e.key === 'Escape') setEditingId(null); }}
-                />
-              ) : (
-                <span
-                  className="text-xs text-gray-500 dark:text-gray-300 truncate w-full text-center"
-                  title={item.name}
-                  onDoubleClick={() => { if (isEditing) { setEditingId(item.id); setNameDraft(item.name); } }}
-                >
-                  {item.name}
-                </span>
-              )}
-            </div>
-          );
-        })}
-        {isEditing && dragIdx !== null && (
-          <div
-            className="relative min-h-[24px]"
-            onDragOver={e => { e.preventDefault(); setDragOverIdx(filtered.length); }}
-            onDrop={e => { e.preventDefault(); if (dragIdx !== null && dragIdx !== filtered.length - 1) reorderItems(dragIdx, filtered.length); setDragIdx(null); setDragOverIdx(null); }}
-            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-          >
-            {dragOverIdx === filtered.length && (
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full z-10" style={{ background: brandColor }} />
-            )}
-          </div>
-        )}
-
-        {/* Add button */}
-        {isEditing && (
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:border-gray-600 transition-colors"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <Plus size={20} />
-            <span className="text-xs">Ajouter</span>
-          </button>
-        )}
-      </div>
+      {renderGroups()}
 
       <input ref={inputRef} type="file" accept=".svg" multiple className="hidden"
         onChange={e => e.target.files && uploadIcons(e.target.files)} />

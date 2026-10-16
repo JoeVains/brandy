@@ -65,6 +65,12 @@ export interface IconItem {
   name: string;
   filename: string;
   size: number;
+  categoryId?: string;
+}
+
+export interface IconCategory {
+  id: string;
+  name: string;
 }
 
 export interface AttachmentItem {
@@ -140,6 +146,7 @@ export interface Module {
   // icons
   iconDescription?: string;
   iconItems?: IconItem[];
+  iconCategories?: IconCategory[];
   // spacing
   spacingBase?: number;
   spacingSteps?: number[];
