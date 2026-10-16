@@ -72,6 +72,7 @@ export interface IconItem {
 export interface IconCategory {
   id: string;
   name: string;
+  emoji?: string;
   color?: string;
 }
 

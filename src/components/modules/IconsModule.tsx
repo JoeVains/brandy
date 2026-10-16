@@ -7,6 +7,7 @@ import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
 import { Plus, Trash2, Download, Check, X, Search, Palette as PaletteIcon, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 import Select from '../Select';
+import EmojiPicker from '../EmojiPicker';
 import { recolorSvg } from '@/lib/svg';
 
 type RasterFormat = 'png' | 'webp';
@@ -308,6 +309,7 @@ function TintControl({ value, onChange, palettes, paletteId, onPaletteChange, ti
 }
 
 const END_DROP = '__end';
+const DEFAULT_CATEGORY_EMOJI = '📁';
 const byAlpha = (a: string, b: string) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
 
 function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
@@ -692,6 +694,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const anchorRef = useRef<string | null>(null);
   const visibleOrder = useRef<string[]>([]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [emojiPicker, setEmojiPicker] = useState<{ catId: string; rect: DOMRect } | null>(null);
   const [dragCatId, setDragCatId] = useState<string | null>(null);
   const [overCatId, setOverCatId] = useState<string | null>(null);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
@@ -792,6 +795,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     await patchModule({ iconCategories: [...categories, cat] });
     setEditingCatId(cat.id);
     setCatDraft(cat.name);
+  }
+
+  async function setCategoryEmoji(id: string, emoji: string) {
+    await patchModule({ iconCategories: categories.map(c => c.id === id ? { ...c, emoji } : c) });
   }
 
   async function renameCategory(id: string, name: string) {
@@ -1187,6 +1194,17 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                       <GripVertical size={14} />
                     </span>
                   )}
+                  {cat && (isEditing ? (
+                    <button
+                      onClick={e => setEmojiPicker({ catId: cat.id, rect: e.currentTarget.getBoundingClientRect() })}
+                      title="Choisir un émoji"
+                      className="text-base leading-none rounded-md px-1 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {cat.emoji ?? DEFAULT_CATEGORY_EMOJI}
+                    </button>
+                  ) : (
+                    <span className="text-base leading-none">{cat.emoji ?? DEFAULT_CATEGORY_EMOJI}</span>
+                  ))}
                   {cat && isEditing && editingCatId === cat.id ? (
                     <input
                       autoFocus
@@ -1428,6 +1446,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
             </button>
           </div>
         </div>
+      )}
+
+      {emojiPicker && (
+        <EmojiPicker
+          anchorRect={emojiPicker.rect}
+          onSelect={emoji => setCategoryEmoji(emojiPicker.catId, emoji)}
+          onClose={() => setEmojiPicker(null)}
+        />
       )}
 
       {inspectedId && (() => {
