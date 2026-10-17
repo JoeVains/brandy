@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Module, ColorItem } from '@/types';
 import { contrastRatio } from '@/lib/colorUtils';
 import { suggestColorName } from '@/lib/colorNames';
-import { Palette, Check, ChevronDown, Plus, X, Trash2, Pipette, Pencil } from 'lucide-react';
+import { Palette, Check, ChevronDown, Plus, X, Trash2, Pipette, Pencil, RotateCcw } from 'lucide-react';
 import ModuleDescription from './ModuleDescription';
 
 interface Props {
@@ -384,6 +384,16 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
                 <span className="text-gray-400 dark:text-gray-500">({levelCounts[level]})</span>
               </button>
             ))}
+            {LEVELS.some(l => !shownLevels[l]) && (
+              <button
+                type="button"
+                onClick={() => setShownLevels({ 'AAA': true, 'AA': true, 'AA Large': true, 'Échec': true })}
+                className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                title="Réactiver les quatre niveaux"
+              >
+                <RotateCcw size={12} /> Tout afficher
+              </button>
+            )}
           </div>
           <table className="border-separate" style={{ borderSpacing: 4 }}>
             <thead>
