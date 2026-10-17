@@ -14,13 +14,11 @@ interface Props {
   isEditing?: boolean;
 }
 
-// Atténuation d'une case selon son niveau quand la mise en valeur est active :
-// AAA/AA intacts, AA Large (grands textes seulement) à demi, échec fortement estompé.
-function dimStyle(label: string | undefined): React.CSSProperties {
-  if (label === 'Échec') return { opacity: 0.2, filter: 'grayscale(0.8)' };
-  if (label === 'AA Large') return { opacity: 0.55, filter: 'grayscale(0.3)' };
-  return {};
-}
+// Niveaux affichables ; un niveau désactivé est estompé dans la matrice (opacité réduite, presque désaturé).
+const LEVELS = ['AAA', 'AA', 'AA Large', 'Échec'] as const;
+type Level = (typeof LEVELS)[number];
+const LEVEL_DOT: Record<Level, string> = { 'AAA': '#16a34a', 'AA': '#16a34a', 'AA Large': '#d97706', 'Échec': '#dc2626' };
+const DIMMED: React.CSSProperties = { opacity: 0.2, filter: 'grayscale(0.8)' };
 
 function ratioLevel(ratio: number): { label: string; color: string } {
   if (ratio >= 7) return { label: 'AAA', color: '#16a34a' };
@@ -33,8 +31,8 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
   const [colorModules, setColorModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [sourceMenuOpen, setSourceMenuOpen] = useState(false);
-  // Mise en valeur des combinaisons conformes : simple réglage d'affichage, non enregistré.
-  const [highlightPassing, setHighlightPassing] = useState(false);
+  // Niveaux affichés : tous par défaut. Simple réglage d'affichage, non enregistré.
+  const [shownLevels, setShownLevels] = useState<Record<Level, boolean>>({ 'AAA': true, 'AA': true, 'AA Large': true, 'Échec': true });
   const sourceMenuRef = useRef<HTMLDivElement>(null);
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [newHex, setNewHex] = useState('#000000');
@@ -173,6 +171,16 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
     (sources.length > 0 ? sources : colorModules).flatMap(m => m.colorItems ?? []).forEach(item => seen.set(item.id, item));
   }
   const colors = [...seen.values()];
+
+  // Nombre de cases de la matrice par niveau (texte sur fond, donc chaque paire apparaît dans les deux sens).
+  const levelCounts: Record<Level, number> = { 'AAA': 0, 'AA': 0, 'AA Large': 0, 'Échec': 0 };
+  for (const row of colors) {
+    for (const col of colors) {
+      if (row.id === col.id) continue;
+      const ratio = contrastRatio(row.value, col.value);
+      if (ratio !== null) levelCounts[ratioLevel(ratio).label as Level] += 1;
+    }
+  }
   const sourceLabel = isCustomMode
     ? 'Couleurs personnalisées'
     : sources.length === 0
@@ -352,24 +360,31 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={highlightPassing}
-            onClick={() => setHighlightPassing(v => !v)}
-            className="flex items-center gap-2 mb-3 text-xs text-gray-600 dark:text-gray-300"
-          >
-            <span
-              className="relative inline-block w-8 h-[18px] rounded-full transition-colors flex-shrink-0"
-              style={{ background: highlightPassing ? brandColor : '#d1d5db' }}
-            >
-              <span
-                className="absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-all"
-                style={{ left: highlightPassing ? 16 : 2 }}
-              />
-            </span>
-            Mettre en valeur les combinaisons AA / AAA
-          </button>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
+            {LEVELS.map(level => (
+              <button
+                key={level}
+                type="button"
+                role="switch"
+                aria-checked={shownLevels[level]}
+                onClick={() => setShownLevels(prev => ({ ...prev, [level]: !prev[level] }))}
+                className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300"
+              >
+                <span
+                  className="relative inline-block w-8 h-[18px] rounded-full transition-colors flex-shrink-0"
+                  style={{ background: shownLevels[level] ? brandColor : '#d1d5db' }}
+                >
+                  <span
+                    className="absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-all"
+                    style={{ left: shownLevels[level] ? 16 : 2 }}
+                  />
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: LEVEL_DOT[level] }} />
+                {level}
+                <span className="text-gray-400 dark:text-gray-500">({levelCounts[level]})</span>
+              </button>
+            ))}
+          </div>
           <table className="border-separate" style={{ borderSpacing: 4 }}>
             <thead>
               <tr>
@@ -397,7 +412,7 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
                       <td key={col.id}>
                         <div
                           className="w-24 h-16 rounded-lg border flex flex-col items-center justify-center gap-0.5"
-                          style={{ background: row.value, color: col.value, borderColor: 'var(--border)', ...(highlightPassing ? dimStyle(level?.label) : {}) }}
+                          style={{ background: row.value, color: col.value, borderColor: 'var(--border)', ...(level && !shownLevels[level.label as Level] ? DIMMED : {}) }}
                           title={`${row.name} / ${col.name}${level ? ` — ${level.label}${ratio !== null ? ` (${ratio.toFixed(2)}:1)` : ''}` : ''}`}
                         >
                           <span className="text-xs font-semibold" style={{ color: col.value }}>Texte</span>
@@ -408,7 +423,7 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
                           )}
                         </div>
                         {level && (
-                          <p className="text-[10px] text-center mt-1 font-medium" style={{ color: level.color, ...(highlightPassing ? dimStyle(level.label) : {}) }}>
+                          <p className="text-[10px] text-center mt-1 font-medium" style={{ color: level.color, ...(!shownLevels[level.label as Level] ? DIMMED : {}) }}>
                             {level.label}
                           </p>
                         )}
