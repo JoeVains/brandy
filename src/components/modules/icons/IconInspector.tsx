@@ -37,19 +37,29 @@ export default function IconInspector({ item, moduleId, brandId, shareToken, pal
   const [keywordDraft, setKeywordDraft] = useState('');
   const [suggestIdx, setSuggestIdx] = useState(-1);  // -1 : aucune suggestion en surbrillance, Entrée valide la saisie telle quelle
   const [nameDraft, setNameDraft] = useState(item.name);
-  useEffect(() => { setNameDraft(item.name); }, [item.id, item.name]);
+  // Le champ de nom se recale quand on change d'icône ou que le nom est modifié ailleurs.
+  const [draftSource, setDraftSource] = useState(`${item.id}|${item.name}`);
+  if (draftSource !== `${item.id}|${item.name}`) {
+    setDraftSource(`${item.id}|${item.name}`);
+    setNameDraft(item.name);
+  }
   const [rasterSize, setRasterSize] = useState(1024);
   const [format, setFormat] = useState<'svg' | 'pdf' | RasterFormat>('svg');
   const [color, setColor] = useState<string | null>(initialColor);
   const [exportingRaster, setExportingRaster] = useState(false);
   const palettes = useBrandPalettes(brandId, shareToken);
-  const [svgText, setSvgText] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Contenu SVG de l'icône affichée ; ignoré tant qu'il ne correspond pas au fichier courant (changement d'icône).
+  const [svgData, setSvgData] = useState<{ filename: string; text: string } | null>(null);
+  const svgText = svgData?.filename === item.filename ? svgData.text : null;
   const [visible, setVisible] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // La couleur globale des icônes sert de valeur par défaut (et suit ses changements).
-  useEffect(() => { setColor(initialColor); }, [initialColor]);
+  const [colorSource, setColorSource] = useState(initialColor);
+  if (colorSource !== initialColor) {
+    setColorSource(initialColor);
+    setColor(initialColor);
+  }
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true));
@@ -95,17 +105,15 @@ export default function IconInspector({ item, moduleId, brandId, shareToken, pal
   }
 
   useEffect(() => {
-    setSvgText(null);
-    fetch(`/uploads/${item.filename}`).then(r => r.text()).then(setSvgText);
+    let cancelled = false;
+    fetch(`/uploads/${item.filename}`).then(r => r.text()).then(text => { if (!cancelled) setSvgData({ filename: item.filename, text }); });
+    return () => { cancelled = true; };
   }, [item.filename]);
 
-  useEffect(() => {
-    if (!color || !svgText) { setPreviewUrl(null); return; }
-    const blob = new Blob([recolorSvg(svgText, color)], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [svgText, color]);
+  // Aperçu recoloré en temps réel (URL de données : rien à libérer).
+  const previewUrl = color && svgText
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(recolorSvg(svgText, color))}`
+    : null;
 
   async function handleDownloadRaster(rasterFormat: RasterFormat) {
     setExportingRaster(true);

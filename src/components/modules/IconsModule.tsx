@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Module, IconItem, IconCategory, AssetStatus } from '@/types';
 import { Plus, Trash2, Download, Check, X, Search, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical, FolderUp } from 'lucide-react';
 import { trackDownload } from '@/lib/trackDownload';
@@ -57,10 +57,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const uploadTarget = useRef<string | undefined>(undefined);
   const colorTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const categoriesRef = useRef<IconCategory[]>([]);
-  categoriesRef.current = categories;
+  // Dernière liste de catégories, lue par les enregistrements différés (délai de 400 ms).
+  useEffect(() => { categoriesRef.current = categories; });
   const gridRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<string | null>(null);
-  const visibleOrder = useRef<string[]>([]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [emojiPicker, setEmojiPicker] = useState<{ catId: string; rect: DOMRect } | null>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -395,7 +395,12 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   // Renvoie true si le clic a été traité comme une sélection.
   function selectWithModifier(id: string, e: React.MouseEvent): boolean {
     if (e.shiftKey && anchorRef.current) {
-      const order = visibleOrder.current;
+      // Ordre d'affichage : « sans catégorie » d'abord, puis chaque catégorie.
+      const known = new Set(categories.map(c => c.id));
+      const order = [
+        ...filtered.filter(i => !i.categoryId || !known.has(i.categoryId)),
+        ...categories.flatMap(c => filtered.filter(i => i.categoryId === c.id)),
+      ].map(i => i.id);
       const a = order.indexOf(anchorRef.current);
       const b = order.indexOf(id);
       if (a >= 0 && b >= 0) {
@@ -630,7 +635,6 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
       ...categories.map(c => ({ cat: c, items: filtered.filter(i => i.categoryId === c.id) })),
     ];
     const grouped = categories.length > 0;
-    visibleOrder.current = groups.flatMap(g => g.items.map(i => i.id));
     const dropToEnd = (catId?: string) => (e: React.DragEvent) => {
       e.preventDefault();
       if (dragIdx !== null) moveItem(dragIdx, items.length, catId);

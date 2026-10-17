@@ -16,15 +16,18 @@ export function fetchSvg(filename: string): Promise<string> {
 
 // Miniature d'icône, recolorée côté client quand une couleur est fournie.
 export function TintedImg({ filename, alt, color }: { filename: string; alt: string; color: string | null }) {
-  const [src, setSrc] = useState(`/uploads/${filename}`);
+  // Version recolorée, valable pour un couple (fichier, couleur) donné ; sinon on affiche l'original.
+  const key = `${filename}|${color}`;
+  const [tinted, setTinted] = useState<{ key: string; src: string } | null>(null);
   useEffect(() => {
-    if (!color) { setSrc(`/uploads/${filename}`); return; }
+    if (!color) return;
     let cancelled = false;
     fetchSvg(filename).then(text => {
-      if (!cancelled) setSrc(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(recolorSvg(text, color))}`);
+      if (!cancelled) setTinted({ key, src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(recolorSvg(text, color))}` });
     });
     return () => { cancelled = true; };
-  }, [filename, color]);
+  }, [filename, color, key]);
+  const src = color && tinted?.key === key ? tinted.src : `/uploads/${filename}`;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt={alt} className="w-full h-full object-contain" />;
 }
