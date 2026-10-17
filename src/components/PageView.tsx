@@ -40,7 +40,7 @@ const MODULE_TYPES: { type: ModuleType; label: string; icon: React.ReactNode; de
   { type: 'spacing', label: 'Espacements', icon: <span className="font-bold text-base leading-none">⇥</span>, description: 'Grille d\'espacements et unité de base' },
   { type: 'attachments', label: 'Fichiers', icon: <Paperclip size={18} />, description: 'ZIP, PDF et autres pièces jointes' },
   { type: 'icons', label: 'Icônes', icon: <span className="font-bold text-base leading-none">❖</span>, description: 'Bibliothèque d\'icônes SVG téléchargeables en ZIP' },
-  { type: 'image', label: 'Image', icon: <Image size={18} />, description: 'Une image par module' },
+  { type: 'image', label: 'Image', icon: <Image size={18} />, description: 'Une image seule ou une galerie classée par catégories' },
   { type: 'divider', label: 'Séparateur', icon: <Minus size={18} />, description: 'Ligne de séparation horizontale' },
   { type: 'text', label: 'Texte', icon: <AlignLeft size={18} />, description: 'Bloc de texte libre' },
   { type: 'heading', label: 'Titre', icon: <span className="font-bold text-base leading-none">H</span>, description: 'Titre de section en grand format' },
