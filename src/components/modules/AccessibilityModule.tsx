@@ -14,6 +14,14 @@ interface Props {
   isEditing?: boolean;
 }
 
+// Atténuation d'une case selon son niveau quand la mise en valeur est active :
+// AAA/AA intacts, AA Large (grands textes seulement) à demi, échec fortement estompé.
+function dimStyle(label: string | undefined): React.CSSProperties {
+  if (label === 'Échec') return { opacity: 0.2, filter: 'grayscale(0.8)' };
+  if (label === 'AA Large') return { opacity: 0.55, filter: 'grayscale(0.3)' };
+  return {};
+}
+
 function ratioLevel(ratio: number): { label: string; color: string } {
   if (ratio >= 7) return { label: 'AAA', color: '#16a34a' };
   if (ratio >= 4.5) return { label: 'AA', color: '#16a34a' };
@@ -25,6 +33,8 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
   const [colorModules, setColorModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [sourceMenuOpen, setSourceMenuOpen] = useState(false);
+  // Mise en valeur des combinaisons conformes : simple réglage d'affichage, non enregistré.
+  const [highlightPassing, setHighlightPassing] = useState(false);
   const sourceMenuRef = useRef<HTMLDivElement>(null);
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [newHex, setNewHex] = useState('#000000');
@@ -342,6 +352,24 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
         </p>
       ) : (
         <div className="overflow-x-auto">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={highlightPassing}
+            onClick={() => setHighlightPassing(v => !v)}
+            className="flex items-center gap-2 mb-3 text-xs text-gray-600 dark:text-gray-300"
+          >
+            <span
+              className="relative inline-block w-8 h-[18px] rounded-full transition-colors flex-shrink-0"
+              style={{ background: highlightPassing ? brandColor : '#d1d5db' }}
+            >
+              <span
+                className="absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-all"
+                style={{ left: highlightPassing ? 16 : 2 }}
+              />
+            </span>
+            Mettre en valeur les combinaisons AA / AAA
+          </button>
           <table className="border-separate" style={{ borderSpacing: 4 }}>
             <thead>
               <tr>
@@ -369,10 +397,10 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
                       <td key={col.id}>
                         <div
                           className="w-24 h-16 rounded-lg border flex flex-col items-center justify-center gap-0.5"
-                          style={{ background: row.value, color: col.value, borderColor: 'var(--border)' }}
-                          title={`${row.name} / ${col.name}`}
+                          style={{ background: row.value, color: col.value, borderColor: 'var(--border)', ...(highlightPassing ? dimStyle(level?.label) : {}) }}
+                          title={`${row.name} / ${col.name}${level ? ` — ${level.label}${ratio !== null ? ` (${ratio.toFixed(2)}:1)` : ''}` : ''}`}
                         >
-                          <span className="text-xs font-semibold" style={{ color: col.value }}>Aa</span>
+                          <span className="text-xs font-semibold" style={{ color: col.value }}>Texte</span>
                           {ratio !== null && (
                             <span className="text-[10px] font-mono" style={{ color: col.value }}>
                               {ratio.toFixed(2)}
@@ -380,7 +408,7 @@ export default function AccessibilityModule({ module, brandColor, onUpdate, isEd
                           )}
                         </div>
                         {level && (
-                          <p className="text-[10px] text-center mt-1 font-medium" style={{ color: level.color }}>
+                          <p className="text-[10px] text-center mt-1 font-medium" style={{ color: level.color, ...(highlightPassing ? dimStyle(level.label) : {}) }}>
                             {level.label}
                           </p>
                         )}
