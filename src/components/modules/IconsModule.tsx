@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Module, IconItem, IconCategory, AssetStatus } from '@/types';
-import { Plus, Trash2, Download, Check, X, Search, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, GripVertical, FolderUp } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, ArrowUpAZ, GripVertical, FolderUp } from 'lucide-react';
 import { trackDownload } from '@/lib/trackDownload';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
 import { isPublished, restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
@@ -329,6 +329,19 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   async function sortCategories() {
     const dir = categoriesAscending ? -1 : 1;
     await patchModule({ iconCategories: [...categories].sort((a, b) => dir * byAlpha(a.name, b.name)) });
+  }
+
+  // Trie les icônes d'une catégorie (ou « sans catégorie ») : A→Z, puis Z→A si déjà triées. Les autres catégories ne bougent pas.
+  function itemsAscending(list: IconItem[]) {
+    return list.every((it, i) => i === 0 || byAlpha(list[i - 1].name, it.name) <= 0);
+  }
+
+  async function sortCategoryItems(groupItems: IconItem[]) {
+    const dir = itemsAscending(groupItems) ? -1 : 1;
+    const sorted = [...groupItems].sort((a, b) => dir * byAlpha(a.name, b.name));
+    const ids = new Set(groupItems.map(i => i.id));
+    let k = 0;
+    await patchModule({ iconItems: items.map(i => (ids.has(i.id) ? sorted[k++] : i)) });
   }
 
   async function deleteCategory(id: string) {
@@ -763,8 +776,20 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                       </div>
                     );
                   })()}
+                  {isEditing && groupItems.length > 1 && (() => {
+                    const asc = itemsAscending(groupItems);
+                    return (
+                      <button
+                        onClick={() => sortCategoryItems(groupItems)}
+                        title={asc ? 'Trier les icônes de Z à A' : 'Trier les icônes de A à Z'}
+                        className={`ml-auto p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200`}
+                      >
+                        {asc ? <ArrowUpAZ size={13} /> : <ArrowDownAZ size={13} />}
+                      </button>
+                    );
+                  })()}
                   {cat && isEditing && (
-                    <div className="ml-auto flex items-center gap-0.5 text-gray-400 dark:text-gray-500">
+                    <div className="flex items-center gap-0.5 text-gray-400 dark:text-gray-500">
                       <button onClick={() => { setEditingCatId(cat.id); setCatDraft(cat.name); }} title="Renommer" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200"><Pencil size={12} /></button>
                       <button onClick={() => moveCategory(cat.id, -1)} disabled={catIndex === 0} title="Monter" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30"><ChevronUp size={13} /></button>
                       <button onClick={() => moveCategory(cat.id, 1)} disabled={catIndex === categories.length - 1} title="Descendre" className="p-1 rounded hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30"><ChevronDown size={13} /></button>
