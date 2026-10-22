@@ -625,6 +625,18 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
           );
         })}
 
+        {/* Add-brand card: same size as a brand card, at the end of each category */}
+        {!dragId && (
+          <button
+            onClick={() => { setNewCategoryId(categoryId); setShowNew(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="min-h-[220px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <Plus size={22} />
+            <span className="text-sm font-medium">Nouvelle marque</span>
+          </button>
+        )}
+
         {/* Drop zone to move a brand into this (possibly empty) category */}
         {dragId && !groupBrands.some(b => b.id === dragId) && (
           <div
@@ -665,7 +677,7 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
             <FolderPlus size={15} /> Nouvelle catégorie
           </button>
           <button
-            onClick={() => setShowNew(true)}
+            onClick={() => { setNewCategoryId(null); setShowNew(true); }}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
             style={{ background: 'var(--accent)' }}
           >
@@ -919,18 +931,6 @@ export default function HomeView({ brands, sections, onOpenBrand, onBrandsChange
                 {!collapsedCategories[category?.id ?? 'uncategorized'] && renderBrandGrid(groupBrands, category?.id ?? null)}
               </div>
             ))}
-
-            {/* New brand card */}
-            {!showNew && (
-              <button
-                onClick={() => setShowNew(true)}
-                className="w-full min-h-[100px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                <Plus size={22} />
-                <span className="text-sm font-medium">Nouvelle marque</span>
-              </button>
-            )}
           </div>
         )}
       </main>
