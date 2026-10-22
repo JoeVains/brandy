@@ -17,7 +17,7 @@ import { renderRaster, saveBlob, TintedImg, type BulkFormat } from './icons/rend
 import { normalizeHex } from './icons/colorUtils';
 import { TintControl, useBrandPalettes } from './icons/palettes';
 import { readDirectory, readZip, type ImportItem } from './icons/importFiles';
-import { byAlpha } from './icons/utils';
+import { byAlpha, wordStartMatch } from './icons/utils';
 
 const END_DROP = '__end';
 
@@ -74,7 +74,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [showObsolete, setShowObsolete] = useState(false);
   const obsoleteCount = items.filter(i => statusOf(i) === 'obsolete').length;
   const shown = visibleItems(items, !!isEditing, showObsolete);
-  const filtered = search.trim() ? shown.filter(i => [i.name, ...(i.keywords ?? [])].some(t => t.toLowerCase().includes(search.toLowerCase()))) : shown;
+  const filtered = search.trim() ? shown.filter(i => [i.name, ...(i.keywords ?? [])].some(t => wordStartMatch(t, search))) : shown;
 
   async function patchModule(patch: Partial<Module>) {
     const res = await fetch(`/api/modules/${module.id}`, {

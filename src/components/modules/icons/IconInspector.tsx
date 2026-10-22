@@ -11,7 +11,7 @@ import { StatusBadge, StatusSelect, VersionHistory } from '../../AssetStatus';
 import { type RasterFormat, formatSize, downloadRaster } from './rendering';
 import { toPickerValue, sameColor } from './colorUtils';
 import { PaletteSwatches, useBrandPalettes } from './palettes';
-import { byAlpha } from './utils';
+import { byAlpha, wordStartMatch } from './utils';
 
 export default function IconInspector({ item, moduleId, brandId, shareToken, paletteId, onPaletteChange, onKeywordsChange, onRename, allKeywords, onStatusChange, onReplaceFile, onRestoreVersion, initialColor, onClose, onDelete, isEditing: moduleEditing }: {
   shareToken?: string;
@@ -94,9 +94,9 @@ export default function IconInspector({ item, moduleId, brandId, shareToken, pal
   }
 
   // Suggestions : mots-clés déjà utilisés dans ce module qui contiennent la saisie.
-  const typed = keywordDraft.split(',').pop()!.trim().toLowerCase();
+  const typed = keywordDraft.split(',').pop()!.trim();
   const suggestions = typed
-    ? allKeywords.filter(k => k.toLowerCase().includes(typed) && !(item.keywords ?? []).some(c => c.toLowerCase() === k.toLowerCase())).slice(0, 6)
+    ? allKeywords.filter(k => wordStartMatch(k, typed) && !(item.keywords ?? []).some(c => c.toLowerCase() === k.toLowerCase())).slice(0, 6)
     : [];
 
   function handleClose() {
