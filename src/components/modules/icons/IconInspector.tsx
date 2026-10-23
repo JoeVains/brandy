@@ -307,10 +307,10 @@ export default function IconInspector({ item, moduleId, brandId, shareToken, pal
                   className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-transform hover:scale-110"
                   style={{
                     borderColor: color === null ? 'var(--accent)' : 'var(--border)',
-                    background: 'repeating-conic-gradient(#d1d5db 0% 25%, white 0% 50%) 50% / 8px 8px',
+                    background: 'white',
                   }}
                 >
-                  {color === null && <Check size={10} className="text-gray-700" strokeWidth={3} />}
+                  <X size={11} className="text-gray-500" strokeWidth={2.5} />
                 </button>
                 <label
                   title="Choisir une couleur"
