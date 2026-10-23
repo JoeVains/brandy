@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Pencil, Search, Trash2, X } from 'lucide-react';
+import { Check, GitMerge, Pencil, Search, Trash2, X } from 'lucide-react';
 import type { IconItem } from '@/types';
 import { byAlpha, norm } from './utils';
 
@@ -34,6 +34,8 @@ export default function KeywordManager({ items, onApply, onFilter, onClose }: {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [merging, setMerging] = useState<string | null>(null);
+  const [mergeQuery, setMergeQuery] = useState('');
 
   const entries = useMemo(() => {
     const map = new Map<string, Entry>();
@@ -55,13 +57,11 @@ export default function KeywordManager({ items, onApply, onFilter, onClose }: {
     try { await onApply(next); } finally { setBusy(false); }
   }
 
-  async function rename(entry: Entry) {
-    const name = draft.trim().replace(/,/g, ' ');
-    setEditing(null);
-    if (!name || name === entry.label) return;
+  // Renomme `entry` en `name` ; si ce mot-clé existe déjà, les deux sont fusionnés.
+  async function renameTo(entry: Entry, name: string, askMerge: boolean) {
     const target = name.toLowerCase();
     const merging = target !== entry.key && entries.some(e => e.key === target);
-    if (merging && !confirm(`« ${name} » existe déjà : les deux mots-clés seront fusionnés. Continuer ?`)) return;
+    if (merging && askMerge && !confirm(`« ${name} » existe déjà : les deux mots-clés seront fusionnés. Continuer ?`)) return;
     await apply(mapKeywords(items, kws => {
       if (!kws.some(k => k.toLowerCase() === entry.key)) return kws;
       const out: string[] = [];
@@ -71,6 +71,19 @@ export default function KeywordManager({ items, onApply, onFilter, onClose }: {
       }
       return out.sort(byAlpha);
     }));
+  }
+
+  async function rename(entry: Entry) {
+    const name = draft.trim().replace(/,/g, ' ');
+    setEditing(null);
+    if (!name || name === entry.label) return;
+    await renameTo(entry, name, true);
+  }
+
+  async function mergeInto(entry: Entry, target: Entry) {
+    if (!confirm(`Fusionner « ${entry.label} » avec « ${target.label} » ? Les ${entry.count} icône${entry.count > 1 ? 's' : ''} de « ${entry.label} » recevront « ${target.label} ».`)) return;
+    setMerging(null);
+    await renameTo(entry, target.label, false);
   }
 
   async function remove(entry: Entry) {
@@ -101,7 +114,8 @@ export default function KeywordManager({ items, onApply, onFilter, onClose }: {
             <p className="text-center text-sm text-gray-400 py-8">{entries.length ? 'Aucun résultat' : 'Aucun mot-clé'}</p>
           )}
           {shown.map(entry => (
-            <div key={entry.key} className="flex items-center gap-2 px-2 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border)' }}>
+            <div key={entry.key} className="border-b last:border-b-0" style={{ borderColor: 'var(--border)' }}>
+              <div className="flex items-center gap-2 px-2 py-2">
               {editing === entry.key ? (
                 <>
                   <input
@@ -124,9 +138,36 @@ export default function KeywordManager({ items, onApply, onFilter, onClose }: {
                   <span className="text-xs text-gray-400 whitespace-nowrap">{entry.count} icône{entry.count > 1 ? 's' : ''}</span>
                   <button disabled={busy} onClick={() => { setEditing(entry.key); setDraft(entry.label); }} title="Renommer"
                     className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40"><Pencil size={13} /></button>
+                  {entries.length > 1 && (
+                    <button disabled={busy} onClick={() => { setMerging(merging === entry.key ? null : entry.key); setMergeQuery(''); }} title="Fusionner avec…"
+                      className={`p-1 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 ${merging === entry.key ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400'}`}><GitMerge size={13} /></button>
+                  )}
                   <button disabled={busy} onClick={() => remove(entry)} title="Supprimer"
                     className="p-1 text-gray-400 hover:text-red-500 disabled:opacity-40"><Trash2 size={13} /></button>
                 </>
+              )}
+              </div>
+              {merging === entry.key && (
+                <div className="mx-2 mb-2 p-2 rounded-lg border" style={{ borderColor: 'var(--border)' }}>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Fusionner « {entry.label} » avec :</p>
+                  <input
+                    autoFocus
+                    value={mergeQuery}
+                    onChange={e => setMergeQuery(e.target.value)}
+                    placeholder="Rechercher un mot-clé…"
+                    className="w-full mb-1.5 text-xs px-2 py-1 rounded-md border outline-none bg-transparent"
+                    style={{ borderColor: 'var(--border)' }}
+                  />
+                  <div className="max-h-36 overflow-y-auto">
+                    {entries.filter(t => t.key !== entry.key && norm(t.label).includes(norm(mergeQuery.trim()))).map(t => (
+                      <button key={t.key} disabled={busy} onClick={() => mergeInto(entry, t)}
+                        className="w-full flex items-center justify-between gap-2 px-2 py-1 rounded-md text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40">
+                        <span className="truncate">{t.label}</span>
+                        <span className="text-xs text-gray-400 whitespace-nowrap">{t.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           ))}
