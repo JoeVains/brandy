@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Module, IconItem, IconCategory, AssetStatus } from '@/types';
-import { Plus, Trash2, Download, Check, X, Search, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, ArrowUpAZ, GripVertical, FolderUp } from 'lucide-react';
+import { Plus, Trash2, Download, Check, X, Search, ChevronDown, ChevronUp, Pencil, FolderPlus, RotateCcw, ArrowDownAZ, ArrowUpAZ, GripVertical, FolderUp, Tag } from 'lucide-react';
 import { trackDownload } from '@/lib/trackDownload';
 import { categoryFolders, iconZipPath } from '@/lib/iconCategories';
 import { isPublished, restoreVersion, statusOf, visibleItems } from '@/lib/assetStatus';
@@ -18,6 +18,7 @@ import { normalizeHex } from './icons/colorUtils';
 import { TintControl, useBrandPalettes } from './icons/palettes';
 import { readDirectory, readZip, type ImportItem } from './icons/importFiles';
 import { byAlpha, wordStartMatch } from './icons/utils';
+import KeywordManager from './icons/KeywordManager';
 
 const END_DROP = '__end';
 
@@ -40,6 +41,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [keywordsOpen, setKeywordsOpen] = useState(false);
   // Couleur globale : enregistrée dans le module (valeur de départ pour tous les visiteurs) ; en lecture, la modifier n'est qu'un aperçu.
   const [tintInput, setTintInput] = useState(module.iconColor ?? '');
   const [catTintInputs, setCatTintInputs] = useState<Record<string, string>>({});
@@ -909,6 +911,14 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
           </div>
         </div>
       )}
+      {keywordsOpen && (
+        <KeywordManager
+          items={items}
+          onApply={async next => { await patchModule({ iconItems: next }); }}
+          onFilter={setSearch}
+          onClose={() => setKeywordsOpen(false)}
+        />
+      )}
       {/* Description */}
       <ModuleDescription
         moduleId={module.id}
@@ -962,6 +972,17 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               </button>
             )}
             {renderSortButton()}
+            {isEditing && items.some(i => (i.keywords ?? []).length > 0) && (
+              <button
+                onClick={() => setKeywordsOpen(true)}
+                title="Renommer, fusionner ou supprimer les mots-clés"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <Tag size={13} />
+                Mots-clés
+              </button>
+            )}
             {!isEditing && obsoleteCount > 0 && (
               <button
                 onClick={() => setShowObsolete(o => !o)}
