@@ -182,13 +182,26 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     await importItems(list);
   }
 
-  // Déplace une icône avant l'index `toIdx` (items.length = à la fin) et l'affecte à une catégorie.
-  async function moveItem(fromIdx: number, toIdx: number, categoryId?: string) {
-    const moved: IconItem = { ...items[fromIdx] };
-    if (categoryId) moved.categoryId = categoryId; else delete moved.categoryId;
-    const reordered = items.filter((_, i) => i !== fromIdx);
-    reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, moved);
-    await patchModule({ iconItems: reordered });
+  // Déplace l'icône glissée (ou toute la sélection si elle en fait partie) avant `targetId`, ou à la fin de la catégorie si `targetId` est null.
+  async function moveItems(draggedId: string, targetId: string | null, categoryId?: string) {
+    const ids = selected.has(draggedId) && selected.size > 1 ? selected : new Set([draggedId]);
+    if (targetId && ids.has(targetId)) return;
+    const moving = items.filter(i => ids.has(i.id)).map(i => {
+      const m: IconItem = { ...i };
+      if (categoryId) m.categoryId = categoryId; else delete m.categoryId;
+      return m;
+    });
+    const rest = items.filter(i => !ids.has(i.id));
+    let at = targetId ? rest.findIndex(i => i.id === targetId) : -1;
+    if (at < 0) {
+      const known = new Set(categories.map(c => c.id));
+      const sameGroup = (i: IconItem) => categoryId ? i.categoryId === categoryId : !i.categoryId || !known.has(i.categoryId);
+      let last = -1;
+      rest.forEach((i, k) => { if (sameGroup(i)) last = k; });
+      at = last < 0 ? rest.length : last + 1;
+    }
+    rest.splice(at, 0, ...moving);
+    await patchModule({ iconItems: rest });
   }
 
   // Enregistre la couleur d'une catégorie (avec délai : le sélecteur natif envoie un flux de valeurs).
@@ -525,10 +538,10 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
               className="relative group flex flex-col items-center gap-2"
               style={{ opacity: dragIdx === idx ? 0.4 : statusOf(item) === 'obsolete' ? 0.55 : 1 }}
               draggable={isEditing}
-              onDragStart={isEditing ? e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(idx); } : undefined}
+              onDragStart={isEditing ? e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', item.id); setDragIdx(idx); } : undefined}
               onDragOver={isEditing ? e => { e.preventDefault(); setDragOverIdx(idx); } : undefined}
-              onDragLeave={isEditing ? () => setDragOverIdx(null) : undefined}
-              onDrop={isEditing ? e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null && dragIdx !== idx) moveItem(dragIdx, idx, item.categoryId); setDragIdx(null); setDragOverIdx(null); } : undefined}
+              onDragLeave={isEditing ? e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverIdx(null); } : undefined}
+              onDrop={isEditing ? e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null && dragIdx !== idx) moveItems(items[dragIdx].id, item.id, item.categoryId); setDragIdx(null); setDragOverIdx(null); } : undefined}
               onDragEnd={isEditing ? () => { setDragIdx(null); setDragOverIdx(null); } : undefined}
             >
               {dragOverIdx === idx && dragIdx !== null && dragIdx !== idx && (
@@ -650,7 +663,8 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
     const grouped = categories.length > 0;
     const dropToEnd = (catId?: string) => (e: React.DragEvent) => {
       e.preventDefault();
-      if (dragIdx !== null) moveItem(dragIdx, items.length, catId);
+      e.stopPropagation();
+      if (dragIdx !== null) moveItems(items[dragIdx].id, null, catId);
       setDragIdx(null); setDragOverIdx(null);
     };
 
@@ -798,7 +812,12 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                   )}
                 </div>
               )}
-              <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
+              <div
+                className="grid gap-4"
+                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', ...(isEditing && dragIdx !== null ? { minHeight: 96 } : {}) }}
+                onDragOver={isEditing && dragIdx !== null ? e => e.preventDefault() : undefined}
+                onDrop={isEditing && dragIdx !== null ? dropToEnd(cat?.id) : undefined}
+              >
                 {groupItems.map(renderCard)}
                 {isEditing && dragIdx !== null && (
                   <div

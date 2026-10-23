@@ -29,7 +29,7 @@ export function TintedImg({ filename, alt, color }: { filename: string; alt: str
   }, [filename, color, key]);
   const src = color && tinted?.key === key ? tinted.src : `/uploads/${filename}`;
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} className="w-full h-full object-contain" />;
+  return <img src={src} alt={alt} draggable={false} className="w-full h-full object-contain" />;
 }
 
 export function formatSize(bytes: number): string {
