@@ -8,6 +8,7 @@ import Select from './Select';
 
 const BADGE_STYLES: Record<AssetStatus, string> = {
   draft: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  to_validate: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
   validated: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
   obsolete: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
 };
@@ -28,7 +29,7 @@ export function StatusSelect({ value, onChange, className = 'text-xs' }: { value
       className={className}
       value={statusOf({ status: value })}
       onChange={v => onChange(v as AssetStatus)}
-      options={(['draft', 'validated', 'obsolete'] as AssetStatus[]).map(s => ({ value: s, label: STATUS_LABELS[s] }))}
+      options={(['draft', 'to_validate', 'validated', 'obsolete'] as AssetStatus[]).map(s => ({ value: s, label: STATUS_LABELS[s] }))}
     />
   );
 }

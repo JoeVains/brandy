@@ -56,7 +56,7 @@ export interface FontItem {
 }
 
 // Statut d'un fichier : sans valeur = validé (les fichiers existants restent donc publiés).
-export type AssetStatus = 'draft' | 'validated' | 'obsolete';
+export type AssetStatus = 'draft' | 'to_validate' | 'validated' | 'obsolete';
 
 // Ancienne version d'un fichier, conservée lors d'un remplacement.
 export interface FileVersion {

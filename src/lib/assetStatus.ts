@@ -10,6 +10,7 @@ interface Versioned {
 
 export const STATUS_LABELS: Record<AssetStatus, string> = {
   draft: 'Brouillon',
+  to_validate: 'À valider',
   validated: 'Validé',
   obsolete: 'Obsolète',
 };
@@ -20,12 +21,12 @@ export const statusOf = (item: { status?: AssetStatus }): AssetStatus => item.st
 // Seuls les fichiers validés sont inclus dans les zips « tout télécharger » et dans l'export PDF.
 export const isPublished = (item: { status?: AssetStatus }) => statusOf(item) === 'validated';
 
-// En lecture : les brouillons sont masqués, les obsolètes seulement si le visiteur le demande.
+// En lecture : les brouillons sont masqués, les « à valider » restent visibles, les obsolètes seulement si le visiteur le demande.
 export function visibleItems<T extends { status?: AssetStatus }>(items: T[], editing: boolean, showObsolete: boolean): T[] {
   if (editing) return items;
   return items.filter(i => {
     const s = statusOf(i);
-    return s === 'validated' || (s === 'obsolete' && showObsolete);
+    return s === 'validated' || s === 'to_validate' || (s === 'obsolete' && showObsolete);
   });
 }
 

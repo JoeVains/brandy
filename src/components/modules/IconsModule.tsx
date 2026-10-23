@@ -1016,6 +1016,7 @@ export default function IconsModule({ module, brandColor, onUpdate, isEditing, s
                 onChange={v => setSelectionStatus(v as AssetStatus)}
                 options={[
                   { value: 'draft', label: 'Brouillon' },
+                  { value: 'to_validate', label: 'À valider' },
                   { value: 'validated', label: 'Validé' },
                   { value: 'obsolete', label: 'Obsolète' },
                 ]}
